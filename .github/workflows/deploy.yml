@@ -2,12 +2,16 @@
 #   develop に入ったら → 開発版（gcis-note-dev）
 #   main に入ったら    → 本番（gcis-note）
 # 配信するもの：画面（Hosting）と Firestore のルール（firestore.rules）
+# 配信の前にルールの自動テスト（tools/rules.test.mjs）を行い、1つでも失敗したら配信しない
+# main への PR でもテストだけ行う（マージ前に結果が見える）
 # 手順と戻し方は RELEASE.md
 name: deploy
 
 on:
   push:
     branches: [main, develop]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
     inputs:
       force:
@@ -24,8 +28,26 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  rules-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: ルールのテスト
+        run: |
+          npm i --no-save --no-package-lock --silent @firebase/rules-unit-testing@4 firebase@11
+          npx --yes firebase-tools@15 emulators:exec --only firestore --project demo-gcis "node tools/rules.test.mjs"
+
   deploy:
-    if: github.ref_name == 'main' || github.ref_name == 'develop'
+    needs: rules-test
+    if: github.event_name != 'pull_request' && (github.ref_name == 'main' || github.ref_name == 'develop')
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
