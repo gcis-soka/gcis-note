@@ -8,6 +8,9 @@
 - ブランチに入ると GitHub Actions が自動で配信する（画面と `firestore.rules`）。2〜3分
 - 本番と開発版はデータもルールも別。開発版で何をしても本番の生徒データには触れない
 - `firebase-config.js` はリポジトリでは見本。配信のときに Secrets の値で書き換わる
+- 配信の前に**ルールの自動テスト**（`tools/rules.test.mjs`）が走り、1つでも失敗したら配信しない。main への PR でもテストだけ走る
+- ルールを変えるときは、テストにも「通るべきもの／通ってはいけないもの」を足す（Claude が行う）
+- `main` は保護してあり、PR のマージでしか変わらない（Claude は develop にだけ入れる）
 
 ## ふだんの更新
 1. Claude が `develop` に直接入れる → 開発版に自動で出る（zip のやりとりはなし）
@@ -36,7 +39,7 @@ https://console.firebase.google.com/ の右上のアイコンで **gcis@ に切�
 4. 構築 → Firestore Database → データベースを作成 → Standard → **asia-northeast1（東京）**（後から変えられない）→ 本番環境モード → 作成
 5. 構築 → Hosting → 始める →「次へ」を最後まで → コンソールに進む
 
-### C. Cloud Shell で配信用アカウントを作る（gcis@・5分）※ Claude が develop を入れたあと
+### C. Cloud Shell で配信用アカウントを作る（gcis@・5分）（済 10/29）
 1. https://console.cloud.google.com/ （gcis@）→ 上のプロジェクト名 → **gcis-note** を選ぶ
 2. 右上の **`>_`** → 下の黒い画面に次の2行を貼って Enter
 ```
@@ -54,6 +57,15 @@ bash setup-ci.sh gcis-soka/gcis-note
 | Secrets | New repository secret | `FIREBASE_CONFIG_PROD` | 本番（gcis-note）の firebaseConfig |
 | Secrets | New repository secret | `FIREBASE_CONFIG_DEV` | 開発版（gcis-note-dev）の firebaseConfig |
 - 取り違えても配信が止まるだけ（安全装置）
+
+### F. main を保護する（gcis-soka・2分）
+Settings → Rules → Rulesets → New ruleset → New branch ruleset →
+Ruleset name `main`・Enforcement status **Active** → Target branches：Add target → Include default branch →
+「Restrict deletions」「Require a pull request before merging」（Required approvals は 0）「Block force pushes」に印 → Create
+
+### G. 予備のオーナー（各1分）
+- Firebase（gcis-note・gcis-note-dev それぞれ）：歯車 → ユーザーと権限 → メンバーを追加 → miura@ → 役割「オーナー」
+- GitHub：Settings → Collaborators → Add people → frost-topaz（Admin）
 
 ### E. 開発版 → 本番
 1. Actions → deploy → Run workflow → Branch：**develop** → 緑になるのを待つ
