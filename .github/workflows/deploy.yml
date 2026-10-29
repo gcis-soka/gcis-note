@@ -1,0 +1,100 @@
+# 探究ノートの自動配信
+#   develop に入ったら → 開発版（gcis-note-dev）
+#   main に入ったら    → 本番（gcis-note）
+# 配信するもの：画面（Hosting）と Firestore のルール（firestore.rules）
+# 手順と戻し方は RELEASE.md
+name: deploy
+
+on:
+  push:
+    branches: [main, develop]
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "月曜でも本番に出す（急ぎの修正だけ）"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  id-token: write   # Workload Identity（鍵なしログイン）に必要
+
+concurrency:
+  group: deploy-${{ github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: github.ref_name == 'main' || github.ref_name == 'develop'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      TARGET: ${{ github.ref_name == 'main' && 'prod' || 'dev' }}
+      PROJECT_PROD: gcis-note       # 本番の Firebase プロジェクトID
+      PROJECT_DEV: gcis-note-dev    # 開発版の Firebase プロジェクトID
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 配信先を決める
+        id: t
+        run: |
+          if [ "$TARGET" = "prod" ]; then PROJECT="$PROJECT_PROD"; else PROJECT="$PROJECT_DEV"; fi
+          echo "project=$PROJECT" >> "$GITHUB_OUTPUT"
+          echo "sa=deploy@${PROJECT}.iam.gserviceaccount.com" >> "$GITHUB_OUTPUT"
+          SKIP=false
+          if [ "$TARGET" = "prod" ] && [ "$(TZ=Asia/Tokyo date +%u)" = "1" ] && [ "${{ inputs.force }}" != "true" ]; then
+            SKIP=true
+            echo "::warning::月曜日（授業日）なので本番には出しませんでした。火曜以降に Actions → deploy → Run workflow で出してください。"
+          fi
+          echo "skip=$SKIP" >> "$GITHUB_OUTPUT"
+          echo "配信先：$TARGET（$PROJECT）／見送り：$SKIP"
+
+      - name: Firebase の設定を書き込む
+        if: steps.t.outputs.skip == 'false'
+        env:
+          CFG: ${{ github.ref_name == 'main' && secrets.FIREBASE_CONFIG_PROD || secrets.FIREBASE_CONFIG_DEV }}
+          EXPECT: ${{ steps.t.outputs.project }}
+        run: |
+          node - <<'JS'
+          const fs = require("fs");
+          const raw = process.env.CFG || "";
+          // コンソールのコードをまるごと貼っても、{ apiKey: … } の部分だけを取り出す
+          const m = raw.match(/\{[^{}]*apiKey[^{}]*\}/);
+          if (!m) { console.error("::error::Secrets の FIREBASE_CONFIG_* が空か、形が違います（RELEASE.md の手順D）"); process.exit(1); }
+          const body = m[0];
+          const cfg = Function(`"use strict"; return (${body});`)();
+          for (const k of ["apiKey", "authDomain", "projectId", "appId"]) {
+            if (!cfg[k]) { console.error(`::error::設定に ${k} がありません`); process.exit(1); }
+          }
+          if (cfg.projectId !== process.env.EXPECT) {
+            console.error(`::error::設定の projectId（${cfg.projectId}）が配信先（${process.env.EXPECT}）と違います。本番と開発の設定を取り違えていないか確認してください`);
+            process.exit(1);
+          }
+          fs.writeFileSync("firebase-config.js",
+            "// 配信のときに GitHub Actions が書き込んだ設定（リポジトリのものは見本）\n" +
+            "export const firebaseConfig = " + JSON.stringify(cfg, null, 2) + ";\n");
+          console.log("設定OK：" + cfg.projectId);
+          JS
+
+      - name: Google Cloud にログイン（鍵なし）
+        if: steps.t.outputs.skip == 'false' && vars.GCP_WIF_PROVIDER != ''
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ steps.t.outputs.sa }}
+
+      - name: Google Cloud にログイン（鍵ファイル）
+        if: steps.t.outputs.skip == 'false' && vars.GCP_WIF_PROVIDER == ''
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ github.ref_name == 'main' && secrets.GCP_SA_KEY_PROD || secrets.GCP_SA_KEY_DEV }}
+
+      - name: 配信（画面とルール）
+        if: steps.t.outputs.skip == 'false'
+        run: |
+          npx --yes firebase-tools@15 deploy \
+            --only hosting,firestore:rules \
+            --project "${{ steps.t.outputs.project }}" \
+            --non-interactive \
+            --message "${GITHUB_REF_NAME} ${GITHUB_SHA::7}"
+          echo "### 配信しました：https://${{ steps.t.outputs.project }}.web.app/" >> "$GITHUB_STEP_SUMMARY"
