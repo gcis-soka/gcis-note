@@ -24,6 +24,7 @@ export function mountStudent({ be, user, app, asTeacher }) {
   let profile = null;
   let note = { step: 0, submitted: false, data: {} };
   let saveTimer = null, alive = true;
+  let dirty = false, lastSaved = 0; // まだ保存していない入力があるか／最後に保存した時刻
 
   const v = k => (note.data[k] || "").trim();
   const route = () => (note.data.route === "B" ? "B" : "A");
@@ -55,20 +56,28 @@ export function mountStudent({ be, user, app, asTeacher }) {
 
   // ---------- 保存 ----------
   function setBadge(text, cls = "") { saveBadge.textContent = text; saveBadge.className = "save " + cls; }
+  // 書き込み回数を抑える（Firestore の無料枠は1日2万回）：
+  //   入力中は15秒に1回まで／入力欄を離れたとき・次へ進むとき・画面を隠すときはすぐ保存
+  const SAVE_EVERY = 15000, SAVE_FIRST = 3000;
   function scheduleSave() {
+    dirty = true;
     setBadge("入力中…");
-    clearTimeout(saveTimer);
-    saveTimer = setTimeout(() => saveNow(), 2000); // 2秒まとめて保存（書き込み回数を抑える）
+    if (saveTimer) return; // すでに予約済み（予約は延ばさない＝打ち続けても15秒以内に保存される）
+    const wait = Math.max(SAVE_FIRST, lastSaved + SAVE_EVERY - Date.now());
+    saveTimer = setTimeout(() => saveNow(), wait);
   }
+  function saveIfDirty() { if (dirty) saveNow(); }
   async function saveNow(markSubmitted = false) {
     clearTimeout(saveTimer); saveTimer = null;
     if (!profile) return;
+    dirty = false; lastSaved = Date.now();
     try {
       setBadge("保存中…");
       await be.saveNote(user.uid, LESSON, profile, note, markSubmitted);
-      if (alive) setBadge(be.demo ? "デモ（保存されません）" : "保存しました ✓", "ok");
+      if (alive && !dirty) setBadge(be.demo ? "デモ（保存されません）" : "保存しました ✓", "ok");
     } catch (e) {
       console.error(e);
+      dirty = true; // 次の機会にもう一度
       if (alive) setBadge("保存できません。先生に声をかけてね", "ng");
     }
   }
@@ -162,7 +171,7 @@ export function mountStudent({ be, user, app, asTeacher }) {
     app.innerHTML = `
       <section class="card hero">
         <p class="eyebrow">ゴール</p>
-        <h2>2月に「もっと知りたい」と思える、自分の問いを持っている</h2>
+        <h2>1月に「もっと知りたい」と思える、自分の問いを持っている</h2>
         <ol class="map">${MAP.map((m, i) => `<li class="${i === 0 ? "now" : ""}">${m}</li>`).join("")}</ol>
         <ul class="promise">
           <li>気になることは、何度変えてもいい</li>
@@ -336,6 +345,10 @@ export function mountStudent({ be, user, app, asTeacher }) {
     scheduleSave(); refreshNext(); updateShortHints();
   }, { signal: ac.signal });
 
+  app.addEventListener("focusout", e => { if (e.target.closest("[data-key]")) saveIfDirty(); }, { signal: ac.signal });
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") saveIfDirty(); }, { signal: ac.signal });
+  window.addEventListener("pagehide", saveIfDirty, { signal: ac.signal });
+
   app.addEventListener("click", async e => {
     const t = e.target;
     if (t.closest("[data-copy]")) { copyPrompt(t.closest("[data-copy]")); return; }
@@ -389,7 +402,7 @@ export function mountStudent({ be, user, app, asTeacher }) {
   })();
 
   return () => {
-    if (saveTimer) saveNow(); // 画面を切り替える直前の入力も保存する
+    if (dirty) saveNow(); // 画面を切り替える直前の入力も保存する
     alive = false; ac.abort();
   };
 }
