@@ -171,7 +171,7 @@ export function mountStudent({ be, user, app, asTeacher }) {
     app.innerHTML = `
       <section class="card hero">
         <p class="eyebrow">ゴール</p>
-        <h2>2月に「もっと知りたい」と思える、自分の問いを持っている</h2>
+        <h2>1月に「もっと知りたい」と思える、自分の問いを持っている</h2>
         <ol class="map">${MAP.map((m, i) => `<li class="${i === 0 ? "now" : ""}">${m}</li>`).join("")}</ol>
         <ul class="promise">
           <li>気になることは、何度変えてもいい</li>

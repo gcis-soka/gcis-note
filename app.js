@@ -32,7 +32,7 @@ function renderLogin(msg = "") {
     <section class="card hero">
       <p class="eyebrow">GCIS 個人探究</p>
       <h1>探究ノート</h1>
-      <p>2月に「もっと知りたい」と思える、自分の問いを見つけにいこう。</p>
+      <p>1月に「もっと知りたい」と思える、自分の問いを見つけにいこう。</p>
       ${isDemo
         ? `<div class="prompt-actions"><button class="btn primary big" data-demo="student">デモ：生徒として入る</button>
            <button class="btn big" data-demo="teacher">デモ：教員として入る</button></div>`
