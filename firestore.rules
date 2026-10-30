@@ -41,7 +41,7 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // 各ステージのノート（ID は「uid_L01」「uid_R01」の形。L＝授業の回、R＝持ち帰りミッションの結果）
+    // 各ステージのノート（ID は「uid_L01」「uid_R01」の形。L＝授業の回、R＝Quest の結果）
     match /notes/{noteId} {
       allow read: if isTeacher()
         || (isStudent() && noteId.matches(request.auth.uid + '_[LR][0-9][0-9]'));

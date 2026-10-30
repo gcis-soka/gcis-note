@@ -1,9 +1,10 @@
 // 教員画面：期・クラス・回ごとの進み具合（リアルタイム）
 import {
-  escapeHtml, classLabel, kiLabel, firstYearKi, methodOf, lsGet, lsSet, MISSION,
+  escapeHtml, classLabel, kiLabel, firstYearKi, methodOf, lsGet, lsSet, quest,
   CLASSES, MAX_NUMBER, TEST_CLASS, METHODS
 } from "./common.js";
 
+const MISSION = quest(1);
 const STALL_MIN = 5; // この分数以上更新がなく未提出なら「止まってる？」
 const esc = escapeHtml;
 const safeUrl = u => /^https:\/\//i.test(String(u || "").trim()) ? String(u).trim() : "";

@@ -13,7 +13,7 @@ GCIS（Global Citizenship Inquiry Studies）の個人探究で使う、生徒用
 |---|---|
 | `index.html` / `app.js` | 入口（ログインと振り分け） |
 | `student.js` | 生徒画面の枠（ホーム・クラスと番号・保存・画面の切り替え） |
-| `l01.js` / `r01.js` / `l02.js` | 各ステージの中身（画面・プロンプト・次へ進める条件）。L＝授業の回、R＝持ち帰りミッションの結果。足すときはファイルを作り、student.js の LESSONS・teacher.js の VIEWS・firestore.rules の lesson に足す |
+| `l01.js` / `r01.js` / `l02.js` | 各ステージの中身（画面・プロンプト・次へ進める条件）。L＝授業の回、R＝Quest の結果。足すときはファイルを作り、student.js の LESSONS・teacher.js の VIEWS・firestore.rules の lesson に足す |
 | `teacher.js` | 教員画面 |
 | `teacher.html` | トップへ移動するだけ |
 | `common.js` | 共通（ログイン・保存・ドメインの設定） |
@@ -40,10 +40,10 @@ GCIS（Global Citizenship Inquiry Studies）の個人探究で使う、生徒用
 - `students/{uid}`：email・ki（期＝アドレスの頭2桁、数字でなければ空）・class（0〜8、0はテスト）・number（教員のテストは0）・createdAt・updatedAt
 - `notes/{uid}_L01`・`_R01`・`_L02`：uid・lesson・ki・class・number・step（0〜4）・submitted・data（入力内容）・updatedAt・submittedAt
 - data（L01）：route（A＝3つの質問／B＝テーマの例／C＝やりたいことから。Cはキーワードの画面をとばす）・odai1〜3・theme・themeWhere・yaritai・yaritaiWhy（入口C）・kw1〜3・setsu（説）・hikkakari（ひっかかり）・ippo・ippoDate・yosou・geminiLink
-- data（R01＝持ち帰りミッションの結果）：did（やった／まだ）・yatta・mita（見たこと・数字）・kanji（感じたこと）・iikire（言い切れないこと）・yarunara（まだの人：やるとしたら）
+- data（R01＝Quest 1 の結果）：did（やった／まだ）・yatta・mita（見たこと・数字）・kanji（感じたこと）・iikire（言い切れないこと）・yarunara（まだの人：やるとしたら）
 - data（L02）：tomo（友だちに言われたこと）・geminiLink・q1〜q3（気になったこと）
 - ステージは L01 → R01 → L02 の順。前を提出すると次がホームに出る（それまでは出ない）。先生の「テスト」では全部出る。提出後も直せる
-- 「持ち帰りミッション」の呼び名は common.js の MISSION で変えられる
+- 授業の外でやってくることは「Quest 1, 2 …」と呼ぶ（common.js の quest）
 - 生徒は自分のデータだけ、教員は全員のデータを読める。教員が書けるのは自分の「テスト」だけ。
 
 生徒の個人データはこのリポジトリには置きません（Firebase にだけ保存されます）。

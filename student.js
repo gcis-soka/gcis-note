@@ -1,7 +1,7 @@
 // 生徒画面の枠：ホーム・クラスと番号・保存・画面の切り替え
 // ステージ（前のステージを提出すると次が出る）の中身は l01.js・r01.js・l02.js … に書く
 import {
-  escapeHtml, kiOf, classLabel, openGemini, MISSION,
+  escapeHtml, kiOf, classLabel, openGemini, quest,
   CLASSES, MAX_NUMBER, TEST_CLASS
 } from "./common.js";
 import { L01 } from "./l01.js";
@@ -10,7 +10,7 @@ import { L02 } from "./l02.js";
 
 // ステージの順。足すときはここに並べる（teacher.js の VIEWS・firestore.rules の lesson も足す）
 const LESSONS = [L01, R01, L02];
-const stageLabel = L => L.no ? `第${L.no}回` : MISSION;
+const stageLabel = L => L.no ? `第${L.no}回` : L.quest ? quest(L.quest) : "";
 const MAP = ["気になる", "一歩", "文献", "問い", "計画", "着手", "RQ"];
 const SHORT_MSG = "思いついたことを、もう少しだけ足してみよう（いつ？どんなとき？）";
 const QMARK_MSG = "最後を「？」にしてみよう";

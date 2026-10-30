@@ -1,6 +1,7 @@
-// ステージ2：持ち帰りミッションの結果（L01のあと、やったらその日のうちに。授業でも書ける）
+// ステージ2：Quest 1 の結果（L01のあと、やったらその日のうちに。授業でも書ける）
 // data：did（やった／まだ）・yatta・mita・kanji・iikire・yarunara
-import { MISSION } from "./common.js";
+import { quest } from "./common.js";
+const MISSION = quest(1);
 
 const IIKIRE_CHIPS = [
   { label: "1回だけ", text: "1回だけなので、" },
@@ -17,16 +18,17 @@ export function recapL01(c) {
   return `
     <div class="recap">
       <div class="tc-row"><span>第1回で「えっ、本当？」と思った説</span><b>${esc(L1.setsu || "—")}</b></div>
-      <div class="tc-row"><span>${MISSION}（やると決めた一歩）</span><b>${esc(L1.ippo || "—")}</b></div>
+      <div class="tc-row"><span>${MISSION}（第1回で決めた一歩）</span><b>${esc(L1.ippo || "—")}</b></div>
       <div class="tc-row"><span>予想</span><b>${esc(L1.yosou || "—")}</b></div>
     </div>`;
 }
 
 export const R01 = {
   id: "R01",
+  quest: 1,
   title: `${MISSION}の結果`,
   sub: "やったら、その日のうちに書こう",
-  mapAt: 1, // 一歩
+  mapAt: 0, // 地図は「一歩」のまま（第2回を出すと「文献」へ）
   after: "L01",
   uses: ["L01"],
   steps: [{ title: `${MISSION}の結果`, mins: 0 }],

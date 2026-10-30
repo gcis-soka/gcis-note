@@ -1,8 +1,9 @@
 // ステージ3／第2回（11/9）同じことに関心を持つ人を探す
 // 仕様：ナレッジの L02.md「アプリ画面」／プロンプト：L02_PROMPTS（確定）
-// 結果の記録は R01（持ち帰りミッションの結果）。ここでは R01 を読んでプロンプトに入れる
+// 結果の記録は R01（Quest 1 の結果）。ここでは R01 を読んでプロンプトに入れる
 // data：tomo・geminiLink・q1〜q3
-import { MISSION } from "./common.js";
+import { quest } from "./common.js";
+const MISSION = quest(1);
 
 // 文末の句読点・空白を取る（プロンプトの文をつなぐため）
 const tail = s => String(s || "").trim().replace(/[。．.、,，！!\s　]+$/u, "");
@@ -60,7 +61,7 @@ export const L02 = {
   no: 2,
   title: "同じことに関心を持つ人を探す",
   mapAt: 1, // 一歩
-  after: "R01", // 持ち帰りミッションの結果を出すと開く
+  after: "R01", // Quest 1 の結果を出すと開く
   uses: ["L01", "R01"],
   steps: [
     { title: "班で報告", mins: 12 },
