@@ -7,6 +7,8 @@ export const CLASSES = [1, 2, 3, 4, 5, 6, 7, 8];
 export const MAX_NUMBER = 41;
 export const TEST_CLASS = 0; // 動作確認用（教員画面では「テスト」と表示）
 export const GEMINI_URL = "https://gemini.google.com/app";
+// 授業の外でやってくること（L01で決めた一歩）の呼び名。変えるときはここだけ
+export const MISSION = "持ち帰りミッション";
 
 const SDK = "https://www.gstatic.com/firebasejs/10.12.2/";
 

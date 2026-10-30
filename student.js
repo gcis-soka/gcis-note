@@ -1,13 +1,16 @@
 // 生徒画面の枠：ホーム・クラスと番号・保存・画面の切り替え
-// 各回の中身（画面・プロンプト・次へ進める条件）は l01.js・l02.js … に書く
+// ステージ（前のステージを提出すると次が出る）の中身は l01.js・r01.js・l02.js … に書く
 import {
-  escapeHtml, kiOf, classLabel, openGemini,
+  escapeHtml, kiOf, classLabel, openGemini, MISSION,
   CLASSES, MAX_NUMBER, TEST_CLASS
 } from "./common.js";
 import { L01 } from "./l01.js";
+import { R01 } from "./r01.js";
 import { L02 } from "./l02.js";
 
-const LESSONS = [L01, L02]; // 回を足すときはここに並べる（firestore.rules の lesson も足す）
+// ステージの順。足すときはここに並べる（teacher.js の VIEWS・firestore.rules の lesson も足す）
+const LESSONS = [L01, R01, L02];
+const stageLabel = L => L.no ? `第${L.no}回` : MISSION;
 const MAP = ["気になる", "一歩", "文献", "問い", "計画", "着手", "RQ"];
 const SHORT_MSG = "思いついたことを、もう少しだけ足してみよう（いつ？どんなとき？）";
 const QMARK_MSG = "最後を「？」にしてみよう";
@@ -25,7 +28,7 @@ export function mountStudent({ be, user, app, asTeacher }) {
   let lastFocus = "";               // 最後に入力した欄（書き出しボタンの入れ先）
 
   const note = () => notes[cur.id];
-  const isOpen = L => !L.after || !!notes[L.after]?.submitted || asTeacher || be.demo;
+  const isOpen = L => !L.after || !!notes[L.after]?.submitted || asTeacher; // デモの生徒は本物と同じく順に出る
 
   // 各回の定義に渡す道具
   function ctx() {
@@ -173,24 +176,17 @@ export function mountStudent({ be, user, app, asTeacher }) {
     // いま取り組む回（開いていて未提出の最初の回。なければ最後に開いている回）
     const openOnes = LESSONS.filter(isOpen);
     const focus = openOnes.find(L => !notes[L.id]?.submitted) || openOnes[openOnes.length - 1];
-    const cards = LESSONS.map(L => {
+    const cards = openOnes.map(L => {
       const n = notes[L.id] || blank();
       const started = n.step > 0 || Object.keys(n.data).length > 0;
-      if (!isOpen(L)) {
-        const need = LESSONS.find(x => x.id === L.after);
-        return `
-          <section class="card lesson locked">
-            <div><p class="eyebrow">第${L.no}回</p><h3>${L.title}</h3></div>
-            <span class="hint">第${need.no}回を提出すると開きます</span>
-          </section>`;
-      }
       const forced = L.after && !notes[L.after]?.submitted; // 先生・デモなので開いている
       return `
         <section class="card lesson ${L === focus ? "" : "quiet"}">
           <div>
-            <p class="eyebrow">第${L.no}回 ${n.submitted ? "・提出済み ✓" : ""}</p>
+            <p class="eyebrow">${stageLabel(L)} ${n.submitted ? "・提出済み ✓" : ""}</p>
             <h3>${L.title}</h3>
-            ${forced ? `<p class="hint">（生徒は第${L.no - 1}回を提出すると開きます。先生・デモなので開いています）</p>` : ""}
+            ${L.sub && !n.submitted ? `<p class="hint">${L.sub}</p>` : ""}
+            ${forced ? `<p class="hint">（生徒には、前のステージを提出すると出ます。先生のテストなので出ています）</p>` : ""}
           </div>
           <button class="btn ${L === focus ? "primary" : ""}" data-open="${L.id}">${n.submitted ? "見なおす" : started ? "つづきから" : "はじめる"} →</button>
         </section>`;
@@ -206,7 +202,7 @@ export function mountStudent({ be, user, app, asTeacher }) {
           <li>早く終わったら、先に進んでいい</li>
         </ul>
       </section>
-      ${cards.reverse().join("")}`; // 新しい回を上に
+      ${cards.reverse().join("")}`; // 新しいステージを上に（まだ開いていないステージは出さない）
   }
 
   function openLesson(id) {
@@ -228,16 +224,23 @@ export function mountStudent({ be, user, app, asTeacher }) {
     const s = cur.steps[n.step], c = ctx();
     const title = cur.stepTitle?.(n.step, c) || s.title;
     const nextLabel = n.step === last ? (n.submitted ? "ホームへ" : "提出する") : "次へ";
+    const one = cur.steps.length === 1;
     app.innerHTML = `
       <section class="card">
-        <p class="eyebrow">第${cur.no}回</p>
-        ${progress(n.step)}
-        <div class="step-head"><h2>${n.step + 1}. ${title}</h2><span class="mins">目安 ${s.mins}分</span></div>
+        <p class="eyebrow">${stageLabel(cur)}</p>
+        ${one ? "" : progress(n.step)}
+        <div class="step-head"><h2>${one ? "" : `${n.step + 1}. `}${title}</h2>${s.mins ? `<span class="mins">目安 ${s.mins}分</span>` : ""}</div>
         ${cur.render(n.step, c)}
-        ${nav(n.step, n.step === last || cur.canNext(n.step, c), nextLabel)}
+        ${nav(n.step, canGo(n.step, c), nextLabel)}
       </section>`;
     window.scrollTo(0, 0);
     updateHints();
+  }
+
+  // 次へ（最後は提出）を押せるか。提出済みの最後の画面は「ホームへ」なので常に押せる
+  function canGo(i, c) {
+    const n = note();
+    return (i === cur.steps.length - 1 && n.submitted) || cur.canNext(i, c);
   }
 
   function updateHints() {
@@ -256,7 +259,7 @@ export function mountStudent({ be, user, app, asTeacher }) {
     if (!cur) return;
     const n = note();
     const btn = app.querySelector(".nav .primary");
-    if (btn && n.step < cur.steps.length - 1) btn.disabled = !cur.canNext(n.step, ctx());
+    if (btn) btn.disabled = !canGo(n.step, ctx());
   }
 
   async function copyPrompt(btn) {
