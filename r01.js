@@ -26,12 +26,12 @@ export function recapL01(c) {
 export const R01 = {
   id: "R01",
   quest: 1,
-  title: `${MISSION}の結果`,
+  title: "やってみたことの結果",
   sub: "やったら、その日のうちに書こう",
   mapAt: 0, // 地図は「一歩」のまま（第2回を出すと「文献」へ）
   after: "L01",
   uses: ["L01"],
-  steps: [{ title: `${MISSION}の結果`, mins: 0 }],
+  steps: [{ title: "やってみたことの結果", mins: 0 }],
   geminiKey: "",
 
   render(i, c) {
