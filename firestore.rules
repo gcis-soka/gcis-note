@@ -1,5 +1,5 @@
 rules_version = '2';
-// 探究ノート（GCIS）の Firestore ルール（第2版）
+// 探究ノート（GCIS）の Firestore ルール（第2版・第2回まで）
 // Firebase コンソール → Firestore Database → ルール に全文を貼って「公開」する
 // 生徒：@tokyo.soka.ed.jp … 自分のデータだけ読み書きできる
 // 教員：@soka.ed.jp      … 全員のデータを読める。書けるのは自分の「テスト」だけ
@@ -47,7 +47,7 @@ service cloud.firestore {
         || (isStudent() && noteId.matches(request.auth.uid + '_L[0-9][0-9]'));
       allow create, update: if (isStudent() || isTeacher())
         && noteId == request.auth.uid + '_' + request.resource.data.lesson
-        && request.resource.data.lesson in ['L01']
+        && request.resource.data.lesson in ['L01', 'L02']
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.keys().hasOnly(['uid', 'lesson', 'ki', 'class', 'number', 'step', 'submitted', 'data', 'updatedAt', 'submittedAt'])
         && request.resource.data.data is map

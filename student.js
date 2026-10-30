@@ -1,57 +1,44 @@
-// 生徒画面：L01（気になることを見つけ、来週の一歩を決める）
+// 生徒画面の枠：ホーム・クラスと番号・保存・画面の切り替え
+// 各回の中身（画面・プロンプト・次へ進める条件）は l01.js・l02.js … に書く
 import {
-  escapeHtml, kiOf, classLabel, methodOf, openGemini,
+  escapeHtml, kiOf, classLabel, openGemini,
   CLASSES, MAX_NUMBER, TEST_CLASS
 } from "./common.js";
-import { THEMES } from "./themes.js";
+import { L01 } from "./l01.js";
+import { L02 } from "./l02.js";
 
-const LESSON = "L01";
+const LESSONS = [L01, L02]; // 回を足すときはここに並べる（firestore.rules の lesson も足す）
 const MAP = ["気になる", "一歩", "文献", "問い", "計画", "着手", "RQ"];
-const STEPS = [
-  { title: "自分が何に興味があるのか、AIと一緒に探してみよう", mins: 4 },
-  { title: "AI① キーワード20個", mins: 8 },
-  { title: "AI② 「えっ、本当？」と思う説", mins: 7 },
-  { title: "AI③ 来週の一歩", mins: 8 },
-  { title: "班で共有して提出", mins: 8 }
-];
-const YOSOU_TEMPLATE = "たぶん＿＿だと思う。なぜなら＿＿。";
 const SHORT_MSG = "思いついたことを、もう少しだけ足してみよう（いつ？どんなとき？）";
+const QMARK_MSG = "最後を「？」にしてみよう";
+const blank = () => ({ step: 0, submitted: false, data: {} });
 
 export function mountStudent({ be, user, app, asTeacher }) {
   const saveBadge = document.getElementById("save");
   const who = document.getElementById("who");
   const ac = new AbortController();
   let profile = null;
-  let note = { step: 0, submitted: false, data: {} };
+  const notes = {};   // { L01: { step, submitted, data }, L02: … }
+  let cur = null;     // 開いている回（l01.js などの定義）
   let saveTimer = null, alive = true;
   let dirty = false, lastSaved = 0; // まだ保存していない入力があるか／最後に保存した時刻
+  let lastFocus = "";               // 最後に入力した欄（書き出しボタンの入れ先）
 
-  const v = k => (note.data[k] || "").trim();
-  const route = () => (note.data.route === "B" ? "B" : "A");
+  const note = () => notes[cur.id];
+  const isOpen = L => !L.after || !!notes[L.after]?.submitted || asTeacher || be.demo;
 
-  // ---------- プロンプト ----------
-  const KW_TAIL = "ここから探究のきっかけになるキーワードを20個、「ど真ん中7・ちょっと意外7・遠いけど面白い6」に分け、一言の説明をつけて表で出してください。番号はつけないでください。表のあとには、説明・アドバイス・問いの例・次の提案を書かないでください。表だけを出してください。";
-  function prompt1() {
-    if (route() === "B") {
-      return `私は高校1年生です。【${v("theme")}】というテーマが少し気になっています。` +
-        (v("themeWhere") ? `特に【${v("themeWhere")}】のところが気になりました。` : "") + KW_TAIL;
-    }
-    return `私は高校1年生です。私についての答え：` +
-      `【時間が溶けたもの：${v("odai1") || "なし"}】` +
-      `【語りだすと止まらないもの：${v("odai2") || "なし"}】` +
-      `【最近モヤっとしたこと：${v("odai3") || "なし"}】。` + KW_TAIL;
-  }
-  function prompt2() {
-    const ks = ["kw1", "kw2", "kw3"].map(v).filter(Boolean).map(k => `【${k}】`).join("");
-    return `気になったのは${ks}です。それぞれについて、研究や専門家の間で「こう言われている」という意外な説を3つずつ、1つ40文字以内で出してください。` +
-      `高校生が直感的に「えっ、本当？」と思うもの、できれば自分の生活で確かめられそうなものにしてください。` +
-      `研究者の名前・論文名は書かないでください。理由・問い・調べ方も書かないでください。表のあとには何も書かないでください。`;
-  }
-  function prompt3() {
-    return `私が「本当？」と思ったのは【${v("setsu")}】です。この説を確かめるために、来週までに30分以内・お金不要・安全にできる小さな一歩を5つ出してください` +
-      `（見に行く／やってみる／聞く／測る。方法が偏らないように。検索だけで終わるものは除く）。` +
-      `それぞれ、【方法】から始まる短い見出しを太字で書き、その下に何をして何を見ればよいかを1〜2行で書いてください。` +
-      `前置きは書かないでください。最後に「ピンとこなければ『もう少し出して』と送ってください」と書いてください。`;
+  // 各回の定義に渡す道具
+  function ctx() {
+    const n = note();
+    return {
+      d: n.data,
+      v: k => String(n.data[k] ?? "").trim(),
+      submitted: n.submitted,
+      prev: id => notes[id]?.data || {},
+      set: (k, val) => { n.data[k] = val; scheduleSave(); },
+      rerender: () => renderStep(n.step),
+      field, promptBox, chips, esc: escapeHtml, app
+    };
   }
 
   // ---------- 保存 ----------
@@ -69,11 +56,13 @@ export function mountStudent({ be, user, app, asTeacher }) {
   function saveIfDirty() { if (dirty) saveNow(); }
   async function saveNow(markSubmitted = false) {
     clearTimeout(saveTimer); saveTimer = null;
-    if (!profile) return;
+    if (!profile || !cur) return;
+    const id = cur.id, n = note(); // 保存中に回を切り替えても、この回に保存する
     dirty = false; lastSaved = Date.now();
     try {
       setBadge("保存中…");
-      await be.saveNote(user.uid, LESSON, profile, note, markSubmitted);
+      await be.saveNote(user.uid, id, profile, n, markSubmitted);
+      n.saved = true;
       if (alive && !dirty) setBadge(be.demo ? "デモ（保存されません）" : "保存しました ✓", "ok");
     } catch (e) {
       console.error(e);
@@ -83,15 +72,19 @@ export function mountStudent({ be, user, app, asTeacher }) {
   }
 
   // ---------- 部品 ----------
-  function field(key, label, { placeholder = "", rows = 2, type = "textarea", hint = "", short = false, chips = null } = {}) {
-    const val = escapeHtml(note.data[key] || "");
+  // chips の text に「|」があれば、その位置にカーソルを置く
+  function chips(list, target) {
+    return `<span class="chips">${list.map(c =>
+      `<button type="button" class="chip" data-insert="${escapeHtml(c.text)}" data-target="${target}">${escapeHtml(c.label)}</button>`).join("")}</span>`;
+  }
+  function field(key, label, { placeholder = "", rows = 2, type = "textarea", hint = "", short = false, qmark = false, chips: cs = null } = {}) {
+    const val = escapeHtml(note().data[key] || "");
     const input = type === "textarea"
       ? `<textarea data-key="${key}" rows="${rows}" placeholder="${escapeHtml(placeholder)}">${val}</textarea>`
       : `<input data-key="${key}" type="${type}" value="${val}" placeholder="${escapeHtml(placeholder)}">`;
-    const chipHtml = chips ? `<span class="chips">${chips.map(c =>
-      `<button type="button" class="chip" data-insert="${escapeHtml(c.text)}" data-target="${key}">${escapeHtml(c.label)}</button>`).join("")}</span>` : "";
-    return `<div class="field"><label><span class="label">${label}</span>${hint ? `<span class="hint">${hint}</span>` : ""}${chipHtml}${input}</label>` +
-      (short ? `<p class="hint short" data-short="${key}" hidden>${SHORT_MSG}</p>` : "") + `</div>`;
+    return `<div class="field"><label><span class="label">${label}</span>${hint ? `<span class="hint">${hint}</span>` : ""}${cs ? chips(cs, key) : ""}${input}</label>` +
+      (short ? `<p class="hint short" data-short="${key}" hidden>${SHORT_MSG}</p>` : "") +
+      (qmark ? `<p class="hint short" data-qmark="${key}" hidden>${QMARK_MSG}</p>` : "") + `</div>`;
   }
 
   function promptBox(text, { first = false } = {}) {
@@ -110,7 +103,7 @@ export function mountStudent({ be, user, app, asTeacher }) {
   }
 
   function progress(i) {
-    return `<ol class="progress">${STEPS.map((s, j) =>
+    return `<ol class="progress">${cur.steps.map((s, j) =>
       `<li class="${j < i ? "done" : j === i ? "now" : ""}"><span>${j + 1}</span></li>`).join("")}</ol>`;
   }
   function nav(i, canNext, nextLabel = "次へ") {
@@ -149,7 +142,13 @@ export function mountStudent({ be, user, app, asTeacher }) {
       profile = { email: user.email, ki: kiOf(user.email), class: Number(c.value), number: Number(n.value) };
       try {
         await be.saveProfile(user.uid, profile, isNew);
-        if (!isNew) await saveNow(); // ノート側のクラス・番号も合わせる
+        if (!isNew) { // ノート側のクラス・番号も合わせる（書いたことのある回だけ）
+          for (const L of LESSONS) {
+            if (!notes[L.id]?.saved) continue;
+            cur = L; await saveNow();
+          }
+          cur = null;
+        }
         showWho(); renderHome();
       } catch (e) {
         console.error(e); ok.disabled = false;
@@ -167,138 +166,92 @@ export function mountStudent({ be, user, app, asTeacher }) {
   }
 
   function renderHome() {
-    const started = note.step > 0 || Object.keys(note.data).length > 0;
+    cur = null;
+    // 地図：提出済みの回の次、または開いている回の位置を光らせる
+    const at = Math.min(MAP.length - 1, Math.max(0, ...LESSONS.map(L =>
+      notes[L.id]?.submitted ? L.mapAt + 1 : isOpen(L) ? L.mapAt : 0)));
+    // いま取り組む回（開いていて未提出の最初の回。なければ最後に開いている回）
+    const openOnes = LESSONS.filter(isOpen);
+    const focus = openOnes.find(L => !notes[L.id]?.submitted) || openOnes[openOnes.length - 1];
+    const cards = LESSONS.map(L => {
+      const n = notes[L.id] || blank();
+      const started = n.step > 0 || Object.keys(n.data).length > 0;
+      if (!isOpen(L)) {
+        const need = LESSONS.find(x => x.id === L.after);
+        return `
+          <section class="card lesson locked">
+            <div><p class="eyebrow">第${L.no}回</p><h3>${L.title}</h3></div>
+            <span class="hint">第${need.no}回を提出すると開きます</span>
+          </section>`;
+      }
+      const forced = L.after && !notes[L.after]?.submitted; // 先生・デモなので開いている
+      return `
+        <section class="card lesson ${L === focus ? "" : "quiet"}">
+          <div>
+            <p class="eyebrow">第${L.no}回 ${n.submitted ? "・提出済み ✓" : ""}</p>
+            <h3>${L.title}</h3>
+            ${forced ? `<p class="hint">（生徒は第${L.no - 1}回を提出すると開きます。先生・デモなので開いています）</p>` : ""}
+          </div>
+          <button class="btn ${L === focus ? "primary" : ""}" data-open="${L.id}">${n.submitted ? "見なおす" : started ? "つづきから" : "はじめる"} →</button>
+        </section>`;
+    });
     app.innerHTML = `
       <section class="card hero">
         <p class="eyebrow">ゴール</p>
         <h2>1月に「もっと知りたい」と思える、自分の問いを持っている</h2>
-        <ol class="map">${MAP.map((m, i) => `<li class="${i === 0 ? "now" : ""}">${m}</li>`).join("")}</ol>
+        <ol class="map">${MAP.map((m, i) => `<li class="${i === at ? "now" : ""}">${m}</li>`).join("")}</ol>
         <ul class="promise">
           <li>気になることは、何度変えてもいい</li>
           <li>空欄があってもいい</li>
           <li>早く終わったら、先に進んでいい</li>
         </ul>
       </section>
-      <section class="card lesson">
-        <div>
-          <p class="eyebrow">第1回 ${note.submitted ? "・提出済み ✓" : ""}</p>
-          <h3>気になることを見つけて、来週の一歩を決める</h3>
-        </div>
-        <button class="btn primary" data-go="${note.submitted ? 4 : note.step}">${note.submitted ? "見なおす" : started ? "つづきから" : "はじめる"} →</button>
-      </section>`;
+      ${cards.reverse().join("")}`; // 新しい回を上に
   }
 
-  function step0() {
-    if (route() === "B") {
-      const sel = v("theme");
-      return `
-        <p><b>テーマの例</b>：少しでも気になるものを1つクリックしよう。あとで変えてもOK。</p>
-        <div class="themes">${THEMES.map((t, i) =>
-          `<button type="button" class="theme ${t === sel ? "on" : ""}" data-theme="${i}">${escapeHtml(t)}</button>`).join("")}</div>
-        ${sel ? field("themeWhere", "どこが少し気になった？（なくてもOK）", { type: "text", placeholder: "例：「食」のところ。給食の残りが多いのが気になってた" }) : ""}
-        <p class="switch"><button type="button" class="link" data-route="A">← 3つの質問にもどる</button></p>`;
-    }
-    return `
-      <p class="lead">まずは3つの質問に答えるだけ。<b>空欄があってもOK。</b>頭の中の考えを、まとめずにそのまま打って大丈夫。話しことばも途中の文も「うーん」も歓迎。まとめるのはAIの仕事です。<span class="hint">（しゃべって入力もOK：Windowsキー＋H）</span></p>
-      ${field("odai1", "① 気づいたら時間が溶けていたのは？", { placeholder: "例：料理動画とか、作らないのに気づいたら1時間くらい見てる", short: true })}
-      ${field("odai2", "② 人に語りだすと止まらないのは？", { placeholder: "例：バスケ部の試合の話になると、あの逆転のときがさ…って止まらなくなる", short: true })}
-      ${field("odai3", "③ 最近モヤっとしたのは？", { placeholder: "例：電車で席を譲るか迷って、結局声をかけられなくて、ずっとモヤモヤしてた", short: true })}
-      <p class="switch"><button type="button" class="link" data-route="B">思いつかないときは → テーマの例から選ぶ</button></p>`;
+  function openLesson(id) {
+    const L = LESSONS.find(x => x.id === id);
+    if (!L || !isOpen(L)) return;
+    cur = L;
+    notes[L.id] ||= blank();
+    const n = note();
+    renderStep(n.submitted ? L.steps.length - 1 : n.step);
   }
 
   function renderStep(i) {
-    note.step = Math.max(0, Math.min(STEPS.length - 1, i));
-    const s = STEPS[note.step];
-    let body = "", nextLabel = "次へ";
-
-    if (note.step === 0) body = step0();
-    if (note.step === 1) {
-      body = `
-        ${promptBox(prompt1(), { first: true })}
-        <p class="hint">画面が重なったら、このページを左に寄せよう（Windows：Windowsキー＋← ／ Chromebook：Alt＋[ ）。Chrome右上の「Geminiに相談」は使いません。</p>
-        <p>出てきた20個を眺めて、<b>直感で気になったもの</b>を3つ書こう。理由はいらない。</p>
-        <div class="row3">
-          ${field("kw1", "気になった ①", { type: "text" })}
-          ${field("kw2", "気になった ②", { type: "text" })}
-          ${field("kw3", "気になった ③", { type: "text" })}
-        </div>
-        <p class="hint">読み切れなかったら、各列から1つずつ選んでもOK。</p>`;
-    }
-    if (note.step === 2) {
-      body = `
-        ${promptBox(prompt2())}
-        <p>出てきた説を眺めて、<b>いちばん「えっ、本当？」と思った説を1つ選ぼう。</b></p>
-        ${field("setsu", "選んだ説", { rows: 2, placeholder: "例：完全に静かな部屋よりも、適度な雑音がある場所の方が没頭しやすい", hint: "Geminiの文をコピーして貼ってOK" })}
-        ${field("hikkakari", "ひっかかったところ（なくてもOK）", {
-          rows: 2, placeholder: "例：本当に？ 自分は図書館のほうがはかどる気がする",
-          hint: "書き出しを押すと入ります", chips: [
-            { label: "本当に〜？", text: "本当に" }, { label: "自分だと〜", text: "自分だと" }, { label: "なんで〜なの？", text: "なんで" }]
-        })}
-        <p class="note">AIの説は、本当かどうか分かりません。<b>だから次で、自分で確かめてみます。</b></p>
-        <p class="hint">ピンとこなければ、Geminiに「ほかの説も出してください」と送ってOK。</p>`;
-    }
-    if (note.step === 3) {
-      body = `
-        ${promptBox(prompt3())}
-        ${field("ippo", "来週までにやる一歩（5つから1つ選ぶ）", { rows: 3, placeholder: "例：【やってみる】無音の部屋と、カフェの雑音を流した部屋で、15分ずつ同じ問題を解いて比べる", hint: "【やってみる】などの見出しごと貼ってOK。自分で思いついた一歩でもOK" })}
-        ${field("ippoDate", "やる日", { type: "date" })}
-        ${field("yosou", "予想", { rows: 2, placeholder: "例：たぶん雑音がある方がはかどると思う。なぜなら、家より図書館の方が勉強が進むから。", hint: "たぶん＿＿だと思う。なぜなら＿＿。", chips: [{ label: "書き出しを入れる", text: YOSOU_TEMPLATE }] })}
-        <div class="rules"><b>一歩の安全ルール</b>
-          <ul><li>他の人の個人情報や写真は集めない</li><li>「検索して終わり」ではなく、体を動かす一歩にする</li></ul></div>`;
-    }
-    if (note.step === 4) {
-      const d = note.data, m = methodOf(d.ippo);
-      body = `
-        <div class="themecard">
-          ${route() === "B" && d.theme ? `<div class="tc-row"><span>テーマの例</span><b>${escapeHtml(d.theme)}</b></div>` : ""}
-          <div class="tc-row"><span>気になったキーワード</span><b>${escapeHtml(["kw1", "kw2", "kw3"].map(v).filter(Boolean).join("・") || "—")}</b></div>
-          <div class="tc-row big"><span>「えっ、本当？」と思った説</span><b>${escapeHtml(d.setsu || "—")}</b></div>
-          <div class="tc-row"><span>ひっかかったところ</span><b>${escapeHtml(d.hikkakari || "—")}</b></div>
-          <div class="tc-row big"><span>来週までにやる一歩${m && m !== "不明" && m !== "その他" ? ` <i class="mt">${m}</i>` : ""}</span><b>${escapeHtml(d.ippo || "—")}</b><em>${escapeHtml(d.ippoDate || "")}</em></div>
-          <div class="tc-row"><span>予想</span><b>${escapeHtml(d.yosou || "—")}</b></div>
-        </div>
-        ${field("geminiLink", "Geminiのチャットのリンク（なくてもOK）", { type: "url", placeholder: "https://…", hint: "Geminiの「共有」→「リンクをコピー」で取れます。共有できないときは空欄でOK" })}
-        <div class="share">
-          <b>班で共有（1人1分）</b>
-          <p>この画面を見せながら「本当？と思った説・来週やること・予想」を話そう。聞く人は質問を1つ。</p>
-        </div>
-        ${note.submitted ? `<p class="okmsg">提出済み ✓　あとから直しても自動で保存されます。</p>` : ""}`;
-      nextLabel = note.submitted ? "ホームへ" : "提出する";
-    }
-
+    const n = note(), last = cur.steps.length - 1;
+    n.step = Math.max(0, Math.min(last, i));
+    const s = cur.steps[n.step], c = ctx();
+    const nextLabel = n.step === last ? (n.submitted ? "ホームへ" : "提出する") : "次へ";
     app.innerHTML = `
       <section class="card">
-        ${progress(note.step)}
-        <div class="step-head"><h2>${note.step + 1}. ${s.title}</h2><span class="mins">目安 ${s.mins}分</span></div>
-        ${body}
-        ${nav(note.step, canNextNow(), nextLabel)}
+        <p class="eyebrow">第${cur.no}回</p>
+        ${progress(n.step)}
+        <div class="step-head"><h2>${n.step + 1}. ${s.title}</h2><span class="mins">目安 ${s.mins}分</span></div>
+        ${cur.render(n.step, c)}
+        ${nav(n.step, n.step === last || cur.canNext(n.step, c), nextLabel)}
       </section>`;
     window.scrollTo(0, 0);
-    updateShortHints();
+    updateHints();
   }
 
-  function yosouFilled() {
-    const x = v("yosou").replace(/[\s　]/g, "");
-    return !!x && x !== YOSOU_TEMPLATE.replace(/[\s　]/g, "");
-  }
-  function canNextNow() {
-    switch (note.step) {
-      case 0: return route() === "B" ? !!v("theme") : ["odai1", "odai2", "odai3"].some(k => v(k));
-      case 1: return ["kw1", "kw2", "kw3"].some(k => v(k));
-      case 2: return !!v("setsu");
-      case 3: return !!v("ippo") && yosouFilled();
-      default: return true;
-    }
-  }
-  function updateShortHints() {
+  function updateHints() {
+    if (!cur) return;
+    const v = k => String(note().data[k] ?? "").trim();
     app.querySelectorAll("[data-short]").forEach(p => {
-      const n = v(p.dataset.short).length;
-      p.hidden = !(n > 0 && n < 10);
+      const len = v(p.dataset.short).length;
+      p.hidden = !(len > 0 && len < 10);
+    });
+    app.querySelectorAll("[data-qmark]").forEach(p => {
+      const x = v(p.dataset.qmark);
+      p.hidden = !x || /[？?]$/.test(x);
     });
   }
   function refreshNext() {
+    if (!cur) return;
+    const n = note();
     const btn = app.querySelector(".nav .primary");
-    if (btn && note.step < 4) btn.disabled = !canNextNow();
+    if (btn && n.step < cur.steps.length - 1) btn.disabled = !cur.canNext(n.step, ctx());
   }
 
   async function copyPrompt(btn) {
@@ -313,7 +266,7 @@ export function mountStudent({ be, user, app, asTeacher }) {
   }
 
   function gemini(btn, force = false) {
-    const r = openGemini({ force });
+    const r = openGemini({ force, key: cur.geminiKey });
     const msg = btn.closest(".prompt").querySelector("[data-gemini-msg]");
     if (r === "lost") {
       msg.innerHTML = `Geminiのウィンドウが見つかりません。<b>開いているときは、そのウィンドウに戻ってください</b>（タスクバー、または Alt＋Tab）。閉じてしまったときは <button class="link" data-gemini-force>新しく開く</button>（前の話は引き継がれません）`;
@@ -322,55 +275,61 @@ export function mountStudent({ be, user, app, asTeacher }) {
     }
   }
 
+  // 書き出しボタン：入れ先が複数（"q1,q2,q3"）なら、最後に触った欄が空ならそこ、なければ空いている最初の欄
   function insertChip(btn) {
-    const el = app.querySelector(`[data-key="${btn.dataset.target}"]`);
-    if (!el) return;
+    const keys = btn.dataset.target.split(",");
+    const els = keys.map(k => app.querySelector(`[data-key="${k}"]`)).filter(Boolean);
+    if (!els.length) return;
+    let el = els.find(e => e.dataset.key === lastFocus) || null;
+    if (!el || el.value.trim()) el = els.find(e => !e.value.trim()) || el || els[0];
     const t = btn.dataset.insert;
-    if (t === YOSOU_TEMPLATE) {
+    if (t.includes("＿＿")) { // 型（例：たぶん＿＿だと思う。）：空なら入れて、最初の＿＿を選ぶ（打てば置きかわる）
       if (!el.value.trim()) el.value = t;
-      el.focus(); el.setSelectionRange(3, 5); // 最初の「＿＿」を選んでおく（打てば置きかわる）
+      el.focus();
+      const at = el.value.indexOf("＿＿");
+      if (at >= 0) el.setSelectionRange(at, at + 2);
     } else {
-      const pos = el.selectionStart ?? el.value.length;
-      el.value = el.value.slice(0, pos) + t + el.value.slice(el.selectionEnd ?? pos);
-      el.focus(); el.setSelectionRange(pos + t.length, pos + t.length);
+      const caret = t.indexOf("|"), text = t.replace("|", "");
+      const pos = el === document.activeElement ? (el.selectionStart ?? el.value.length) : el.value.length;
+      const end = el === document.activeElement ? (el.selectionEnd ?? pos) : pos;
+      el.value = el.value.slice(0, pos) + text + el.value.slice(end);
+      const to = pos + (caret >= 0 ? caret : text.length);
+      el.focus(); el.setSelectionRange(to, to);
     }
+    lastFocus = el.dataset.key;
     el.dispatchEvent(new Event("input", { bubbles: true }));
   }
 
   // ---------- イベント（画面共通） ----------
   app.addEventListener("input", e => {
     const el = e.target.closest("[data-key]");
-    if (!el) return;
-    note.data[el.dataset.key] = el.value;
-    scheduleSave(); refreshNext(); updateShortHints();
+    if (!el || !cur) return;
+    note().data[el.dataset.key] = el.value;
+    scheduleSave(); refreshNext(); updateHints();
   }, { signal: ac.signal });
 
+  app.addEventListener("focusin", e => { const el = e.target.closest("[data-key]"); if (el) lastFocus = el.dataset.key; }, { signal: ac.signal });
   app.addEventListener("focusout", e => { if (e.target.closest("[data-key]")) saveIfDirty(); }, { signal: ac.signal });
   document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") saveIfDirty(); }, { signal: ac.signal });
   window.addEventListener("pagehide", saveIfDirty, { signal: ac.signal });
 
   app.addEventListener("click", async e => {
     const t = e.target;
+    const op = t.closest("[data-open]");
+    if (op) { openLesson(op.dataset.open); return; }
+    if (!cur) return;
     if (t.closest("[data-copy]")) { copyPrompt(t.closest("[data-copy]")); return; }
     if (t.closest("[data-gemini-force]")) { gemini(t.closest(".prompt").querySelector("[data-gemini]"), true); return; }
     if (t.closest("[data-gemini]")) { gemini(t.closest("[data-gemini]")); return; }
     if (t.closest("[data-insert]")) { insertChip(t.closest("[data-insert]")); return; }
-    const rt = t.closest("[data-route]");
-    if (rt) { note.data.route = rt.dataset.route; renderStep(0); scheduleSave(); return; }
-    const th = t.closest("[data-theme]");
-    if (th) {
-      note.data.theme = THEMES[Number(th.dataset.theme)];
-      renderStep(0); scheduleSave();
-      app.querySelector('[data-key="themeWhere"]')?.scrollIntoView({ block: "center" });
-      return;
-    }
+    if (cur.onClick?.(t, ctx())) return;
     if (t.closest("[data-home]")) { await saveNow(); renderHome(); return; }
     const go = t.closest("[data-go]");
     if (!go) return;
-    const to = Number(go.dataset.go);
-    if (to >= STEPS.length) { // 提出
-      if (!note.submitted) { note.submitted = true; await saveNow(true); renderStep(4); }
-      else { renderHome(); }
+    const to = Number(go.dataset.go), n = note();
+    if (to >= cur.steps.length) { // 提出
+      if (!n.submitted) { n.submitted = true; await saveNow(true); renderStep(cur.steps.length - 1); }
+      else { await saveNow(); renderHome(); }
       return;
     }
     renderStep(to);
@@ -382,8 +341,11 @@ export function mountStudent({ be, user, app, asTeacher }) {
     app.innerHTML = `<section class="card"><p>読み込み中…</p></section>`;
     try {
       profile = await be.getProfile(user.uid);
-      const saved = await be.getNote(user.uid, LESSON);
-      if (saved) note = { step: saved.step || 0, submitted: !!saved.submitted, data: saved.data || {} };
+      const saved = await Promise.all(LESSONS.map(L => be.getNote(user.uid, L.id)));
+      LESSONS.forEach((L, i) => {
+        const s = saved[i];
+        if (s) notes[L.id] = { step: s.step || 0, submitted: !!s.submitted, data: s.data || {}, saved: true };
+      });
       const ki = kiOf(user.email);
       if (asTeacher) { // 教員は番号の入力なしで「テスト」として保存
         const want = { email: user.email, ki, class: TEST_CLASS, number: 0 };

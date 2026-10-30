@@ -1,12 +1,103 @@
-// 教員画面：期・クラスごとの進み具合（リアルタイム）
+// 教員画面：期・クラス・回ごとの進み具合（リアルタイム）
 import {
   escapeHtml, classLabel, kiLabel, firstYearKi, methodOf, lsGet, lsSet,
   CLASSES, MAX_NUMBER, TEST_CLASS, METHODS
 } from "./common.js";
 
-const LESSON = "L01";
-const STEP_NAMES = ["お題", "AI①", "AI②", "AI③", "共有"];
 const STALL_MIN = 5; // この分数以上更新がなく未提出なら「止まってる？」
+const esc = escapeHtml;
+const safeUrl = u => /^https:\/\//i.test(String(u || "").trim()) ? String(u).trim() : "";
+const linkCell = u => safeUrl(u) ? `<a href="${esc(safeUrl(u))}" target="_blank" rel="noopener">開く ↗</a>` : esc(u || "—");
+const item = (d, k, label) => `<div class="tc-row"><span>${label}</span><b>${esc(d[k] || "—")}</b></div>`;
+const qsOf = d => ["q1", "q2", "q3"].map(k => String(d[k] || "").trim()).filter(Boolean);
+
+// ---------- 回ごとの見せ方 ----------
+// 授業日：この日になったら、その回を最初に表示する
+const VIEWS = {
+  L01: {
+    no: 1, date: "2026-11-02",
+    stepNames: ["お題", "AI①", "AI②", "AI③", "共有"],
+    head: ["「本当？」と思った説", "方法", "来週の一歩", "やる日"],
+    cells: r => {
+      const d = r.note?.data || {}, m = methodOf(d.ippo);
+      return [esc(d.setsu || ""), m ? `<span class="mchip">${m}</span>` : "", esc(d.ippo || ""), esc(d.ippoDate || "")];
+    },
+    nowrap: [1, 3],
+    // 一歩の方法の偏り
+    chips(rs) {
+      const count = Object.fromEntries([...METHODS, "その他", "不明"].map(m => [m, 0]));
+      rs.forEach(r => { const m = methodOf(r.note?.data?.ippo); if (m) count[m]++; });
+      const total = Object.values(count).reduce((a, b) => a + b, 0);
+      return total
+        ? `<span class="hint">一歩の方法：</span>${[...METHODS, "その他", "不明"].filter(m => count[m] || METHODS.includes(m))
+            .map(m => `<span class="mchip ${count[m] ? "" : "zero"}">${m} <b>${count[m]}</b></span>`).join("")}`
+        : "";
+    },
+    detail(r) {
+      const d = r.note?.data || {};
+      const first = d.route === "B"
+        ? `<div class="tc-row"><span>入口</span><b>テーマの例から選んだ</b></div>${item(d, "theme", "テーマの例")}${item(d, "themeWhere", "どこが少し気になった？")}`
+        : `${item(d, "odai1", "時間が溶けたもの")}${item(d, "odai2", "語りだすと止まらないもの")}${item(d, "odai3", "最近モヤっとしたこと")}`;
+      return `
+        ${first}
+        <div class="tc-row"><span>気になったキーワード</span><b>${esc(["kw1", "kw2", "kw3"].map(k => d[k]).filter(Boolean).join("・") || "—")}</b></div>
+        ${item(d, "setsu", "「えっ、本当？」と思った説")}${item(d, "hikkakari", "ひっかかったところ")}
+        <div class="tc-row"><span>来週までにやる一歩（方法：${esc(methodOf(d.ippo) || "—")}）</span><b>${esc(d.ippo || "—")}</b></div>
+        ${item(d, "ippoDate", "やる日")}${item(d, "yosou", "予想")}
+        <div class="tc-row"><span>Geminiのチャット</span><b>${linkCell(d.geminiLink)}</b></div>`;
+    },
+    csvHead: ["入口", "テーマの例", "どこが気になった", "時間が溶けたもの", "語りだすと止まらないもの", "モヤっとしたこと",
+      "キーワード1", "キーワード2", "キーワード3", "本当？と思った説", "ひっかかったところ", "方法", "一歩", "やる日", "予想", "Geminiのリンク"],
+    csvRow: r => {
+      const d = r.note?.data || {};
+      return [d.route === "B" ? "テーマの例" : "3つの質問", d.theme, d.themeWhere, d.odai1, d.odai2, d.odai3, d.kw1, d.kw2, d.kw3,
+        d.setsu, d.hikkakari, methodOf(d.ippo), d.ippo, d.ippoDate, d.yosou, d.geminiLink];
+    }
+  },
+  L02: {
+    no: 2, date: "2026-11-09",
+    stepNames: ["一歩の記録", "班", "AI", "気になったこと", "提出"],
+    head: ["説（第1回）", "一歩", "感じたこと／やるとしたら", "言い切れないこと", "気になったこと（？）"],
+    cells: r => {
+      const d = r.note?.data || {}, s = r.l01?.data || {};
+      const did = d.did === "やった" ? `<span class="mchip">やった</span>` : d.did === "まだ" ? `<span class="mchip zero">まだ</span>` : "";
+      return [esc(s.setsu || ""), did, esc(d.did === "まだ" ? d.yarunara || "" : d.kanji || ""), esc(d.iikire || ""),
+        qsOf(d).map(esc).join("<br>")];
+    },
+    nowrap: [1],
+    chips(rs) {
+      const n = x => rs.filter(r => (r.note?.data?.did || "") === x).length;
+      const opened = rs.filter(r => r.note).length;
+      return opened
+        ? `<span class="hint">一歩：</span><span class="mchip">やった <b>${n("やった")}</b></span><span class="mchip zero">まだ <b>${n("まだ")}</b></span>` +
+          `<span class="hint">　「？」を1つ以上：</span><span class="mchip">${rs.filter(r => qsOf(r.note?.data || {}).length).length}人</span>`
+        : "";
+    },
+    detail(r) {
+      const d = r.note?.data || {}, s = r.l01?.data || {};
+      const step = d.did === "まだ"
+        ? `<div class="tc-row"><span>一歩</span><b>まだ</b></div>${item(d, "yarunara", "やるとしたら")}`
+        : `<div class="tc-row"><span>一歩</span><b>${esc(d.did || "—")}</b></div>${item(d, "yatta", "やったこと")}${item(d, "mita", "見たこと・数字")}${item(d, "kanji", "感じたこと")}${item(d, "iikire", "この一歩だけでは言い切れないこと")}`;
+      const qs = qsOf(d);
+      return `
+        <div class="recap">${item(s, "setsu", "第1回の説")}${item(s, "ippo", "第1回の一歩")}${item(s, "yosou", "予想")}</div>
+        ${step}${item(d, "tomo", "友だちに言われたこと")}
+        <div class="tc-row"><span>気になったこと</span><b>${qs.length ? `<ul class="qs">${qs.map(q => `<li>${esc(q)}</li>`).join("")}</ul>` : "—"}</b></div>
+        <div class="tc-row"><span>Geminiのチャット</span><b>${linkCell(d.geminiLink)}</b></div>`;
+    },
+    csvHead: ["説（第1回）", "一歩（第1回）", "予想（第1回）", "やった／まだ", "やったこと", "見たこと・数字", "感じたこと", "言い切れないこと", "やるとしたら",
+      "友だちに言われたこと", "気になったこと1", "気になったこと2", "気になったこと3", "Geminiのリンク"],
+    csvRow: r => {
+      const d = r.note?.data || {}, s = r.l01?.data || {};
+      return [s.setsu, s.ippo, s.yosou, d.did, d.yatta, d.mita, d.kanji, d.iikire, d.yarunara, d.tomo, d.q1, d.q2, d.q3, d.geminiLink];
+    }
+  }
+};
+const LESSON_IDS = Object.keys(VIEWS);
+function lessonForToday() {
+  const today = new Date().toLocaleDateString("sv-SE"); // YYYY-MM-DD（端末の日付）
+  return [...LESSON_IDS].reverse().find(id => VIEWS[id].date <= today) || LESSON_IDS[0];
+}
 
 export function mountTeacher({ be, app, dlg }) {
   const k1 = firstYearKi();
@@ -14,7 +105,9 @@ export function mountTeacher({ be, app, dlg }) {
   let ki = KIS.includes(lsGet("gcis_t_ki") ?? "x") ? lsGet("gcis_t_ki") : k1;
   let cls = Number(lsGet("gcis_t_cls") ?? 1);
   if (![...CLASSES, TEST_CLASS].includes(cls)) cls = 1;
+  let lesson = lessonForToday(); // 回は保存しない（授業日に合わせて開く）
   let unwatch = null, students = [], notes = [];
+  const view = () => VIEWS[lesson];
 
   function renderShell() {
     const tabs = [...CLASSES, TEST_CLASS].map(c =>
@@ -25,7 +118,8 @@ export function mountTeacher({ be, app, dlg }) {
       <section class="card">
         <div class="t-head">
           <div class="tabs"><select id="ki" class="ki" ${cls === TEST_CLASS ? "disabled" : ""}>${kiOpts}</select>${tabs}</div>
-          <div class="t-actions"><span class="pill">第1回（L01）</span><button class="btn ghost small" id="csv">CSVで保存</button></div>
+          <div class="t-actions"><span class="lesson-tabs">${LESSON_IDS.map(id =>
+            `<button class="tab ${id === lesson ? "on" : ""}" data-lesson="${id}">第${VIEWS[id].no}回</button>`).join("")}</span><button class="btn ghost small" id="csv">CSVで保存</button></div>
         </div>
         ${cls === TEST_CLASS ? `<p class="hint">テスト：期を問わず表示します（アドレス順）。先生が「生徒画面へ」で入力したものもここに出ます。</p>` : ""}
         <div id="summary" class="summary"></div>
@@ -36,13 +130,15 @@ export function mountTeacher({ be, app, dlg }) {
     app.querySelectorAll("[data-cls]").forEach(b => b.onclick = () => {
       cls = Number(b.dataset.cls); lsSet("gcis_t_cls", String(cls)); renderShell(); watch();
     });
+    app.querySelectorAll("[data-lesson]").forEach(b => b.onclick = () => { lesson = b.dataset.lesson; renderShell(); renderTable(); });
     document.getElementById("ki").onchange = e => { ki = e.target.value; lsSet("gcis_t_ki", ki); watch(); };
     document.getElementById("csv").onclick = downloadCsv;
   }
 
   function rows() {
-    const byUid = Object.fromEntries(notes.map(n => [n.uid, n]));
-    const rs = students.map(s => ({ ...s, note: byUid[s.uid] || null }));
+    const by = id => Object.fromEntries(notes.filter(n => n.lesson === id).map(n => [n.uid, n]));
+    const cur = by(lesson), l01 = by("L01");
+    const rs = students.map(s => ({ ...s, note: cur[s.uid] || null, l01: l01[s.uid] || null }));
     return cls === TEST_CLASS
       ? rs.sort((a, b) => String(a.email).localeCompare(String(b.email)))
       : rs.sort((a, b) => a.number - b.number);
@@ -50,15 +146,17 @@ export function mountTeacher({ be, app, dlg }) {
 
   function status(r) {
     const n = r.note;
-    if (!n) return { label: "ログインのみ", cls: "st-none", stall: false };
+    if (!n) {
+      if (lesson === "L01") return { label: "ログインのみ", cls: "st-none", stall: false };
+      return { label: r.l01?.submitted ? "未着手" : "第1回が未提出", cls: "st-none", stall: false };
+    }
     if (n.submitted) return { label: "提出済み", cls: "st-done", stall: false };
     const mins = n.updatedAt ? (Date.now() - n.updatedAt.getTime()) / 60000 : 0;
-    return { label: `${(n.step ?? 0) + 1}. ${STEP_NAMES[n.step ?? 0]}`, cls: "st-work", stall: mins >= STALL_MIN };
+    return { label: `${(n.step ?? 0) + 1}. ${view().stepNames[n.step ?? 0]}`, cls: "st-work", stall: mins >= STALL_MIN };
   }
 
   const fmtTime = d => d ? d.toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" }) : "—";
   const numCell = r => cls === TEST_CLASS ? escapeHtml(r.number ? `${r.number}番` : "教員") : r.number;
-  const safeUrl = u => /^https:\/\//i.test(String(u || "").trim()) ? String(u).trim() : "";
 
   function renderTable() {
     if (!document.getElementById("table")) return;
@@ -70,30 +168,20 @@ export function mountTeacher({ be, app, dlg }) {
       <div class="sum"><b>${submitted}</b><span>提出済み</span></div>
       <div class="sum warn"><b>${stalled}</b><span>${STALL_MIN}分以上止まってる？</span></div>`;
 
-    // 一歩の方法の偏り
-    const count = Object.fromEntries([...METHODS, "その他", "不明"].map(m => [m, 0]));
-    rs.forEach(r => { const m = methodOf(r.note?.data?.ippo); if (m) count[m]++; });
-    const total = Object.values(count).reduce((a, b) => a + b, 0);
-    document.getElementById("methods").innerHTML = total
-      ? `<span class="hint">一歩の方法：</span>${[...METHODS, "その他", "不明"].filter(m => count[m] || METHODS.includes(m))
-          .map(m => `<span class="mchip ${count[m] ? "" : "zero"}">${m} <b>${count[m]}</b></span>`).join("")}`
-      : "";
+    document.getElementById("methods").innerHTML = view().chips(rs);
 
     if (!rs.length) {
       document.getElementById("table").innerHTML = `<p class="hint">まだ誰もログインしていません。</p>`;
     } else {
       document.getElementById("table").innerHTML = `
         <div class="tbl-wrap"><table class="tbl">
-          <thead><tr><th>${cls === TEST_CLASS ? "アドレス" : "番号"}</th><th>進み具合</th><th>「本当？」と思った説</th><th>方法</th><th>来週の一歩</th><th>やる日</th><th>更新</th></tr></thead>
+          <thead><tr><th>${cls === TEST_CLASS ? "アドレス" : "番号"}</th><th>進み具合</th>${view().head.map(h => `<th>${h}</th>`).join("")}<th>更新</th></tr></thead>
           <tbody>${rs.map(r => {
-            const st = status(r), d = r.note?.data || {}, m = methodOf(d.ippo);
+            const st = status(r), V = view();
             return `<tr data-uid="${r.uid}" class="${st.stall ? "stall" : ""}">
               ${cls === TEST_CLASS ? `<td class="addr-cell">${escapeHtml(r.email || "")}</td>` : `<td class="num">${numCell(r)}</td>`}
               <td><span class="st ${st.cls}">${st.label}</span>${st.stall ? ` <span class="st st-stall">止まってる？</span>` : ""}</td>
-              <td>${escapeHtml(d.setsu || "")}</td>
-              <td class="nowrap">${m ? `<span class="mchip">${m}</span>` : ""}</td>
-              <td>${escapeHtml(d.ippo || "")}</td>
-              <td class="nowrap">${escapeHtml(d.ippoDate || "")}</td>
+              ${V.cells(r).map((c, i) => `<td class="${V.nowrap.includes(i) ? "nowrap" : ""}">${c}</td>`).join("")}
               <td class="nowrap">${fmtTime(r.note?.updatedAt)}</td></tr>`;
           }).join("")}</tbody></table></div>`;
       app.querySelectorAll("tr[data-uid]").forEach(tr => tr.onclick = () => showDetail(tr.dataset.uid));
@@ -110,24 +198,11 @@ export function mountTeacher({ be, app, dlg }) {
 
   function showDetail(uid) {
     const r = rows().find(x => x.uid === uid); if (!r) return;
-    const d = r.note?.data || {};
-    const item = (k, label) => `<div class="tc-row"><span>${label}</span><b>${escapeHtml(d[k] || "—")}</b></div>`;
-    const link = safeUrl(d.geminiLink);
-    const first = d.route === "B"
-      ? `<div class="tc-row"><span>入口</span><b>テーマの例から選んだ</b></div>${item("theme", "テーマの例")}${item("themeWhere", "どこが少し気になった？")}`
-      : `${item("odai1", "時間が溶けたもの")}${item("odai2", "語りだすと止まらないもの")}${item("odai3", "最近モヤっとしたこと")}`;
     dlg.innerHTML = `
       <div class="dlg">
-        <div class="dlg-head"><h3>${r.class === TEST_CLASS ? "テスト" : `${kiLabel(r.ki)} ${classLabel(r.class)} ${r.number}番`}</h3><button class="btn ghost small" id="close">閉じる</button></div>
+        <div class="dlg-head"><h3>${r.class === TEST_CLASS ? "テスト" : `${kiLabel(r.ki)} ${classLabel(r.class)} ${r.number}番`}　第${view().no}回</h3><button class="btn ghost small" id="close">閉じる</button></div>
         <p class="hint">${escapeHtml(r.email || "")}</p>
-        <div class="themecard">
-          ${first}
-          <div class="tc-row"><span>気になったキーワード</span><b>${escapeHtml(["kw1", "kw2", "kw3"].map(k => d[k]).filter(Boolean).join("・") || "—")}</b></div>
-          ${item("setsu", "「えっ、本当？」と思った説")}${item("hikkakari", "ひっかかったところ")}
-          <div class="tc-row"><span>来週までにやる一歩（方法：${escapeHtml(methodOf(d.ippo) || "—")}）</span><b>${escapeHtml(d.ippo || "—")}</b></div>
-          ${item("ippoDate", "やる日")}${item("yosou", "予想")}
-          <div class="tc-row"><span>Geminiのチャット</span><b>${link ? `<a href="${escapeHtml(link)}" target="_blank" rel="noopener">開く ↗</a>` : escapeHtml(d.geminiLink || "—")}</b></div>
-        </div>
+        <div class="themecard">${view().detail(r)}</div>
       </div>`;
     dlg.showModal();
     document.getElementById("close").onclick = () => dlg.close();
@@ -135,18 +210,15 @@ export function mountTeacher({ be, app, dlg }) {
 
   const csvCell = s => `"${String(s ?? "").replace(/"/g, '""')}"`;
   function downloadCsv() {
-    const head = ["期", "クラス", "番号", "アドレス", "進み具合", "入口", "テーマの例", "どこが気になった", "時間が溶けたもの", "語りだすと止まらないもの", "モヤっとしたこと",
-      "キーワード1", "キーワード2", "キーワード3", "本当？と思った説", "ひっかかったところ", "方法", "一歩", "やる日", "予想", "Geminiのリンク", "更新"];
-    const lines = rows().map(r => {
-      const d = r.note?.data || {};
-      return [kiLabel(r.ki), classLabel(r.class), r.number || "", r.email, status(r).label, d.route === "B" ? "テーマの例" : "3つの質問",
-        d.theme, d.themeWhere, d.odai1, d.odai2, d.odai3, d.kw1, d.kw2, d.kw3, d.setsu, d.hikkakari, methodOf(d.ippo), d.ippo, d.ippoDate, d.yosou, d.geminiLink,
-        r.note?.updatedAt?.toLocaleString("ja-JP") || ""].map(csvCell).join(",");
-    });
-    const blob = new Blob(["﻿" + [head.map(csvCell).join(","), ...lines].join("\r\n")], { type: "text/csv" });
+    const V = view();
+    const head = ["期", "クラス", "番号", "アドレス", "進み具合", ...V.csvHead, "更新"];
+    const lines = rows().map(r =>
+      [kiLabel(r.ki), classLabel(r.class), r.number || "", r.email, status(r).label, ...V.csvRow(r),
+        r.note?.updatedAt?.toLocaleString("ja-JP") || ""].map(csvCell).join(","));
+    const blob = new Blob(["\ufeff" + [head.map(csvCell).join(","), ...lines].join("\r\n")], { type: "text/csv" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = cls === TEST_CLASS ? `${LESSON}_テスト.csv` : `${LESSON}_${kiLabel(ki)}_${classLabel(cls)}.csv`;
+    a.download = cls === TEST_CLASS ? `${lesson}_テスト.csv` : `${lesson}_${kiLabel(ki)}_${classLabel(cls)}.csv`;
     a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   }
@@ -155,7 +227,7 @@ export function mountTeacher({ be, app, dlg }) {
     unwatch?.();
     students = []; notes = []; renderTable();
     if (be.demo) { [students, notes] = demoData(); renderTable(); return; }
-    unwatch = be.watchGroup({ ki, cls }, LESSON,
+    unwatch = be.watchGroup({ ki, cls }, null, // すべての回（第2回の表に第1回の説も出すため）
       s => { students = s; renderTable(); },
       n => { notes = n; renderTable(); },
       e => {
@@ -177,14 +249,23 @@ export function mountTeacher({ be, app, dlg }) {
     const st = [], nt = [];
     const n = cls === TEST_CLASS ? 3 : 30;
     for (let i = 1; i <= n; i++) {
-      const uid = "u" + i, e = ex[(i * 3) % ex.length], step = i % 5;
+      const uid = "u" + i, e = ex[(i * 3) % ex.length];
       st.push(cls === TEST_CLASS
         ? { uid, ki: "", class: 0, number: i === 1 ? 0 : i, email: i === 1 ? "demo.teacher@soka.ed.jp" : `test${i}@example` }
         : { uid, ki, class: cls, number: i, email: `${ki}student${i}@example` });
       if (i % 7 === 0) continue;
-      nt.push({ uid, step, submitted: step === 4 && i % 2 === 0, updatedAt: new Date(Date.now() - (i % 9) * 60000),
+      const step = i % 3 === 0 ? i % 4 : 4, sub = step === 4; // 第1回：多くは提出済み
+      nt.push({ uid, lesson: "L01", step, submitted: sub, updatedAt: new Date(Date.now() - (i % 9) * 60000),
         data: { setsu: step >= 2 ? e[0] : "", hikkakari: step >= 2 ? "本当に？" : "", ippo: step >= 3 ? e[1] : "", ippoDate: step >= 3 ? "2026-11-05" : "", yosou: step >= 3 ? "（予想の例）" : "",
           kw1: "集中", route: i % 6 === 0 ? "B" : "A", theme: i % 6 === 0 ? "「SNS」に対して、私たちはどう向き合っていくか？" : "" } });
+      if (!sub || i % 4 === 0) continue;
+      const s2 = i % 5, mada = i % 5 === 1;
+      nt.push({ uid, lesson: "L02", step: s2, submitted: s2 === 4 && i % 2 === 0, updatedAt: new Date(Date.now() - (i % 8) * 60000),
+        data: mada
+          ? { did: "まだ", yarunara: "週末に、無音と雑音で15分ずつ問題を解く" }
+          : { did: "やった", yatta: "（やったことの例）", mita: "（数字の例）", kanji: "予想どおりだったけど、歌詞のある曲だと逆に気が散った",
+              iikire: s2 >= 1 ? "1回だけなので、毎日そうなるかは分からない" : "",
+              q1: s2 >= 3 ? "なんで歌詞があると気が散るの？" : "", q2: s2 >= 3 && i % 2 ? "研究では、雑音の大きさはどこまで分かっている？" : "" } });
     }
     return [st, nt];
   }
