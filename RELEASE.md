@@ -58,14 +58,14 @@ bash setup-ci.sh gcis-soka/gcis-note
 | Secrets | New repository secret | `FIREBASE_CONFIG_DEV` | 開発版（gcis-note-dev）の firebaseConfig |
 - 取り違えても配信が止まるだけ（安全装置）
 
-### F. main を保護する（gcis-soka・2分）
+### F. main を保護する（gcis-soka・2分）（済 10/30）
 Settings → Rules → Rulesets → New ruleset → New branch ruleset →
 Ruleset name `main`・Enforcement status **Active** → Target branches：Add target → Include default branch →
 「Restrict deletions」「Require a pull request before merging」（Required approvals は 0）「Block force pushes」に印 → Create
 
 ### G. 予備のオーナー（各1分）
 - Firebase（gcis-note・gcis-note-dev それぞれ）：歯車 → ユーザーと権限 → メンバーを追加 → miura@ → 役割「オーナー」
-- GitHub：Settings → Collaborators → Add people → frost-topaz（Admin）
+- GitHub：Settings → Collaborators → Add people → frost-topaz（個人アカウントのリポジトリなので役割は選べない。PRのマージ・更新はできるが、設定の変更はできない）
 
 ### E. 開発版 → 本番
 1. Actions → deploy → Run workflow → Branch：**develop** → 緑になるのを待つ
