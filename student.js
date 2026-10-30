@@ -220,14 +220,19 @@ export function mountStudent({ be, user, app, asTeacher }) {
 
   function renderStep(i) {
     const n = note(), last = cur.steps.length - 1;
-    n.step = Math.max(0, Math.min(last, i));
+    // この生徒には要らない画面（例：入口Cのキーワード）はとばす。もどるときは手前へ
+    const back = i < n.step;
+    let at = Math.max(0, Math.min(last, i));
+    while (at > 0 && at < last && cur.skip?.(at, ctx())) at += back ? -1 : 1;
+    n.step = at;
     const s = cur.steps[n.step], c = ctx();
+    const title = cur.stepTitle?.(n.step, c) || s.title;
     const nextLabel = n.step === last ? (n.submitted ? "ホームへ" : "提出する") : "次へ";
     app.innerHTML = `
       <section class="card">
         <p class="eyebrow">第${cur.no}回</p>
         ${progress(n.step)}
-        <div class="step-head"><h2>${n.step + 1}. ${s.title}</h2><span class="mins">目安 ${s.mins}分</span></div>
+        <div class="step-head"><h2>${n.step + 1}. ${title}</h2><span class="mins">目安 ${s.mins}分</span></div>
         ${cur.render(n.step, c)}
         ${nav(n.step, n.step === last || cur.canNext(n.step, c), nextLabel)}
       </section>`;

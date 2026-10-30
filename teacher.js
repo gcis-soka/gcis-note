@@ -37,20 +37,22 @@ const VIEWS = {
       const d = r.note?.data || {};
       const first = d.route === "B"
         ? `<div class="tc-row"><span>入口</span><b>テーマの例から選んだ</b></div>${item(d, "theme", "テーマの例")}${item(d, "themeWhere", "どこが少し気になった？")}`
-        : `${item(d, "odai1", "時間が溶けたもの")}${item(d, "odai2", "語りだすと止まらないもの")}${item(d, "odai3", "最近モヤっとしたこと")}`;
+        : d.route === "C"
+          ? `<div class="tc-row"><span>入口</span><b>やりたいことから始めた</b></div>${item(d, "yaritai", "やりたいこと")}${item(d, "yaritaiWhy", "なぜ気になる？")}`
+          : `${item(d, "odai1", "時間が溶けたもの")}${item(d, "odai2", "語りだすと止まらないもの")}${item(d, "odai3", "最近モヤっとしたこと")}`;
       return `
         ${first}
-        <div class="tc-row"><span>気になったキーワード</span><b>${esc(["kw1", "kw2", "kw3"].map(k => d[k]).filter(Boolean).join("・") || "—")}</b></div>
+        ${d.route === "C" ? "" : `<div class="tc-row"><span>気になったキーワード</span><b>${esc(["kw1", "kw2", "kw3"].map(k => d[k]).filter(Boolean).join("・") || "—")}</b></div>`}
         ${item(d, "setsu", "「えっ、本当？」と思った説")}${item(d, "hikkakari", "ひっかかったところ")}
         <div class="tc-row"><span>来週までにやる一歩（方法：${esc(methodOf(d.ippo) || "—")}）</span><b>${esc(d.ippo || "—")}</b></div>
         ${item(d, "ippoDate", "やる日")}${item(d, "yosou", "予想")}
         <div class="tc-row"><span>Geminiのチャット</span><b>${linkCell(d.geminiLink)}</b></div>`;
     },
-    csvHead: ["入口", "テーマの例", "どこが気になった", "時間が溶けたもの", "語りだすと止まらないもの", "モヤっとしたこと",
+    csvHead: ["入口", "テーマの例", "どこが気になった", "時間が溶けたもの", "語りだすと止まらないもの", "モヤっとしたこと", "やりたいこと", "なぜ気になる",
       "キーワード1", "キーワード2", "キーワード3", "本当？と思った説", "ひっかかったところ", "方法", "一歩", "やる日", "予想", "Geminiのリンク"],
     csvRow: r => {
       const d = r.note?.data || {};
-      return [d.route === "B" ? "テーマの例" : "3つの質問", d.theme, d.themeWhere, d.odai1, d.odai2, d.odai3, d.kw1, d.kw2, d.kw3,
+      return [d.route === "B" ? "テーマの例" : d.route === "C" ? "やりたいこと" : "3つの質問", d.theme, d.themeWhere, d.odai1, d.odai2, d.odai3, d.yaritai, d.yaritaiWhy, d.kw1, d.kw2, d.kw3,
         d.setsu, d.hikkakari, methodOf(d.ippo), d.ippo, d.ippoDate, d.yosou, d.geminiLink];
     }
   },
@@ -257,7 +259,8 @@ export function mountTeacher({ be, app, dlg }) {
       const step = i % 3 === 0 ? i % 4 : 4, sub = step === 4; // 第1回：多くは提出済み
       nt.push({ uid, lesson: "L01", step, submitted: sub, updatedAt: new Date(Date.now() - (i % 9) * 60000),
         data: { setsu: step >= 2 ? e[0] : "", hikkakari: step >= 2 ? "本当に？" : "", ippo: step >= 3 ? e[1] : "", ippoDate: step >= 3 ? "2026-11-05" : "", yosou: step >= 3 ? "（予想の例）" : "",
-          kw1: "集中", route: i % 6 === 0 ? "B" : "A", theme: i % 6 === 0 ? "「SNS」に対して、私たちはどう向き合っていくか？" : "" } });
+          kw1: i % 6 === 3 ? "" : "集中", route: i % 6 === 0 ? "B" : i % 6 === 3 ? "C" : "A", theme: i % 6 === 0 ? "「SNS」に対して、私たちはどう向き合っていくか？" : "",
+          yaritai: i % 6 === 3 ? "（やりたいことの例）古着をリメイクして、自分のブランドを作ってみたい" : "" } });
       if (!sub || i % 4 === 0) continue;
       const s2 = i % 5, mada = i % 5 === 1;
       nt.push({ uid, lesson: "L02", step: s2, submitted: s2 === 4 && i % 2 === 0, updatedAt: new Date(Date.now() - (i % 8) * 60000),

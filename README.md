@@ -39,7 +39,7 @@ GCIS（Global Citizenship Inquiry Studies）の個人探究で使う、生徒用
 ## データ（Firestore）
 - `students/{uid}`：email・ki（期＝アドレスの頭2桁、数字でなければ空）・class（0〜8、0はテスト）・number（教員のテストは0）・createdAt・updatedAt
 - `notes/{uid}_L01`・`notes/{uid}_L02`：uid・lesson・ki・class・number・step（0〜4）・submitted・data（入力内容）・updatedAt・submittedAt
-- data（L01）：route（A＝3つの質問／B＝テーマの例）・odai1〜3・theme・themeWhere・kw1〜3・setsu（説）・hikkakari（ひっかかり）・ippo・ippoDate・yosou・geminiLink
+- data（L01）：route（A＝3つの質問／B＝テーマの例／C＝やりたいことから。Cはキーワードの画面をとばす）・odai1〜3・theme・themeWhere・yaritai・yaritaiWhy（入口C）・kw1〜3・setsu（説）・hikkakari（ひっかかり）・ippo・ippoDate・yosou・geminiLink
 - data（L02）：did（やった／まだ）・yatta・mita（見たこと・数字）・kanji（感じたこと）・iikire（言い切れないこと）・yarunara（まだの人：やるとしたら）・tomo（友だちに言われたこと）・geminiLink・q1〜q3（気になったこと）
 - 第2回は第1回を提出すると開く（先生の「テスト」とデモでは最初から開く）。提出後も直せる
 - 生徒は自分のデータだけ、教員は全員のデータを読める。教員が書けるのは自分の「テスト」だけ。
