@@ -41,6 +41,21 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // 問いの数（第4回の順位用）。数だけを置く。同じ期の生徒どうしで数え合える（名前は置かない）
+    // パス：counts/{期}/{回}/{uid}。期なしの生徒は "x"、教員のテストは "t"
+    function myKiPath(k) {
+      return (isStudent() && ((myProfile().ki != '' && k == myProfile().ki) || (myProfile().ki == '' && k == 'x')))
+        || (isTeacher() && k == 't');
+    }
+    match /counts/{ki}/{lesson}/{uid} {
+      allow read: if isTeacher() || (signedIn() && myKiPath(ki));
+      allow create, update: if request.auth.uid == uid && myKiPath(ki)
+        && lesson in ['L04']
+        && request.resource.data.keys().hasOnly(['n', 'updatedAt'])
+        && request.resource.data.n is int && request.resource.data.n >= 0 && request.resource.data.n <= 500;
+      allow delete: if false;
+    }
+
     // 各ステージのノート（ID は「uid_L01」「uid_R01」の形。L＝授業の回、R＝Quest の結果）
     match /notes/{noteId} {
       allow read: if isTeacher()

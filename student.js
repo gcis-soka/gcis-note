@@ -44,7 +44,9 @@ export function mountStudent({ be, user, app, asTeacher }) {
       prev: id => notes[id]?.data || {},
       set: (k, val) => { n.data[k] = val; scheduleSave(); },
       rerender: () => renderStep(n.step),
-      field, promptBox, chips, esc: escapeHtml, app
+      field, promptBox, chips, esc: escapeHtml, app,
+      // 問いの数の順位（第4回）。学年＝期ごと。期なしは "x"、先生のテストは "t" で別に数える
+      scoreRank: n => be.scoreRank({ ki: asTeacher ? "t" : (profile?.ki || "x"), lesson: cur.id, uid: user.uid, n })
     };
   }
 

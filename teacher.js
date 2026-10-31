@@ -24,7 +24,7 @@ const kindChip = m => kindOf(m) ? `<span class="mchip">${kindOf(m)}</span>` : ""
 const papersOf = d => [["p1Title", "p1Url"], ["p2Title", "p2Url"]].map(([t, u]) => ({ title: String(d[t] || "").trim(), url: d[u] })).filter(p => p.title);
 const paperCell = p => p ? (safeUrl(p.url) ? `<a href="${esc(safeUrl(p.url))}" target="_blank" rel="noopener">${esc(p.title)}</a>` : esc(p.title)) : "";
 const yomiChip = x => x ? `<span class="mchip ${x === "全部読んだ" ? "" : "zero"}">${esc(x)}</span>` : "";
-const toiLines = s => String(s || "").split(/\n/).map(x => x.trim()).filter(Boolean);
+const qsList = d => Array.isArray(d.qs) ? d.qs : []; // 第4回の問い [{t, k, a}]
 
 // ---------- 回ごとの見せ方 ----------
 // date：この日になったら、そのステージを最初に表示する
@@ -217,35 +217,41 @@ const VIEWS = {
   },
   L04: {
     tab: "第4回", date: "2026-12-07",
-    stepNames: ["読む", "問いを出す", "AIで広げる", "しぼる", "計画", "AIに見せる", "提出"],
+    stepNames: ["問いを出す", "AIで広げる", "7種類に分ける", "1つ選ぶ", "計画", "AIに見せる", "提出"],
     head: ["問いの数", "選んだ問い", "調べ方", "確かめること", "予定"],
     cells: r => {
-      const d = r.note?.data || {};
-      return [d.toiList ? String(toiLines(d.toiList).length) : "", esc(d.toi || ""), d.houhou ? `<span class="mchip">${esc(d.houhou)}</span>` : "", esc(d.nani || ""), esc(d.yotei || "")];
+      const d = r.note?.data || {}, qs = qsList(d), own = qs.filter(q => !q.a).length;
+      const k = qs.find(q => q.t === d.toi)?.k;
+      return [qs.length ? `${own}${qs.length > own ? `<span class="hint">＋AI ${qs.length - own}</span>` : ""}` : "",
+        `${esc(d.toi || "")}${k ? ` <span class="mchip">${esc(k)}</span>` : ""}`,
+        d.houhou ? `<span class="mchip">${esc(d.houhou)}</span>` : "", esc(d.nani || ""), esc(d.yotei || "")];
     },
     nowrap: [0, 2],
     chips(rs) {
       const names = ["文献・データ", "アンケート", "インタビュー", "観察", "実験・制作"];
       const count = n => rs.filter(r => r.note?.data?.houhou === n).length;
-      return rs.some(r => r.note?.data?.houhou)
-        ? `<span class="hint">調べ方：</span>${names.map(n => `<span class="mchip ${count(n) ? "" : "zero"}">${n} <b>${count(n)}</b></span>`).join("")}`
+      const ns = rs.map(r => qsList(r.note?.data || {}).filter(q => !q.a).length).filter(n => n > 0);
+      const avg = ns.length ? (ns.reduce((a, b) => a + b, 0) / ns.length).toFixed(1) : "";
+      return rs.some(r => r.note)
+        ? `${avg ? `<span class="hint">問いの数（自分で出した）：</span><span class="mchip">平均 <b>${avg}</b></span><span class="mchip">最多 <b>${Math.max(...ns)}</b></span>` : ""}` +
+          `<span class="hint">調べ方：</span>${names.map(n => `<span class="mchip ${count(n) ? "" : "zero"}">${n} <b>${count(n)}</b></span>`).join("")}`
         : "";
     },
     detail(r) {
-      const d = r.note?.data || {}, q = r.r03?.data || {};
-      const list = toiLines(d.toiList);
+      const d = r.note?.data || {}, q = r.r03?.data || {}, qs = qsList(d);
       return `
         <div class="recap">${item(q, "wakatta", `${quest(3)}：分かったこと`)}${item(q, "mada", "まだ分かっていないこと")}</div>
-        <div class="tc-row"><span>出した問い（${list.length}個）</span><b>${list.length ? `<ul class="qs">${list.map(x => `<li>${esc(x)}</li>`).join("")}</ul>` : "—"}</b></div>
+        <div class="tc-row"><span>出した問い（${qs.length}個・チャレンジ${esc(d.rounds || 0)}回）</span><b>${qs.length ? `<ul class="qs">${qs.map(x => `<li>${esc(x.t)}${x.k ? ` <span class="mchip">${esc(x.k)}</span>` : ""}${x.a ? ` <span class="hint">AI</span>` : ""}</li>`).join("")}</ul>` : "—"}</b></div>
         ${item(d, "toi", "選んだ問い")}${item(d, "toiWhy", "選んだわけ")}
         ${item(d, "houhou", "調べ方")}${item(d, "nani", "確かめること")}${item(d, "yotei", "予定")}
         ${item(d, "hitsuyou", "必要なもの・人")}${item(d, "kuraberu", "比べるもの")}${item(d, "anzen", "気をつけること（安全・倫理）")}
         <div class="tc-row"><span>Geminiのチャット</span><b>${linkCell(d.geminiLink)}</b></div>`;
     },
-    csvHead: ["出した問い", "問いの数", "選んだ問い", "選んだわけ", "調べ方", "確かめること", "予定", "必要なもの・人", "比べるもの", "気をつけること", "Geminiのリンク"],
+    csvHead: ["出した問い（種類）", "問いの数", "うちAI", "チャレンジ回数", "選んだ問い", "選んだわけ", "調べ方", "確かめること", "予定", "必要なもの・人", "比べるもの", "気をつけること", "Geminiのリンク"],
     csvRow: r => {
-      const d = r.note?.data || {};
-      return [toiLines(d.toiList).join(" / "), toiLines(d.toiList).length, d.toi, d.toiWhy, d.houhou, d.nani, d.yotei, d.hitsuyou, d.kuraberu, d.anzen, d.geminiLink];
+      const d = r.note?.data || {}, qs = qsList(d);
+      return [qs.map(x => `${x.t}（${x.k || "未分類"}${x.a ? "・AI" : ""}）`).join(" / "), qs.length, qs.filter(x => x.a).length, d.rounds || 0,
+        d.toi, d.toiWhy, d.houhou, d.nani, d.yotei, d.hitsuyou, d.kuraberu, d.anzen, d.geminiLink];
     }
   }
 };
@@ -446,7 +452,8 @@ export function mountTeacher({ be, app, dlg }) {
       if (i % 3 === 0) continue;
       const s4 = i % 4 === 2 ? 3 : 6;
       nt.push({ uid, lesson: "L04", step: s4, submitted: s4 === 6, updatedAt: new Date(Date.now() - (i % 8) * 60000),
-        data: { toiList: "なんで雑音があると集中できるの？\n高校生でも同じ？\nどのくらいの音の大きさがいい？\n歌詞があるとなぜ気が散る？",
+        data: { qs: [{ t: "なんで雑音があると集中できるの？", k: "原因" }, { t: "高校生でも同じ？", k: "比較" }, { t: "どのくらいの音の大きさがいい？", k: "方法・関連性" },
+            { t: "歌詞があるとなぜ気が散る？", k: "原因" }, ...Array.from({ length: i % 9 }, (_, j) => ({ t: `（問いの例${j + 1}）`, k: "影響" })), { t: "（AIの例）", k: "定義", a: 1 }], rounds: 1 + (i % 2),
           toi: s4 >= 3 ? "高校生でも、カフェ程度の音があると問題を速く解けるか？" : "", houhou: s4 === 6 ? ["実験・制作", "アンケート", "観察"][i % 3] : "",
           nani: s4 === 6 ? "（確かめることの例）" : "", yotei: s4 === 6 ? "（予定の例）冬休みに3日ずつ" : "", anzen: s4 === 6 ? "名前や連絡先は集めない。" : "" } });
     }

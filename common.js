@@ -126,6 +126,16 @@ export async function createBackend() {
       if (markSubmitted) data.submittedAt = fs.serverTimestamp();
       await fs.setDoc(fs.doc(db, "notes", `${uid}_${lesson}`), data, { merge: true });
     },
+    // 問いの数の順位（第4回）：counts/{期}/{回}/{uid} に数だけ置き、多い人の数を数える（読み取り2回分）
+    async scoreRank({ ki, lesson, uid, n }) {
+      const col = fs.collection(db, "counts", ki, lesson);
+      await fs.setDoc(fs.doc(col, uid), { n, updatedAt: fs.serverTimestamp() });
+      const [above, all] = await Promise.all([
+        fs.getCountFromServer(fs.query(col, fs.where("n", ">", n))),
+        fs.getCountFromServer(col)
+      ]);
+      return { rank: above.data().count + 1, total: all.data().count };
+    },
     // 教員用：1つの期・クラス（テストは期を問わない）をリアルタイムで受け取る。lesson が null ならすべての回
     watchGroup({ ki, cls }, lesson, onStudents, onNotes, onError) {
       const sw = [fs.where("class", "==", cls)];
@@ -160,6 +170,11 @@ function demoBackend() {
     async saveProfile(uid, p) { profiles[uid] = { ...p }; },
     async getNote(uid, lesson) { return notes[uid + lesson] ? JSON.parse(JSON.stringify(notes[uid + lesson])) : null; },
     async saveNote(uid, lesson, p, note) { notes[uid + lesson] = JSON.parse(JSON.stringify(note)); },
+    // デモ：架空の学年（160人）の中での順位
+    async scoreRank({ n }) {
+      const others = Array.from({ length: 160 }, (_, i) => Math.max(0, Math.round(12 + 6 * Math.sin(i * 1.7) + (i % 7) - 3)));
+      return { rank: others.filter(x => x > n).length + 1, total: others.length + 1 };
+    },
     watchGroup() { return () => {}; }
   };
 }

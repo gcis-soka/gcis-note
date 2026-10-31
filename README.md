@@ -45,8 +45,9 @@ GCIS（Global Citizenship Inquiry Studies）の個人探究で使う、生徒用
 - data（R02＝Quest 2：「？」の手がかりになりそうな本か動画）：mono（見たもの・読んだもの。動画はリンク、本は題名とページ）・kokoro（いちばん心に残った所と、ひとこと）
 - data（L03＝第3回：先行研究に出会う）：hanMemo（班で出たこと）・kensaku（検索語）・tried（試した検索語、新しい順10個）・p1Title・p1Url・p2Title・p2Url（論文2本）・yomiMemo・geminiLink
 - data（R03＝Quest 3：論文を読んだ結果）：yomi1・yomi2（全部読んだ／途中まで／まだ）・wakatta（分かったこと）・mada（まだ分かっていないこと）・q1〜q3
-- data（L04＝第4回：問いを立てて、確かめる計画を作る）：toiList（出した問い、1行に1つ）・toi（選んだ問い）・toiWhy・houhou（調べ方：文献・データ／アンケート／インタビュー／観察／実験・制作）・nani・yotei・hitsuyou・kuraberu・anzen・geminiLink
-- 教科書 p.44「問いの種類」7分類は l04.js の Q_TYPES に並べると、第4回の「しぼる」プロンプトに1列足される（空のあいだは使わない）
+- data（L04＝第4回：問いを立てて、確かめる計画を作る）：qs（出した問い [{t:問い, k:7種類, a:1＝AIで足した}]）・qftPhase・qftEnd・rounds（チャレンジ回数）・rank・rankTotal・rankN・toi（選んだ問い）・toiWhy・houhou（調べ方）・nani・yotei・hitsuyou・kuraberu・anzen・geminiLink
+- `counts/{期}/{回}/{uid}`：第4回の問いの数（n）だけ。学年の順位を数えるため同じ期の生徒どうしで読める（名前は置かない）。期なしは `x`、教員のテストは `t`
+- 問いの7種類（教科書 p.44）は l04.js の QTYPES
 - ステージは L01 → R01 → L02 → R02 → L03 → R03 → L04 の順。前を提出すると次がホームに出る（それまでは出ない）。先生の「テスト」では全部出る。提出後も直せる
 - 授業の外でやってくることは「Quest 1, 2 …」と呼ぶ（common.js の quest）
 - 生徒は自分のデータだけ、教員は全員のデータを読める。教員が書けるのは自分の「テスト」だけ。
