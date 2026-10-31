@@ -7,6 +7,9 @@ export const CLASSES = [1, 2, 3, 4, 5, 6, 7, 8];
 export const MAX_NUMBER = 41;
 export const TEST_CLASS = 0; // 動作確認用（教員画面では「テスト」と表示）
 export const GEMINI_URL = "https://gemini.google.com/app";
+// 学校図書館の蔵書検索（先生から届いたら差し替える。{q} があれば検索語が入る。なければそのページを開くだけ）
+export const LIBRARY_URL = "https://example.com/opac/search?q={q}"; // ダミー
+export const YOUTUBE_SEARCH = q => `https://www.youtube.com/results?search_query=${encodeURIComponent(q)}`;
 // 授業の外でやってくること（L01で決めた一歩）の呼び名。Quest 1, Quest 2 …（quest・question・inquiry は同じ語源）
 export const quest = n => `Quest ${n}`;
 

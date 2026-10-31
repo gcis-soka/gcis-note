@@ -41,8 +41,8 @@ GCIS（Global Citizenship Inquiry Studies）の個人探究で使う、生徒用
 - `notes/{uid}_L01`・`_R01`・`_L02`・`_R02`・`_L03`・`_R03`・`_L04`：uid・lesson・ki・class・number・step（0〜4）・submitted・data（入力内容）・updatedAt・submittedAt
 - data（L01）：route（A＝3つの質問／B＝テーマの例／C＝やりたいことから。Cはキーワードの画面をとばす）・odai1〜3・theme・themeWhere・yaritai・yaritaiWhy（入口C）・kw1〜3・setsu（説）・hikkakari（ひっかかり）・ippo・ippoDate・yosou・geminiLink
 - data（R01＝Quest 1 の結果）：did（やった／まだ）・yatta・mita（見たこと・数字）・kanji（感じたこと）・iikire（言い切れないこと）・yarunara（まだの人：やるとしたら）
-- data（L02）：tomo（友だちに言われたこと）・geminiLink・q1〜q3（気になったこと）
-- data（R02＝Quest 2：「？」の手がかりになりそうな本か動画）：mono（見たもの・読んだもの。動画はリンク、本は題名とページ）・kokoro（いちばん心に残った所と、ひとこと）
+- data（L02）：tomo（友だちに言われたこと）・geminiLink・q1〜q3（気になったこと）・findq（本か動画を探す言葉）
+- data（R02＝Quest 2：「？」の手がかりになりそうな本か動画）：findq（探す言葉）・mono（見たもの・読んだもの。動画はリンク、本は題名とページ）・kokoro（いちばん心に残った所と、ひとこと）
 - data（L03＝第3回：先行研究に出会う）：hanMemo（班で出たこと）・kensaku（検索語）・tried（試した検索語、新しい順10個）・p1Title・p1Url・p2Title・p2Url（論文2本）・yomiMemo・geminiLink
 - data（R03＝Quest 3：論文を読んだ結果）：yomi1・yomi2（全部読んだ／途中まで／まだ）・wakatta（分かったこと）・mada（まだ分かっていないこと）・q1〜q3
 - data（L04＝第4回：問いを立てて、確かめる計画を作る）：qs（出した問い [{t:問い, k:7種類, a:1＝AIで足した}]）・qftPhase・qftEnd・rounds（チャレンジ回数）・rank・rankTotal・rankN・toi（選んだ問い）・toiWhy・houhou（調べ方）・nani・yotei・hitsuyou・kuraberu・anzen・geminiLink
@@ -53,3 +53,4 @@ GCIS（Global Citizenship Inquiry Studies）の個人探究で使う、生徒用
 - 生徒は自分のデータだけ、教員は全員のデータを読める。教員が書けるのは自分の「テスト」だけ。
 
 生徒の個人データはこのリポジトリには置きません（Firebase にだけ保存されます）。
+- 学校図書館の蔵書検索のURLは common.js の LIBRARY_URL（今はダミー）

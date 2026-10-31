@@ -101,7 +101,7 @@ const VIEWS = {
   },
   L02: {
     tab: "第2回", date: "2026-11-09",
-    stepNames: ["班", "AI", "気になったこと", "提出"],
+    stepNames: ["班", "AI", "気になったこと", "本・動画", "提出"],
     head: ["説（第1回）", "やった？", "友だちに言われたこと", "気になったこと（？）"],
     cells: r => {
       const d = r.note?.data || {}, s = r.l01?.data || {};
@@ -431,11 +431,11 @@ export function mountTeacher({ be, app, dlg }) {
           : { did: "やった", yatta: "（やったことの例）", mita: "（数字の例）", kanji: "予想どおりだったけど、歌詞のある曲だと逆に気が散った",
               iikire: "1回だけなので、毎日そうなるかは分からない" } });
       if (i % 3 === 2) continue;
-      const s2 = i % 5 === 0 ? 3 : i % 4;
-      nt.push({ uid, lesson: "L02", step: s2, submitted: s2 === 3 && i % 8 !== 7, updatedAt: new Date(Date.now() - (i % 8) * 60000),
+      const s2 = i % 5 === 0 ? 4 : i % 5;
+      nt.push({ uid, lesson: "L02", step: s2, submitted: s2 === 4 && i % 8 !== 7, updatedAt: new Date(Date.now() - (i % 8) * 60000),
         data: { tomo: s2 >= 1 ? "部活のあとでも同じ？" : "",
           q1: s2 >= 2 ? "なんで歌詞があると気が散るの？" : "", q2: s2 >= 2 && i % 2 ? "研究では、雑音の大きさはどこまで分かっている？" : "" } });
-      if (!(s2 === 3 && i % 8 !== 7)) continue;
+      if (!(s2 === 4 && i % 8 !== 7)) continue;
       nt.push({ uid, lesson: "R02", step: 0, submitted: i % 4 !== 1, updatedAt: new Date(Date.now() - (i % 8) * 60000),
         data: i % 10 === 0
           ? { mono: "https://youtu.be/xxxxxxxxxxx?t=125", kokoro: "（動画の例）雑音の大きさで、集中しやすさが逆になるという話" }

@@ -1,8 +1,9 @@
 // ステージ3／第2回（11/9）同じことに関心を持つ人を探す
 // 仕様：ナレッジの L02.md「アプリ画面」／プロンプト：L02_PROMPTS（確定）
 // 結果の記録は R01（Quest 1 の結果）。ここでは R01 を読んでプロンプトに入れる
-// data：tomo・geminiLink・q1〜q3
+// data：tomo・geminiLink・q1〜q3・findq（本か動画を探す言葉）
 import { quest } from "./common.js";
+import { findTools, handleFind, PICK_TIPS } from "./r02.js";
 const MISSION = quest(1);
 
 // 文末の句読点・空白を取る（プロンプトの文をつなぐため）
@@ -40,6 +41,14 @@ function prompt1(c) {
     "列は「媒体｜日付｜見出し｜だれが何をしているか（30文字以内）｜リンク」の表にしてください。" +
     "無料で読めるものを優先してください。表のあとには何も書かないでください。";
 }
+// 本か動画を探す言葉（同じチャットで。試作・未試行）。題名は作り話が出やすいので、言葉と分類番号だけ
+function promptFind(c) {
+  const qs = ["q1", "q2", "q3"].map(c.v).filter(Boolean);
+  const q = qs.length ? qs.map(x => `「${x}」`).join("") : "（気になったこと）";
+  return `ありがとうございます。最後に、私が気になった${q}の手がかりになりそうな本や動画を探すための言葉を考えてください。` +
+    "①YouTubeで検索する言葉を、近いもの3つ・少し遠いもの3つ。②図書館で本を探すための日本十進分類法（NDC）の番号を、近い・少し遠い・遠いの3つと、その棚に何の本があるか。" +
+    "本や動画の題名は書かないでください。「種類｜言葉や番号｜選んだわけ（20文字以内）」の表にしてください。表のあとには何も書かないでください。";
+}
 const PROMPT2 = "ありがとうございます。今度は、この説とはまったく別の分野や場面で、同じしくみに注目している人や、似たことで困っている人が分かる記事を5つ、同じ表で出してください。表のあとには何も書かないでください。";
 
 function myStory(c) {
@@ -67,6 +76,7 @@ export const L02 = {
     { title: "班で報告", mins: 12 },
     { title: "AIで、同じことに関心を持つ人を探す", mins: 20 },
     { title: "気になったこと", mins: 8 },
+    { title: "本か動画を探す", mins: 6 },
     { title: "提出", mins: 2 }
   ],
   geminiKey: "gcis_gemini_L02", // 第1回とは別の、新しいチャット
@@ -104,7 +114,16 @@ export const L02 = {
       ${field("q2", "気になったこと ②", { type: "text", qmark: true })}
       ${field("q3", "気になったこと ③", { type: "text", qmark: true })}
       <p class="hint">読み終わらなかったら、あとで読んで書き足そう。提出したあとも直せます。</p>`;
-    // i === 3：提出
+    if (i === 3) return `
+      <p>${quest(2)}の準備です。この「？」の<b>手がかりになりそうな本か動画</b>を探そう。今日決まらなくてもOK。続きは家で。</p>
+      <div class="recap"><div class="tc-row"><span>気になったこと</span><b>${(() => { const qs = ["q1", "q2", "q3"].map(c.v).filter(Boolean); return qs.length ? `<ul class="qs">${qs.map(q => `<li>${esc(q)}</li>`).join("")}</ul>` : "—"; })()}</b></div></div>
+      <h3>① 探す言葉をAIに考えてもらう</h3>
+      ${promptBox(promptFind(c))}
+      <h3>② 探す</h3>
+      ${findTools(c)}
+      ${PICK_TIPS}
+      <p class="hint">動画は合わせて5分以上。本は少し読めばOK。見たら・読んだら、ホームの「${quest(2)}」に書きます。</p>`;
+    // i === 4：提出
     const qs = ["q1", "q2", "q3"].map(c.v).filter(Boolean);
     const R = res(c);
     return `
@@ -122,5 +141,9 @@ export const L02 = {
   canNext(i, c) {
     if (i === 2) return ["q1", "q2", "q3"].some(k => c.v(k));
     return true;
+  },
+
+  onClick(t, c) {
+    return handleFind(t, c);
   }
 };
