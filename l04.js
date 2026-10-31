@@ -7,7 +7,7 @@
 //       ・toi・toiWhy・houhou・nani・yotei・hitsuyou・kuraberu・anzen・geminiLink
 import { quest } from "./common.js";
 
-const QFT_MIN = 5;   // 1回のチャレンジの時間（分）。1学期のQFTと同じ5分
+const QFT_MIN = 3;   // 1回のチャレンジの時間（分）。1人なので班の5分より短く。もう一度チャレンジで足せる
 const TOP = 20;      // 学年で何位までは順位を見せるか
 const MIN_Q = 3;     // 次へ進むのに要る問いの数
 const tail = s => String(s || "").trim().replace(/[。．.、,，！!\s　]+$/u, "");
