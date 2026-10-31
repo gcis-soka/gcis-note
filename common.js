@@ -7,6 +7,8 @@ export const CLASSES = [1, 2, 3, 4, 5, 6, 7, 8];
 export const MAX_NUMBER = 41;
 export const TEST_CLASS = 0; // 動作確認用（教員画面では「テスト」と表示）
 export const GEMINI_URL = "https://gemini.google.com/app";
+// 授業の外でやってくること（L01で決めた一歩）の呼び名。Quest 1, Quest 2 …（quest・question・inquiry は同じ語源）
+export const quest = n => `Quest ${n}`;
 
 const SDK = "https://www.gstatic.com/firebasejs/10.12.2/";
 
@@ -60,18 +62,19 @@ export function methodOf(ippo) {
 
 // Gemini を画面の右半分の別ウィンドウで開く。2回目以降は前に出すだけ（チャットを消さない）
 // 戻り値："opened"（開いた）／"focused"（前に出した）／"lost"（開いたはずだが見つからない）／"blocked"
-let geminiWin = null;
-export function openGemini({ force = false } = {}) {
-  if (geminiWin && !geminiWin.closed) { geminiWin.focus(); return "focused"; }
+// key：回ごとの印（回が変わったら新しいチャットにする）
+let geminiWin = null, geminiFor = "";
+export function openGemini({ force = false, key = "gcis_gemini" } = {}) {
+  if (geminiWin && !geminiWin.closed && geminiFor === key) { geminiWin.focus(); return "focused"; }
   let opened = false;
-  try { opened = sessionStorage.getItem("gcis_gemini") === "1"; } catch { /* なし */ }
+  try { opened = sessionStorage.getItem(key) === "1"; } catch { /* なし */ }
   if (opened && !force) return "lost"; // 新しく開くとチャットが分かれるので、先に戻ってもらう
   const W = screen.availWidth || 1366, H = screen.availHeight || 768;
   const feat = `popup=yes,left=${Math.round(W / 2)},top=0,width=${Math.round(W / 2)},height=${H}`;
   const w = window.open(GEMINI_URL, "gcis_gemini", feat) || window.open(GEMINI_URL, "_blank");
   if (!w) return "blocked";
-  geminiWin = w;
-  try { sessionStorage.setItem("gcis_gemini", "1"); } catch { /* なし */ }
+  geminiWin = w; geminiFor = key;
+  try { sessionStorage.setItem(key, "1"); } catch { /* なし */ }
   try { w.focus(); } catch { /* なし */ }
   return "opened";
 }
@@ -123,10 +126,11 @@ export async function createBackend() {
       if (markSubmitted) data.submittedAt = fs.serverTimestamp();
       await fs.setDoc(fs.doc(db, "notes", `${uid}_${lesson}`), data, { merge: true });
     },
-    // 教員用：1つの期・クラス（テストは期を問わない）をリアルタイムで受け取る
+    // 教員用：1つの期・クラス（テストは期を問わない）をリアルタイムで受け取る。lesson が null ならすべての回
     watchGroup({ ki, cls }, lesson, onStudents, onNotes, onError) {
       const sw = [fs.where("class", "==", cls)];
-      const nw = [fs.where("lesson", "==", lesson), fs.where("class", "==", cls)];
+      const nw = [fs.where("class", "==", cls)];
+      if (lesson) nw.push(fs.where("lesson", "==", lesson));
       if (cls !== TEST_CLASS) { sw.push(fs.where("ki", "==", ki)); nw.push(fs.where("ki", "==", ki)); }
       const u1 = fs.onSnapshot(fs.query(fs.collection(db, "students"), ...sw),
         snap => onStudents(snap.docs.map(d => ({ uid: d.id, ...d.data() }))), onError);

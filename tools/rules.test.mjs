@@ -5,7 +5,7 @@ import { readFileSync } from "node:fs";
 import {
   initializeTestEnvironment, assertSucceeds, assertFails
 } from "@firebase/rules-unit-testing";
-import { doc, getDoc, setDoc, deleteDoc, collection, getDocs, serverTimestamp } from "firebase/firestore";
+import { doc, getDoc, setDoc, deleteDoc, collection, getDocs, query, where, serverTimestamp } from "firebase/firestore";
 
 const env = await initializeTestEnvironment({
   projectId: "demo-gcis",
@@ -47,6 +47,15 @@ await t("他人のプロフィールは読めない", () => assertFails(getDoc(d
 await t("自分の L01 ノートを書ける", () => assertSucceeds(setDoc(doc(s1, "notes", S1.uid + "_L01"), note(S1))));
 await t("自分のノートを読める", () => assertSucceeds(getDoc(doc(s1, "notes", S1.uid + "_L01"))));
 await t("クラスをプロフィールと違えて書けない", () => assertFails(setDoc(doc(s1, "notes", S1.uid + "_L01"), note(S1, { class: 4 }))));
+await t("自分の L02 ノートを書ける", () => assertSucceeds(setDoc(doc(s1, "notes", S1.uid + "_L02"), note(S1, { lesson: "L02", data: { did: "やった", q1: "なんで？" } }))));
+await t("ID と回が食い違うと書けない（ID は L02・中身は L01）", () => assertFails(setDoc(doc(s1, "notes", S1.uid + "_L02"), note(S1))));
+await t("自分の R01（Quest 1 の結果）を書ける", () => assertSucceeds(setDoc(doc(s1, "notes", S1.uid + "_R01"), note(S1, { lesson: "R01", step: 0, data: { did: "やった" } }))));
+await t("自分の R01 を読める", () => assertSucceeds(getDoc(doc(s1, "notes", S1.uid + "_R01"))));
+await t("他人の R01 は読めない", () => assertFails(getDoc(doc(s1, "notes", S2.uid + "_R01"))));
+await t("自分の R02（Quest 2）を書ける", () => assertSucceeds(setDoc(doc(s1, "notes", S1.uid + "_R02"), note(S1, { lesson: "R02", step: 0, data: { mono: "『本』p.48", kokoro: "ひとこと" } }))));
+await t("他人の R02 は読めない", () => assertFails(getDoc(doc(s1, "notes", S2.uid + "_R02"))));
+await t("まだないステージ（R03）は書けない", () => assertFails(setDoc(doc(s1, "notes", S1.uid + "_R03"), note(S1, { lesson: "R03" }))));
+await t("まだない回（L03）は書けない", () => assertFails(setDoc(doc(s1, "notes", S1.uid + "_L03"), note(S1, { lesson: "L03" }))));
 await t("まだない回（L99）は書けない", () => assertFails(setDoc(doc(s1, "notes", S1.uid + "_L99"), note(S1, { lesson: "L99" }))));
 await t("他人のノートは読めない", () => assertFails(getDoc(doc(s1, "notes", S2.uid + "_L01"))));
 await t("他人のノートは書けない", () => assertFails(setDoc(doc(s1, "notes", S2.uid + "_L01"), note(S2, { number: 13 }))));
@@ -61,10 +70,12 @@ console.log("教員");
 const tdb = as(T);
 await t("全員のプロフィールを読める", () => assertSucceeds(getDocs(collection(tdb, "students"))));
 await t("全員のノートを読める", () => assertSucceeds(getDocs(collection(tdb, "notes"))));
+await t("クラスで絞って全部の回を読める（第2回の表）", () => assertSucceeds(getDocs(query(collection(tdb, "notes"), where("class", "==", 3), where("ki", "==", "59")))));
 await t("自分を「テスト・0番」で作れる", () => assertSucceeds(setDoc(doc(tdb, "students", T.uid), prof(T, { ki: "", class: 0, number: 0 }))));
 await t("自分を3組にはできない", () => assertFails(setDoc(doc(tdb, "students", T.uid), prof(T, { ki: "", class: 3, number: 1 }))));
 await t("（戻す）テスト・0番", () => assertSucceeds(setDoc(doc(tdb, "students", T.uid), prof(T, { ki: "", class: 0, number: 0 }))));
 await t("自分のテストノートを書ける", () => assertSucceeds(setDoc(doc(tdb, "notes", T.uid + "_L01"), note(T, { ki: "", class: 0, number: 0 }))));
+await t("自分のテストノート（第2回）を書ける", () => assertSucceeds(setDoc(doc(tdb, "notes", T.uid + "_L02"), note(T, { lesson: "L02", ki: "", class: 0, number: 0 }))));
 await t("生徒のノートは書き換えられない", () => assertFails(setDoc(doc(tdb, "notes", S2.uid + "_L01"), note(S2, { number: 13, step: 4 }))));
 
 console.log("学校外・未確認");
