@@ -179,3 +179,49 @@ select.ki { width: auto; padding: 3px 10px; border-radius: 999px; font-size: 15p
 .todo li { margin: 4px 0; }
 .qs { margin: 0; padding-left: 1.2em; }
 .lesson-tabs { display: inline-flex; gap: 4px; }
+
+/* 第3回・第4回 */
+.card h3 { font-size: 17px; margin: 20px 0 6px; }
+.searchbtns { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 8px; }
+.choice.small { margin: 2px 0 10px; }
+.choice.small .choice-btn { padding: 6px 10px; min-width: 6em; font-size: 14px; border-radius: 10px; }
+.houhou { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px; margin: 6px 0 14px; }
+.hh { font: inherit; text-align: left; padding: 10px 12px; border-radius: 12px; border: 2px solid var(--line); background: #fff; cursor: pointer; }
+.hh b { display: block; font-size: 16px; }
+.hh span { display: block; font-size: 13px; color: var(--sub); margin-top: 2px; line-height: 1.45; }
+.hh:hover { border-color: var(--accent); }
+.hh.on { border-color: var(--accent); background: var(--accent-soft); }
+.hh.on b { color: var(--accent); }
+/* 第4回：問いのタイムアタック・分類・選ぶ */
+.qstart { text-align: center; margin: 18px 0; }
+.qft-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.timer { font-size: 44px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--accent); }
+.timer.hurry { color: var(--warn); }
+.qcount { display: flex; align-items: baseline; gap: 4px; }
+.qcount b { font-size: 44px; line-height: 1; }
+.qadd { display: flex; gap: 8px; margin: 10px 0; }
+.qadd input { flex: 1; font: inherit; font-size: 17px; padding: 12px 14px; border-radius: 12px; border: 2px solid var(--accent); background: #fffdf8; }
+.qlist { margin: 8px 0; padding-left: 1.8em; }
+.qlist li { padding: 4px 0; border-bottom: 1px dashed var(--line); display: flex; align-items: center; gap: 8px; }
+.qlist li span { flex: 1; }
+.qdel { border: 0; background: none; color: var(--sub); font-size: 18px; cursor: pointer; padding: 0 6px; }
+.qdel:hover { color: var(--warn); }
+.tagai { font-style: normal; font-size: 12px; color: var(--sub); border: 1px solid var(--line); border-radius: 6px; padding: 0 5px; }
+.qresult { text-align: center; padding: 18px; border-radius: var(--radius); background: var(--accent-soft); margin-bottom: 14px; }
+.qr-n b { font-size: 56px; line-height: 1.1; }
+.qr-big { font-size: 28px; font-weight: 700; color: var(--accent); margin: 4px 0 8px; }
+.qtypes-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 13px; color: var(--sub); background: var(--bg); border-radius: 12px; padding: 8px 12px; }
+.qtypes-legend b { color: var(--ink); }
+.qsort { padding-left: 1.6em; }
+.qsort li { padding: 8px 0; border-bottom: 1px dashed var(--line); }
+.qs-t { font-size: 16px; margin-bottom: 4px; }
+.qs-k { display: flex; flex-wrap: wrap; gap: 4px; }
+.kchip { font: inherit; font-size: 13px; padding: 3px 9px; border-radius: 999px; border: 1px solid var(--line); background: #fff; cursor: pointer; }
+.kchip:hover { border-color: var(--accent); }
+.kchip.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+.qgroups { display: grid; gap: 10px; margin: 8px 0 14px; }
+.qg-h { font-weight: 700; font-size: 14px; color: var(--accent); margin-bottom: 4px; display: flex; gap: 8px; align-items: baseline; }
+.qg-h span { font-weight: 400; color: var(--sub); font-size: 13px; }
+.qpick { display: block; width: 100%; text-align: left; font: inherit; padding: 8px 12px; margin: 4px 0; border-radius: 10px; border: 2px solid var(--line); background: #fff; cursor: pointer; }
+.qpick:hover { border-color: var(--accent); }
+.qpick.on { border-color: var(--accent); background: var(--accent-soft); font-weight: 700; }
