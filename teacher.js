@@ -17,6 +17,9 @@ function resultRows(d) {
     : `<div class="tc-row"><span>${MISSION}</span><b>${esc(d.did || "—")}</b></div>${item(d, "yatta", "やったこと")}${item(d, "mita", "見たこと・数字")}${item(d, "kanji", "感じたこと")}${item(d, "iikire", "これだけでは言い切れないこと")}`;
 }
 const qsOf = d => ["q1", "q2", "q3"].map(k => String(d[k] || "").trim()).filter(Boolean);
+// Quest 2：リンクが動画サイトなら「動画」、それ以外（題名・ほかのリンク）は「本・その他」
+const kindOf = m => !String(m || "").trim() ? "" : /youtu\.?be|youtube\.com|nicovideo|tiktok\.com|vimeo\.com/i.test(m) ? "動画" : "本・その他";
+const kindChip = m => kindOf(m) ? `<span class="mchip">${kindOf(m)}</span>` : "";
 
 // ---------- 回ごとの見せ方 ----------
 // date：この日になったら、そのステージを最初に表示する
@@ -118,6 +121,34 @@ const VIEWS = {
       const d = r.note?.data || {}, s = r.l01?.data || {};
       return [s.setsu, r.r01?.data?.did, d.tomo, d.q1, d.q2, d.q3, d.geminiLink];
     }
+  },
+  R02: {
+    tab: quest(2), date: "2026-11-10", noStall: true, // 家でやるので「止まってる？」は出さない
+    stepNames: ["記録"],
+    head: ["気になったこと（第2回）", "本か動画", "見たもの・読んだもの", "心に残った所・ひとこと"],
+    cells: r => {
+      const d = r.note?.data || {};
+      return [qsOf(r.l02?.data || {}).map(esc).join("<br>"), kindChip(d.mono), d.mono ? linkCell(d.mono) : "", esc(d.kokoro || "")];
+    },
+    nowrap: [1],
+    chips(rs) {
+      const n = k => rs.filter(r => kindOf(r.note?.data?.mono) === k).length;
+      return rs.some(r => r.note?.data?.mono)
+        ? `<span class="hint">${quest(2)}：</span><span class="mchip">動画 <b>${n("動画")}</b></span><span class="mchip">本・その他 <b>${n("本・その他")}</b></span>`
+        : "";
+    },
+    detail(r) {
+      const d = r.note?.data || {}, qs = qsOf(r.l02?.data || {});
+      return `
+        <div class="recap"><div class="tc-row"><span>第2回で気になったこと</span><b>${qs.length ? `<ul class="qs">${qs.map(q => `<li>${esc(q)}</li>`).join("")}</ul>` : "—"}</b></div></div>
+        <div class="tc-row"><span>見たもの・読んだもの（${kindOf(d.mono) || "—"}）</span><b>${linkCell(d.mono)}${safeUrl(d.mono) ? `<br><span class="hint">${esc(d.mono)}</span>` : ""}</b></div>
+        ${item(d, "kokoro", "いちばん心に残った所と、ひとこと")}`;
+    },
+    csvHead: ["気になったこと1（第2回）", "気になったこと2（第2回）", "気になったこと3（第2回）", "本か動画", "見たもの・読んだもの", "心に残った所・ひとこと"],
+    csvRow: r => {
+      const d = r.note?.data || {}, q = r.l02?.data || {};
+      return [q.q1, q.q2, q.q3, kindOf(d.mono), d.mono, d.kokoro];
+    }
   }
 };
 const LESSON_IDS = Object.keys(VIEWS);
@@ -164,8 +195,8 @@ export function mountTeacher({ be, app, dlg }) {
 
   function rows() {
     const by = id => Object.fromEntries(notes.filter(n => n.lesson === id).map(n => [n.uid, n]));
-    const cur = by(lesson), l01 = by("L01"), r01 = by("R01");
-    const rs = students.map(s => ({ ...s, note: cur[s.uid] || null, l01: l01[s.uid] || null, r01: r01[s.uid] || null }));
+    const cur = by(lesson), l01 = by("L01"), r01 = by("R01"), l02 = by("L02");
+    const rs = students.map(s => ({ ...s, note: cur[s.uid] || null, l01: l01[s.uid] || null, r01: r01[s.uid] || null, l02: l02[s.uid] || null }));
     return cls === TEST_CLASS
       ? rs.sort((a, b) => String(a.email).localeCompare(String(b.email)))
       : rs.sort((a, b) => a.number - b.number);
@@ -175,7 +206,7 @@ export function mountTeacher({ be, app, dlg }) {
     const n = r.note;
     if (!n) {
       if (lesson === "L01") return { label: "ログインのみ", cls: "st-none", stall: false };
-      const before = { R01: r.l01, L02: r.r01 }[lesson];
+      const before = { R01: r.l01, L02: r.r01, R02: r.l02 }[lesson];
       return { label: before?.submitted ? "未着手" : "前が未提出", cls: "st-none", stall: false };
     }
     if (n.submitted) return { label: "提出済み", cls: "st-done", stall: false };
@@ -295,10 +326,15 @@ export function mountTeacher({ be, app, dlg }) {
           : { did: "やった", yatta: "（やったことの例）", mita: "（数字の例）", kanji: "予想どおりだったけど、歌詞のある曲だと逆に気が散った",
               iikire: "1回だけなので、毎日そうなるかは分からない" } });
       if (i % 3 === 2) continue;
-      const s2 = i % 4;
-      nt.push({ uid, lesson: "L02", step: s2, submitted: s2 === 3 && i % 2 === 0, updatedAt: new Date(Date.now() - (i % 8) * 60000),
+      const s2 = i % 5 === 0 ? 3 : i % 4;
+      nt.push({ uid, lesson: "L02", step: s2, submitted: s2 === 3 && i % 8 !== 7, updatedAt: new Date(Date.now() - (i % 8) * 60000),
         data: { tomo: s2 >= 1 ? "部活のあとでも同じ？" : "",
           q1: s2 >= 2 ? "なんで歌詞があると気が散るの？" : "", q2: s2 >= 2 && i % 2 ? "研究では、雑音の大きさはどこまで分かっている？" : "" } });
+      if (!(s2 === 3 && i % 8 !== 7)) continue;
+      nt.push({ uid, lesson: "R02", step: 0, submitted: i % 4 !== 1, updatedAt: new Date(Date.now() - (i % 8) * 60000),
+        data: i % 10 === 0
+          ? { mono: "https://youtu.be/xxxxxxxxxxx?t=125", kokoro: "（動画の例）雑音の大きさで、集中しやすさが逆になるという話" }
+          : { mono: "『（本の題名の例）』p.48", kokoro: "（本の例）音楽のテンポで作業の速さが変わるという実験" } });
     }
     return [st, nt];
   }

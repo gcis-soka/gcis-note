@@ -52,7 +52,9 @@ await t("ID と回が食い違うと書けない（ID は L02・中身は L01）
 await t("自分の R01（Quest 1 の結果）を書ける", () => assertSucceeds(setDoc(doc(s1, "notes", S1.uid + "_R01"), note(S1, { lesson: "R01", step: 0, data: { did: "やった" } }))));
 await t("自分の R01 を読める", () => assertSucceeds(getDoc(doc(s1, "notes", S1.uid + "_R01"))));
 await t("他人の R01 は読めない", () => assertFails(getDoc(doc(s1, "notes", S2.uid + "_R01"))));
-await t("まだないステージ（R02）は書けない", () => assertFails(setDoc(doc(s1, "notes", S1.uid + "_R02"), note(S1, { lesson: "R02" }))));
+await t("自分の R02（Quest 2）を書ける", () => assertSucceeds(setDoc(doc(s1, "notes", S1.uid + "_R02"), note(S1, { lesson: "R02", step: 0, data: { mono: "『本』p.48", kokoro: "ひとこと" } }))));
+await t("他人の R02 は読めない", () => assertFails(getDoc(doc(s1, "notes", S2.uid + "_R02"))));
+await t("まだないステージ（R03）は書けない", () => assertFails(setDoc(doc(s1, "notes", S1.uid + "_R03"), note(S1, { lesson: "R03" }))));
 await t("まだない回（L03）は書けない", () => assertFails(setDoc(doc(s1, "notes", S1.uid + "_L03"), note(S1, { lesson: "L03" }))));
 await t("まだない回（L99）は書けない", () => assertFails(setDoc(doc(s1, "notes", S1.uid + "_L99"), note(S1, { lesson: "L99" }))));
 await t("他人のノートは読めない", () => assertFails(getDoc(doc(s1, "notes", S2.uid + "_L01"))));

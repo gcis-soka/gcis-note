@@ -103,6 +103,8 @@ details.help { margin-top: 8px; font-size: 15px; } details.help summary { cursor
 .tc-row em { font-style: normal; font-size: 14px; color: var(--sub); }
 .share { margin-top: 16px; padding: 12px 16px; border-radius: 12px; background: #fdf3dc; }
 .share p { margin: 4px 0 0; font-size: 15px; }
+.share ul { margin: 4px 0 8px; padding-left: 1.4em; font-size: 15px; }
+.share ul:last-child { margin-bottom: 0; }
 
 /* 教員画面 */
 .t-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }

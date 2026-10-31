@@ -83,7 +83,6 @@ export const L02 = {
           <li>班の人が答える（「わからない」もOK）</li>
           <li>結果を伝える</li>
         </ol>
-        <b>聞く人</b><p>結果を聞いたら、1人1つ「〇〇なところが面白い」か「本当に〜？」を言おう。</p>
       </div>
       ${field("tomo", "友だちに言われたこと（なくてもOK）", { rows: 2, placeholder: "例：「部活のあとでも同じになる？」と聞かれた" })}`;
     if (i === 1) return `
@@ -104,7 +103,7 @@ export const L02 = {
       ${field("q1", "気になったこと ①", { type: "text", qmark: true })}
       ${field("q2", "気になったこと ②", { type: "text", qmark: true })}
       ${field("q3", "気になったこと ③", { type: "text", qmark: true })}
-      <p class="hint">読み終わらなかったら、次回までに読んで書き足そう。提出したあとも直せます。</p>`;
+      <p class="hint">読み終わらなかったら、あとで読んで書き足そう。提出したあとも直せます。</p>`;
     // i === 3：提出
     const qs = ["q1", "q2", "q3"].map(c.v).filter(Boolean);
     const R = res(c);
@@ -115,7 +114,8 @@ export const L02 = {
         <div class="tc-row"><span>友だちに言われたこと</span><b>${esc(d.tomo || "—")}</b></div>
         <div class="tc-row big"><span>気になったこと</span><b>${qs.length ? `<ul class="qs">${qs.map(q => `<li>${esc(q)}</li>`).join("")}</ul>` : "—"}</b></div>
       </div>
-      <div class="share"><b>次回は</b><p>記事に出てきた研究を探し、まだ分かっていないことを見つけます。</p></div>
+      <div class="share"><b>次は ${quest(2)}</b><p>この「？」の手がかりになりそうな本か動画を見つけよう。提出すると、ホームに出てきます。</p>
+        <p>第3回は、持ってきたものを班で紹介し、研究を探します。</p></div>
       ${c.submitted ? `<p class="okmsg">提出済み ✓　あとから直しても自動で保存されます。</p>` : ""}`;
   },
 
