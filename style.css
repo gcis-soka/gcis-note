@@ -179,3 +179,16 @@ select.ki { width: auto; padding: 3px 10px; border-radius: 999px; font-size: 15p
 .todo li { margin: 4px 0; }
 .qs { margin: 0; padding-left: 1.2em; }
 .lesson-tabs { display: inline-flex; gap: 4px; }
+
+/* 第3回・第4回 */
+.card h3 { font-size: 17px; margin: 20px 0 6px; }
+.searchbtns { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 8px; }
+.choice.small { margin: 2px 0 10px; }
+.choice.small .choice-btn { padding: 6px 10px; min-width: 6em; font-size: 14px; border-radius: 10px; }
+.houhou { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px; margin: 6px 0 14px; }
+.hh { font: inherit; text-align: left; padding: 10px 12px; border-radius: 12px; border: 2px solid var(--line); background: #fff; cursor: pointer; }
+.hh b { display: block; font-size: 16px; }
+.hh span { display: block; font-size: 13px; color: var(--sub); margin-top: 2px; line-height: 1.45; }
+.hh:hover { border-color: var(--accent); }
+.hh.on { border-color: var(--accent); background: var(--accent-soft); }
+.hh.on b { color: var(--accent); }

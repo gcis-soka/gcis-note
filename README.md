@@ -13,7 +13,7 @@ GCIS（Global Citizenship Inquiry Studies）の個人探究で使う、生徒用
 |---|---|
 | `index.html` / `app.js` | 入口（ログインと振り分け） |
 | `student.js` | 生徒画面の枠（ホーム・クラスと番号・保存・画面の切り替え） |
-| `l01.js` / `r01.js` / `l02.js` / `r02.js` | 各ステージの中身（画面・プロンプト・次へ進める条件）。L＝授業の回、R＝Quest の結果。足すときはファイルを作り、student.js の LESSONS・teacher.js の VIEWS・firestore.rules の lesson に足す |
+| `l01.js` / `r01.js` / `l02.js` / `r02.js` / `l03.js` / `r03.js` / `l04.js` | 各ステージの中身（画面・プロンプト・次へ進める条件）。L＝授業の回、R＝Quest の結果。足すときはファイルを作り、student.js の LESSONS・teacher.js の VIEWS・firestore.rules の lesson に足す |
 | `teacher.js` | 教員画面 |
 | `teacher.html` | トップへ移動するだけ |
 | `common.js` | 共通（ログイン・保存・ドメインの設定） |
@@ -38,12 +38,16 @@ GCIS（Global Citizenship Inquiry Studies）の個人探究で使う、生徒用
 
 ## データ（Firestore）
 - `students/{uid}`：email・ki（期＝アドレスの頭2桁、数字でなければ空）・class（0〜8、0はテスト）・number（教員のテストは0）・createdAt・updatedAt
-- `notes/{uid}_L01`・`_R01`・`_L02`・`_R02`：uid・lesson・ki・class・number・step（0〜4）・submitted・data（入力内容）・updatedAt・submittedAt
+- `notes/{uid}_L01`・`_R01`・`_L02`・`_R02`・`_L03`・`_R03`・`_L04`：uid・lesson・ki・class・number・step（0〜4）・submitted・data（入力内容）・updatedAt・submittedAt
 - data（L01）：route（A＝3つの質問／B＝テーマの例／C＝やりたいことから。Cはキーワードの画面をとばす）・odai1〜3・theme・themeWhere・yaritai・yaritaiWhy（入口C）・kw1〜3・setsu（説）・hikkakari（ひっかかり）・ippo・ippoDate・yosou・geminiLink
 - data（R01＝Quest 1 の結果）：did（やった／まだ）・yatta・mita（見たこと・数字）・kanji（感じたこと）・iikire（言い切れないこと）・yarunara（まだの人：やるとしたら）
 - data（L02）：tomo（友だちに言われたこと）・geminiLink・q1〜q3（気になったこと）
 - data（R02＝Quest 2：「？」の手がかりになりそうな本か動画）：mono（見たもの・読んだもの。動画はリンク、本は題名とページ）・kokoro（いちばん心に残った所と、ひとこと）
-- ステージは L01 → R01 → L02 → R02 の順。前を提出すると次がホームに出る（それまでは出ない）。先生の「テスト」では全部出る。提出後も直せる
+- data（L03＝第3回：先行研究に出会う）：hanMemo（班で出たこと）・kensaku（検索語）・tried（試した検索語、新しい順10個）・p1Title・p1Url・p2Title・p2Url（論文2本）・yomiMemo・geminiLink
+- data（R03＝Quest 3：論文を読んだ結果）：yomi1・yomi2（全部読んだ／途中まで／まだ）・wakatta（分かったこと）・mada（まだ分かっていないこと）・q1〜q3
+- data（L04＝第4回：問いを立てて、確かめる計画を作る）：toiList（出した問い、1行に1つ）・toi（選んだ問い）・toiWhy・houhou（調べ方：文献・データ／アンケート／インタビュー／観察／実験・制作）・nani・yotei・hitsuyou・kuraberu・anzen・geminiLink
+- 教科書 p.44「問いの種類」7分類は l04.js の Q_TYPES に並べると、第4回の「しぼる」プロンプトに1列足される（空のあいだは使わない）
+- ステージは L01 → R01 → L02 → R02 → L03 → R03 → L04 の順。前を提出すると次がホームに出る（それまでは出ない）。先生の「テスト」では全部出る。提出後も直せる
 - 授業の外でやってくることは「Quest 1, 2 …」と呼ぶ（common.js の quest）
 - 生徒は自分のデータだけ、教員は全員のデータを読める。教員が書けるのは自分の「テスト」だけ。
 
