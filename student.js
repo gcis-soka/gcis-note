@@ -182,26 +182,30 @@ export function mountStudent({ be, user, app, asTeacher }) {
     // いま取り組む回（開いていて未提出の最初の回。なければ最後に開いている回）
     const openOnes = LESSONS.filter(isOpen);
     const focus = openOnes.find(L => !notes[L.id]?.submitted) || openOnes[openOnes.length - 1];
+    // カードの状態：done（提出済み）・now（いま取り組む）・todo（まだ。先生のテストで先が開いているとき）
+    const CHECK = `<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3.2 3L13 4.5" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
     const cards = openOnes.map(L => {
       const n = notes[L.id] || blank();
       const started = n.step > 0 || Object.keys(n.data).length > 0;
       const forced = L.after && !notes[L.after]?.submitted; // 先生・デモなので開いている
+      const state = n.submitted ? "done" : L === focus ? "now" : "todo";
       return `
-        <section class="card lesson ${L === focus ? "" : "quiet"}">
-          <div>
-            <p class="eyebrow">${stageLabel(L)} ${n.submitted ? "・提出済み ✓" : ""}</p>
+        <section class="card lesson ${state}">
+          <span class="mark" aria-hidden="true">${state === "done" ? CHECK : state === "now" ? "<i></i>" : ""}</span>
+          <div class="lesson-body">
+            <p class="eyebrow">${stageLabel(L)}${n.submitted ? " ・提出済み" : ""}</p>
             <h3>${L.title}</h3>
             ${L.sub && !n.submitted ? `<p class="hint">${L.sub}</p>` : ""}
             ${forced ? `<p class="hint">（生徒には、前のステージを提出すると出ます。先生のテストなので出ています）</p>` : ""}
           </div>
-          <button class="btn ${L === focus ? "primary" : ""}" data-open="${L.id}">${n.submitted ? "見なおす" : started ? "つづきから" : "はじめる"} →</button>
+          <button class="btn ${state === "now" ? "primary" : state === "done" ? "ghost" : "ghost"}" data-open="${L.id}">${n.submitted ? "見なおす" : started ? "つづきから" : "はじめる"} →</button>
         </section>`;
     });
     app.innerHTML = `
       <section class="card hero">
         <p class="eyebrow">ゴール</p>
         <h2>1月に「もっと知りたい」と思える、自分の問いを持っている</h2>
-        <ol class="map">${MAP.map((m, i) => `<li class="${i === at ? "now" : ""}">${m}</li>`).join("")}</ol>
+        <ol class="map">${MAP.map((m, i) => `<li class="${i < at ? "done" : i === at ? "now" : ""}">${m}</li>`).join("")}</ol>
         <ul class="promise">
           <li>気になることは、何度変えてもいい</li>
           <li>空欄があってもいい</li>

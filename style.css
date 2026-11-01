@@ -62,7 +62,7 @@ h2 { font-size: 21px; margin: 0; } h3 { margin: 0; font-size: 19px; }
 .map li { margin-right: 8px; }
 .map li.now { background: var(--sun); font-weight: 700; }
 .promise { margin: 0; padding-left: 1.2em; color: var(--sub); font-size: 15px; }
-.lesson { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; border-left: 6px solid var(--sun); }
+.lesson { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
 
 /* 進み具合 */
 .progress { list-style: none; display: flex; gap: 6px; padding: 0; margin: 0 0 16px; }
@@ -166,8 +166,6 @@ select.ki { width: auto; padding: 3px 10px; border-radius: 999px; font-size: 15p
 .addr-cell { font-weight: 500; font-size: 13px; }
 
 /* ---------- 第2回で追加 ---------- */
-.lesson.locked { opacity: .55; border-left-color: var(--line); background: var(--bg); }
-.lesson.quiet { border-left-color: var(--line); }
 .recap { background: var(--bg); border-radius: 12px; padding: 2px 14px; margin-bottom: 14px; }
 .recap .tc-row b { font-weight: 500; }
 .choice { display: flex; gap: 10px; flex-wrap: wrap; margin: 4px 0 8px; }
@@ -225,3 +223,21 @@ select.ki { width: auto; padding: 3px 10px; border-radius: 999px; font-size: 15p
 .qpick { display: block; width: 100%; text-align: left; font: inherit; padding: 8px 12px; margin: 4px 0; border-radius: 10px; border: 2px solid var(--line); background: #fff; cursor: pointer; }
 .qpick:hover { border-color: var(--accent); }
 .qpick.on { border-color: var(--accent); background: var(--accent-soft); font-weight: 700; }
+
+/* ホームのカード：done＝提出済み（背景を少し暗く・緑に✓）／now＝いま（緑の枠・緑の輪）／todo＝まだ（点線） */
+.lesson h3 { margin: 0; }
+.lesson-body { flex: 1; min-width: 12em; }
+.mark { flex: 0 0 30px; width: 30px; height: 30px; box-sizing: border-box; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+.lesson.done { background: #ece7dc; }
+.lesson.done .mark { background: var(--ok); }
+.lesson.done .eyebrow { color: var(--ok); }
+.lesson.done h3 { color: #4a4f58; }
+.lesson.now { border: 2px solid var(--accent); padding: 23px; box-shadow: 0 4px 14px rgba(31, 111, 92, .12); }
+.lesson.now .mark { border: 3px solid var(--accent); }
+.lesson.now .mark i { width: 12px; height: 12px; border-radius: 50%; background: var(--accent); }
+.lesson.todo { background: transparent; border: 2px dashed #cfc7b8; padding: 23px; }
+.lesson.todo .mark { border: 2px dashed #b8b0a2; }
+.lesson.todo .eyebrow { color: #6b6f78; }
+.lesson.todo h3 { color: #4a4f58; }
+.map li.done { background: var(--accent-soft); color: var(--accent); font-weight: 700; }
+.map li.done::before { content: "✓ "; }
