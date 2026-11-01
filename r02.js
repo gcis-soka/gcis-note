@@ -30,10 +30,7 @@ export function handleFind(t, c) {
   return true;
 }
 export const PICK_TIPS = `
-  <ul class="todo">
-    <li><b>動画</b>：誰が出しているか見る（研究者・大学・新聞社・個人…）。題名とサムネだけで決めない。概要欄に出どころがあるか</li>
-    <li><b>本</b>：分類番号（NDC）を見て、その棚へ。近くの本も手に取ってみよう。家の本・町の図書館の本もOK</li>
-  </ul>`;
+  <p class="hint">図書館に行くと、探していた本の近くにある本も見られます。気になったら手に取ってみよう。</p>`;
 
 export const R02 = {
   id: "R02",
