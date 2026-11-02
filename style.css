@@ -88,6 +88,16 @@ details.help { margin-top: 8px; font-size: 15px; } details.help summary { cursor
 .prompt-head { font-size: 13px; font-weight: 700; color: var(--accent); }
 .prompt-text { white-space: pre-wrap; word-break: break-word; font-family: inherit; font-size: 15px; margin: 6px 0 10px; max-height: 9.5em; overflow: auto; }
 .prompt-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.prompt .if-link { display: none; }
+.prompt.has-link .if-link { display: inline; }
+.prompt.has-link p.if-link { display: block; }
+.prompt.has-link .if-nolink { display: none; }
+.chatlink { display: block; margin-top: 8px; font-size: 14px; font-weight: 700; }
+.chatlink input { display: block; width: 100%; font: inherit; font-size: 15px; padding: 8px 10px; border: 2px solid var(--accent); border-radius: 10px; background: #fff; margin-top: 4px; }
+.warn-text { color: var(--warn); }
+.link.small { font-size: 13px; margin-left: 6px; }
+.snap { margin: 8px 0 0; background: #fff; border-radius: 10px; padding: 6px 10px; }
+.snap kbd { font-family: inherit; font-weight: 700; border: 1px solid var(--line); border-bottom-width: 3px; border-radius: 6px; padding: 0 6px; background: var(--bg); }
 
 .rules { background: var(--warn-soft); border-radius: 12px; padding: 10px 14px; font-size: 15px; margin-top: 12px; }
 .rules ul { margin: 4px 0 0; padding-left: 1.2em; }

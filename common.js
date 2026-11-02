@@ -63,23 +63,56 @@ export function methodOf(ippo) {
   return word ? "その他" : "不明";
 }
 
-// Gemini を画面の右半分の別ウィンドウで開く。2回目以降は前に出すだけ（チャットを消さない）
+// Gemini を画面の右半分の別ウィンドウで開く
+// url：覚えておいたこの回のチャット（https://gemini.google.com/app/…）。あれば必ずそのチャットを開く
+//      （「前に出す」はブラウザが止めることが多く、生徒が「出てこない」と新しいチャットを開いてしまったため）
+// url がないとき：1回目は新しいチャット、2回目以降は前に出すだけ（チャットを消さない）
 // 戻り値："opened"（開いた）／"focused"（前に出した）／"lost"（開いたはずだが見つからない）／"blocked"
 // key：回ごとの印（回が変わったら新しいチャットにする）
 let geminiWin = null, geminiFor = "";
-export function openGemini({ force = false, key = "gcis_gemini" } = {}) {
-  if (geminiWin && !geminiWin.closed && geminiFor === key) { geminiWin.focus(); return "focused"; }
+export function openGemini({ force = false, key = "gcis_gemini", url = "" } = {}) {
+  const W = screen.availWidth || 1366, H = screen.availHeight || 768;
+  const feat = `popup=yes,left=${Math.round(W / 2)},top=0,width=${Math.round(W / 2)},height=${H}`;
+  if (url) {
+    const w = window.open(url, "gcis_gemini", feat) || window.open(url, "_blank");
+    if (!w) return "blocked";
+    geminiWin = w; geminiFor = key;
+    try { w.focus(); } catch { /* なし */ }
+    return "opened";
+  }
+  if (geminiWin && !geminiWin.closed && geminiFor === key && !force) { geminiWin.focus(); return "focused"; }
   let opened = false;
   try { opened = sessionStorage.getItem(key) === "1"; } catch { /* なし */ }
   if (opened && !force) return "lost"; // 新しく開くとチャットが分かれるので、先に戻ってもらう
-  const W = screen.availWidth || 1366, H = screen.availHeight || 768;
-  const feat = `popup=yes,left=${Math.round(W / 2)},top=0,width=${Math.round(W / 2)},height=${H}`;
   const w = window.open(GEMINI_URL, "gcis_gemini", feat) || window.open(GEMINI_URL, "_blank");
   if (!w) return "blocked";
   geminiWin = w; geminiFor = key;
   try { sessionStorage.setItem(key, "1"); } catch { /* なし */ }
   try { w.focus(); } catch { /* なし */ }
   return "opened";
+}
+
+// この回のチャットのURLか（https://gemini.google.com/app/… または /u/1/app/…）。共有リンクは不可
+export function chatUrlOf(s) {
+  const m = String(s || "").trim().match(/^https:\/\/gemini\.google\.com\/(?:u\/\d+\/)?app\/[0-9a-zA-Z_-]{6,}/);
+  return m ? m[0] : "";
+}
+export function chatUrlProblem(s) {
+  const t = String(s || "").trim();
+  if (!t) return "";
+  if (chatUrlOf(t)) return "";
+  if (/gemini\.google\.com\/(?:u\/\d+\/)?app\/?$/.test(t)) return "まだ送信していないかも。プロンプトを送ってから、もう一度コピーしよう（URLの最後に英数字がつきます）";
+  if (/share|g\.co/.test(t)) return "それは共有リンクです。Geminiの窓のいちばん上のURLをコピーしよう";
+  return "https://gemini.google.com/app/ で始まるURLを貼ろう";
+}
+
+// 画面を左右に並べるキー（端末ごと）
+export function snapKeys() {
+  const ua = navigator.userAgent || "";
+  if (/CrOS/.test(ua)) return "Alt ＋ [";
+  if (/Windows/.test(ua)) return "Windowsキー ＋ ←";
+  if (/Macintosh/.test(ua)) return "fn ＋ control ＋ ←";
+  return "";
 }
 
 export function lsGet(k) { try { return localStorage.getItem(k); } catch { return null; } }

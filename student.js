@@ -1,7 +1,7 @@
 // 生徒画面の枠：ホーム・クラスと番号・保存・画面の切り替え
 // ステージ（前のステージを提出すると次が出る）の中身は l01.js・r01.js・l02.js・r02.js・l03.js・r03.js・l04.js … に書く
 import {
-  escapeHtml, kiOf, classLabel, openGemini, quest,
+  escapeHtml, kiOf, classLabel, openGemini, chatUrlOf, chatUrlProblem, snapKeys, quest,
   CLASSES, MAX_NUMBER, TEST_CLASS
 } from "./common.js";
 import { L01 } from "./l01.js";
@@ -96,20 +96,42 @@ export function mountStudent({ be, user, app, asTeacher }) {
       (qmark ? `<p class="hint short" data-qmark="${key}" hidden>${QMARK_MSG}</p>` : "") + `</div>`;
   }
 
+  // AIに送る文の箱。この回のチャットのURL（chatUrl）を最初に預かり、以後は「このチャットに戻る」で必ず同じチャットを開く
   function promptBox(text, { first = false } = {}) {
+    const link = chatUrlOf(note().data.chatUrl), keys = snapKeys();
     return `
-      <div class="prompt">
+      <div class="prompt ${link ? "has-link" : ""}">
         <div class="prompt-head">AIに送る文（自動でできています）</div>
         <pre class="prompt-text">${escapeHtml(text)}</pre>
         <div class="prompt-actions">
           <button class="btn" data-copy>コピーする</button>
-          <button class="btn ghost" data-gemini>${first ? "Geminiを右半分に開く ↗" : "Geminiのウィンドウを前に出す ↗"}</button>
+          <button class="btn ghost" data-gemini><span class="if-link">このチャットに戻る ↗</span><span class="if-nolink">${first ? "Geminiを右半分に開く ↗" : "Geminiの窓に戻る ↗"}</span></button>
         </div>
-        <p class="note" data-gemini-msg>${first
-          ? `開いたGeminiに貼って送信。<b>このあとも同じチャットで続けます。</b>（モデルは「Flash」のままでOK）`
-          : `⚠️ さっきの<b>Geminiのウィンドウに戻って、同じチャットに</b>貼ってください。新しいチャットにすると、AIは前の話を覚えていません。`}</p>
+        <p class="note if-link">✓ ${stageLabel(cur)}のチャットを覚えています。ボタンを押すと、いつでも<b>このチャット</b>が開きます。<button class="link small" data-gemini-new>新しいチャットでやり直す</button></p>
+        <div class="if-nolink">
+          <p class="note" data-gemini-msg>${first
+            ? `開いたGeminiに貼って送信。<b>送信したら</b>、Geminiの窓のいちばん上の<b>URL</b>をコピーして、下に貼ろう。この回はずっとこのチャットを使います。`
+            : `⚠️ さっきの<b>Geminiの窓の同じチャットに</b>貼ってください。下にチャットのURLを貼っておくと、いつでも戻れます。`}</p>
+          <label class="chatlink"><span>この回のチャットのURL</span>
+            <input type="url" data-key="chatUrl" value="${escapeHtml(note().data.chatUrl || "")}" placeholder="https://gemini.google.com/app/…" autocomplete="off"></label>
+          <p class="hint warn-text" data-chaturl-msg hidden></p>
+        </div>
+        ${keys ? `<p class="hint snap" data-snap hidden>アプリの画面を左に寄せるには <kbd>${keys}</kbd>。Geminiと左右に並べて使おう。</p>` : ""}
       </div>`;
   }
+
+  // チャットのURLを貼ったら、箱の表示を切り替える（全体を描き直すと入力中の欄が消えるため）
+  function refreshChatUrl() {
+    const raw = note().data.chatUrl, ok = !!chatUrlOf(raw), why = chatUrlProblem(raw);
+    app.querySelectorAll(".prompt").forEach(p => p.classList.toggle("has-link", ok));
+    app.querySelectorAll("[data-chaturl-msg]").forEach(m => { m.hidden = !why; m.textContent = why; });
+  }
+  // Geminiを開いたあと、アプリが画面いっぱいなら左に寄せるキーを出す
+  function showSnap() {
+    const wide = window.innerWidth > (screen.availWidth || 1366) * 0.75;
+    app.querySelectorAll("[data-snap]").forEach(el => { el.hidden = !wide; });
+  }
+  window.addEventListener("resize", () => { if (window.innerWidth <= (screen.availWidth || 1366) * 0.75) app.querySelectorAll("[data-snap]").forEach(el => { el.hidden = true; }); }, { signal: ac.signal });
 
   function progress(i) {
     return `<ol class="progress">${cur.steps.map((s, j) =>
@@ -284,13 +306,15 @@ export function mountStudent({ be, user, app, asTeacher }) {
   }
 
   function gemini(btn, force = false) {
-    const r = openGemini({ force, key: cur.geminiKey });
+    const url = force ? "" : chatUrlOf(note().data.chatUrl);
+    const r = openGemini({ force, key: cur.geminiKey, url });
     const msg = btn.closest(".prompt").querySelector("[data-gemini-msg]");
-    if (r === "lost") {
-      msg.innerHTML = `Geminiのウィンドウが見つかりません。<b>開いているときは、そのウィンドウに戻ってください</b>（タスクバー、または Alt＋Tab）。閉じてしまったときは <button class="link" data-gemini-force>新しく開く</button>（前の話は引き継がれません）`;
-    } else if (r === "blocked") {
+    if (r === "lost" && msg) {
+      msg.innerHTML = `Geminiの窓が見つかりません。<b>開いているときは、その窓に戻ってください</b>（タスクバー、または Alt＋Tab）。閉じてしまったときは <button class="link" data-gemini-force>新しく開く</button>（前の話は引き継がれません）`;
+    } else if (r === "blocked" && msg) {
       msg.innerHTML = `ポップアップが止められました。アドレスバー右の表示から、このサイトのポップアップを許可してください。`;
     }
+    if (r === "opened") showSnap();
   }
 
   // 書き出しボタン：入れ先が複数（"q1,q2,q3"）なら、最後に触った欄が空ならそこ、なければ空いている最初の欄
@@ -323,6 +347,7 @@ export function mountStudent({ be, user, app, asTeacher }) {
     const el = e.target.closest("[data-key]");
     if (!el || !cur) return;
     note().data[el.dataset.key] = el.value;
+    if (el.dataset.key === "chatUrl") refreshChatUrl();
     scheduleSave(); refreshNext(); updateHints();
   }, { signal: ac.signal });
 
@@ -337,6 +362,10 @@ export function mountStudent({ be, user, app, asTeacher }) {
     if (op) { openLesson(op.dataset.open); return; }
     if (!cur) return;
     if (t.closest("[data-copy]")) { copyPrompt(t.closest("[data-copy]")); return; }
+    if (t.closest("[data-gemini-new]")) { // やり直す：覚えたURLを消して、新しいチャットを開く
+      note().data.chatUrl = ""; app.querySelectorAll('[data-key="chatUrl"]').forEach(i => { i.value = ""; }); scheduleSave(); refreshChatUrl();
+      gemini(t.closest(".prompt").querySelector("[data-gemini]"), true); return;
+    }
     if (t.closest("[data-gemini-force]")) { gemini(t.closest(".prompt").querySelector("[data-gemini]"), true); return; }
     if (t.closest("[data-gemini]")) { gemini(t.closest("[data-gemini]")); return; }
     if (t.closest("[data-insert]")) { insertChip(t.closest("[data-insert]")); return; }
