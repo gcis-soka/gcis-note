@@ -102,6 +102,35 @@ function refreshNav(c, ok) {
 
 let ctxRef = null, tickId = null, busy = false;
 
+// ---------- 7種類に分ける：1問ずつ（押すと次へ） ----------
+let sortAt = -1, sortTimer = null;
+function sortHtml(c) {
+  const qs = qsOf(c), esc = c.esc;
+  if (!qs.length) return `<p class="hint">問いがありません。前の画面で問いを出そう。</p>`;
+  const q = qs[sortAt] || qs[0], left = qs.filter(x => !x.k).length;
+  const num = k => { const j = QTYPES.findIndex(x => x.k === k); return j >= 0 ? `${j + 1} ` : ""; };
+  return `
+    <div class="sort-card">
+      <div class="sort-pos"><span>${sortAt + 1} / ${qs.length}</span><span>${left ? `あと ${left} 個` : "全部分けられた！ 次へ進もう"}</span></div>
+      <div class="sort-q">${esc(q.t)}</div>
+    </div>
+    <div class="kgrid">${TYPE_ORDER.map(k => {
+      const t = QTYPES.find(x => x.k === k);
+      return `<button type="button" class="kbtn ${q.k === k ? "on" : ""} ${t ? "" : "unk"}" data-qtype="${sortAt}" data-k="${k}"><b>${num(k)}${k}</b>${t ? `<span>${t.ex}</span>` : ""}</button>`;
+    }).join("")}</div>
+    <div class="sort-move">
+      <button type="button" class="link" data-sortgo="prev" ${sortAt <= 0 ? "disabled" : ""}>← 前の問い</button>
+      <button type="button" class="link" data-sortgo="next" ${sortAt >= qs.length - 1 ? "disabled" : ""}>次の問い →</button>
+    </div>
+    <ol class="sort-list">${qs.map((x, j) => `
+      <li><button type="button" class="${j === sortAt ? "now" : ""}" data-sortgo="${j}"><em class="${x.k ? "" : "none"}">${x.k ? esc(num(x.k) + x.k) : "まだ"}</em><span>${esc(x.t)}</span></button></li>`).join("")}
+    </ol>`;
+}
+function refreshSort(c) {
+  const box = c.app.querySelector("[data-sort]");
+  if (box) box.innerHTML = sortHtml(c);
+}
+
 function addQuestion(c, input, ai = false) {
   let t = String(input.value || "").trim();
   if (!t) return;
@@ -247,15 +276,10 @@ export const L04 = {
       <div data-qlist>${listHtml(qs, esc)}</div>`;
 
     if (i === 2) {
-      const left = qs.filter(q => !q.k).length;
+      if (sortAt < 0 || sortAt >= qs.length) { const f = qs.findIndex(q => !q.k); sortAt = f >= 0 ? f : 0; }
       return `
-        <p>出した問いを、<b>問いの7種類</b>（教科書 p.44）に分けよう。迷ったら「${UNKNOWN}」でOK。</p>
-        <div class="qtypes-legend">${QTYPES.map((t, j) => `<span><b>${j + 1} ${t.k}</b> ${t.ex}</span>`).join("")}</div>
-        <p class="hint">あと <b data-qleft>${left}</b> 個</p>
-        <ol class="qsort">${qs.map((q, idx) => `
-          <li data-qrow="${idx}"><div class="qs-t">${esc(q.t)}</div><div class="qs-k">${TYPE_ORDER.map((k, j) =>
-            `<button type="button" class="kchip ${q.k === k ? "on" : ""}" data-qtype="${idx}" data-k="${k}">${j < QTYPES.length ? `${j + 1} ` : ""}${k}</button>`).join("")}</div></li>`).join("")}
-        </ol>`;
+        <p>出した問いを1つずつ、<b>問いの7種類</b>（教科書 p.44）に分けよう。押すと次の問いに進みます。迷ったら「${UNKNOWN}」でOK。</p>
+        <div data-sort>${sortHtml(c)}</div>`;
     }
 
     if (i === 3) {
@@ -346,12 +370,23 @@ export const L04 = {
     const ty = t.closest("[data-qtype]");
     if (ty) {
       const idx = Number(ty.dataset.qtype), qs = qsOf(c).map(q => ({ ...q }));
+      if (!qs[idx]) return true;
       qs[idx].k = ty.dataset.k;
       c.set("qs", qs);
-      ty.parentElement.querySelectorAll(".kchip").forEach(b => b.classList.toggle("on", b === ty));
-      const left = qs.filter(q => !q.k).length;
-      const el = c.app.querySelector("[data-qleft]"); if (el) el.textContent = String(left);
+      ty.parentElement.querySelectorAll(".kbtn").forEach(b => b.classList.toggle("on", b === ty));
       refreshNav(c, L04.canNext(2, c));
+      // 少し見せてから、次のまだ分けていない問いへ（後ろ→前の順に探す）
+      const next = [...qs.keys()].slice(idx + 1).concat([...qs.keys()].slice(0, idx)).find(j => !qs[j].k);
+      clearTimeout(sortTimer);
+      sortTimer = setTimeout(() => { if (next !== undefined) sortAt = next; refreshSort(c); }, 280);
+      return true;
+    }
+    const go = t.closest("[data-sortgo]");
+    if (go) {
+      const n = qsOf(c).length, v = go.dataset.sortgo;
+      sortAt = v === "prev" ? Math.max(0, sortAt - 1) : v === "next" ? Math.min(n - 1, sortAt + 1) : Number(v);
+      clearTimeout(sortTimer);
+      refreshSort(c);
       return true;
     }
     const pk = t.closest("[data-qpick]");
