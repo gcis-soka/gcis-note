@@ -208,27 +208,34 @@ select.ki { width: auto; padding: 3px 10px; border-radius: 999px; font-size: 15p
 .qresult { text-align: center; padding: 18px; border-radius: var(--radius); background: var(--accent-soft); margin-bottom: 14px; }
 .qr-n b { font-size: 56px; line-height: 1.1; }
 .qr-big { font-size: 28px; font-weight: 700; color: var(--accent); margin: 4px 0 8px; }
-/* 7種類に分ける（1問ずつ） */
-.sort-card { background: var(--accent-soft); border-radius: 14px; padding: 12px 16px 16px; margin: 8px 0 12px; }
-.sort-pos { display: flex; justify-content: space-between; font-size: 13px; color: var(--sub); }
-.sort-q { font-size: 21px; font-weight: 700; line-height: 1.5; margin-top: 4px; }
-.kgrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-@media (max-width: 560px) { .kgrid { grid-template-columns: repeat(2, 1fr); } }
-.kbtn { --kc: var(--accent); font: inherit; text-align: left; padding: 8px 10px; border-radius: 12px; border: 2px solid color-mix(in srgb, var(--kc) 35%, #fff); border-left: 8px solid var(--kc); background: color-mix(in srgb, var(--kc) 7%, #fff); cursor: pointer; line-height: 1.35; }
-.kbtn b { display: block; font-size: 16px; color: var(--kc); }
-.kbtn span { display: block; font-size: 12px; color: var(--sub); }
-.kbtn:hover { border-color: var(--kc); }
-.kbtn.on { background: var(--kc); border-color: var(--kc); color: #fff; }
-.kbtn.on b { color: #fff; }
-.kbtn.on span { color: rgba(255,255,255,.85); }
-.kbtn.unk { display: flex; align-items: center; }
+/* 7種類に分ける（まん中のカードを8つの箱へ送る） */
+.sort-pos { display: flex; justify-content: space-between; font-size: 13px; color: var(--sub); margin-top: 6px; }
+.compass { display: grid; grid-template-columns: 1fr 1.5fr 1fr; gap: 8px; margin: 6px 0; user-select: none; -webkit-user-select: none; }
+.sort-card { background: #fff; border: 2px solid var(--ink); border-radius: 14px; padding: 10px 12px; box-shadow: 0 4px 0 rgba(0,0,0,.12);
+  display: flex; flex-direction: column; justify-content: center; gap: 6px; min-height: 110px; cursor: grab; touch-action: none; position: relative; z-index: 2; }
+.sort-card:active { cursor: grabbing; }
+.sort-q { font-size: 18px; font-weight: 700; line-height: 1.45; }
+.sort-card .ktag { align-self: flex-start; }
+.kbox { --kc: var(--accent); font: inherit; text-align: left; padding: 8px 10px; border-radius: 12px; position: relative; cursor: pointer; line-height: 1.3;
+  border: 2px solid color-mix(in srgb, var(--kc) 35%, #fff); background: color-mix(in srgb, var(--kc) 8%, #fff); transition: transform .12s, box-shadow .12s; }
+.kbox b { display: block; font-size: 15px; color: var(--kc); }
+.kbox span { display: block; font-size: 11px; color: var(--sub); }
+.kbox i { position: absolute; right: 6px; bottom: 4px; font-style: normal; font-weight: 700; font-size: 14px; color: var(--kc); }
+.kbox:hover, .kbox.aim { border-color: var(--kc); box-shadow: 0 0 0 3px color-mix(in srgb, var(--kc) 30%, #fff); }
+.kbox.aim { transform: scale(1.06); }
+.kbox.on { background: var(--kc); border-color: var(--kc); }
+.kbox.on b, .kbox.on span, .kbox.on i { color: #fff; }
+.kbox.got { animation: kgot .3s; }
+@keyframes kgot { 50% { transform: scale(1.12); } }
+@media (max-width: 560px) { .kbox { padding: 6px 7px; } .kbox span { display: none; } .kbox b { font-size: 13px; word-break: keep-all; } .sort-q { font-size: 16px; } .compass { gap: 6px; grid-template-columns: 1fr 1.4fr 1fr; } }
+.ktag { flex: 0 0 auto; min-width: 5.6em; text-align: center; font-style: normal; font-size: 12px; font-weight: 700; color: #fff; background: var(--kc); border-radius: 999px; padding: 1px 8px; }
+.ktag.none { background: #fff; color: var(--sub); border: 1px dashed var(--sub); }
+.sort-how { margin: 4px 0 0; }
 .sort-move { display: flex; justify-content: space-between; margin: 8px 0 4px; font-size: 14px; }
 .sort-move .link:disabled { color: var(--line); cursor: default; text-decoration: none; }
 .sort-list { list-style: none; padding: 0; margin: 6px 0 0; border-top: 1px dashed var(--line); }
 .sort-list button { display: flex; gap: 10px; align-items: baseline; width: 100%; text-align: left; font: inherit; font-size: 15px; background: none; border: 0; border-bottom: 1px dashed var(--line); padding: 6px 4px; cursor: pointer; color: var(--ink); }
 .sort-list button.now { background: var(--accent-soft); font-weight: 700; }
-.ktag { flex: 0 0 auto; min-width: 5.6em; text-align: center; font-style: normal; font-size: 12px; font-weight: 700; color: #fff; background: var(--kc); border-radius: 999px; padding: 1px 8px; }
-.ktag.none { background: #fff; color: var(--sub); border: 1px dashed var(--sub); }
 .qgroups { display: grid; gap: 10px; margin: 8px 0 14px; }
 .qg { --kc: var(--accent); border-left: 6px solid var(--kc); padding-left: 10px; }
 .qg-h { font-weight: 700; font-size: 14px; color: var(--kc); margin-bottom: 4px; display: flex; gap: 8px; align-items: baseline; }

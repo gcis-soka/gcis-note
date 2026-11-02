@@ -104,29 +104,84 @@ function refreshNav(c, ok) {
 
 let ctxRef = null, tickId = null, busy = false;
 
-// ---------- 7種類に分ける：1問ずつ（押すと次へ） ----------
-let sortAt = -1, sortTimer = null;
+// ---------- 7種類に分ける：まん中のカードを、まわりの8つの箱へ送る ----------
+// はじく（フリック）・ドラッグ・箱を押す、のどれでも送れる。方向は 8 つ＝7種類＋わからない
+let sortAt = -1, sortTimer = null, sorting = false;
+// 3×3 の並び（まん中はカード）。方向は時計の12時から右回りに 1〜7、9時が「わからない」
+const COMPASS = ["定義", "原因", "信ぴょう性", UNKNOWN, null, "比較", "方法・関連性", "影響", "先行研究"];
+// はじいた向き（右から反時計回りに45度ずつ）→ 種類
+const DIR8 = ["比較", "信ぴょう性", "原因", "定義", UNKNOWN, "方法・関連性", "影響", "先行研究"];
+const numOf = k => { const j = QTYPES.findIndex(x => x.k === k); return j >= 0 ? `${j + 1} ` : ""; };
 function sortHtml(c) {
   const qs = qsOf(c), esc = c.esc;
   if (!qs.length) return `<p class="hint">問いがありません。前の画面で問いを出そう。</p>`;
   const q = qs[sortAt] || qs[0], left = qs.filter(x => !x.k).length;
-  const num = k => { const j = QTYPES.findIndex(x => x.k === k); return j >= 0 ? `${j + 1} ` : ""; };
+  const cnt = k => qs.filter(x => x.k === k).length;
   return `
-    <div class="sort-card">
-      <div class="sort-pos"><span>${sortAt + 1} / ${qs.length}</span><span>${left ? `あと ${left} 個` : "全部分けられた！ 次へ進もう"}</span></div>
-      <div class="sort-q">${esc(q.t)}</div>
-    </div>
-    <div class="kgrid">${TYPE_ORDER.map(k => {
+    <div class="sort-pos"><span>${sortAt + 1} / ${qs.length}</span><span>${left ? `あと ${left} 個` : "全部分けられた！ 次へ進もう"}</span></div>
+    <div class="compass">${COMPASS.map(k => {
+      if (!k) return `<div class="sort-card" data-sortcard><div class="sort-q">${esc(q.t)}</div>${q.k ? `<em class="ktag" style="${kc(q.k)}">${esc(numOf(q.k) + q.k)}</em>` : ""}</div>`;
       const t = QTYPES.find(x => x.k === k);
-      return `<button type="button" class="kbtn ${q.k === k ? "on" : ""} ${t ? "" : "unk"}" style="${kc(k)}" data-qtype="${sortAt}" data-k="${k}"><b>${num(k)}${k}</b>${t ? `<span>${t.ex}</span>` : ""}</button>`;
+      return `<button type="button" class="kbox ${q.k === k ? "on" : ""} ${t ? "" : "unk"}" style="${kc(k)}" data-qtype="${sortAt}" data-k="${k}">
+        <b>${numOf(k)}${k}</b>${t ? `<span>${t.ex}</span>` : ""}<i>${cnt(k) || ""}</i></button>`;
     }).join("")}</div>
+    <p class="hint sort-how">カードを箱の方へ<b>はじく</b>か、箱を<b>押す</b>と送れます。</p>
     <div class="sort-move">
       <button type="button" class="link" data-sortgo="prev" ${sortAt <= 0 ? "disabled" : ""}>← 前の問い</button>
       <button type="button" class="link" data-sortgo="next" ${sortAt >= qs.length - 1 ? "disabled" : ""}>次の問い →</button>
     </div>
     <ol class="sort-list">${qs.map((x, j) => `
-      <li><button type="button" class="${j === sortAt ? "now" : ""}" data-sortgo="${j}"><em class="ktag ${x.k ? "" : "none"}" style="${kc(x.k)}">${x.k ? esc(num(x.k) + x.k) : "まだ"}</em><span>${esc(x.t)}</span></button></li>`).join("")}
+      <li><button type="button" class="${j === sortAt ? "now" : ""}" data-sortgo="${j}"><em class="ktag ${x.k ? "" : "none"}" style="${kc(x.k)}">${x.k ? esc(numOf(x.k) + x.k) : "まだ"}</em><span>${esc(x.t)}</span></button></li>`).join("")}
     </ol>`;
+}
+// 種類を決めて、カードを箱へ飛ばし、次のまだの問いへ
+function sendTo(c, k) {
+  if (sorting) return;
+  const qs = qsOf(c).map(q => ({ ...q })), idx = sortAt;
+  if (!qs[idx]) return;
+  sorting = true;
+  qs[idx].k = k;
+  c.set("qs", qs);
+  refreshNav(c, L04.canNext(2, c));
+  const card = c.app.querySelector("[data-sortcard]"), box = c.app.querySelector(`.kbox[data-k="${k}"]`);
+  if (card && box) {
+    const a = card.getBoundingClientRect(), b = box.getBoundingClientRect();
+    card.style.transition = "transform .22s ease-in, opacity .22s ease-in";
+    card.style.transform = `translate(${b.left + b.width / 2 - (a.left + a.width / 2)}px, ${b.top + b.height / 2 - (a.top + a.height / 2)}px) scale(.25)`;
+    card.style.opacity = "0";
+    box.classList.add("got");
+  }
+  const next = [...qs.keys()].slice(idx + 1).concat([...qs.keys()].slice(0, idx)).find(j => !qs[j].k);
+  clearTimeout(sortTimer);
+  sortTimer = setTimeout(() => { sorting = false; if (next !== undefined) sortAt = next; refreshSort(c); }, 240);
+}
+// はじく・ドラッグ（指でもマウスでも）
+let drag = null;
+if (typeof document !== "undefined") {
+  document.addEventListener("pointerdown", e => {
+    const card = e.target.closest?.("[data-sortcard]");
+    if (!card || !ctxRef || sorting) return;
+    drag = { card, x: e.clientX, y: e.clientY, t: Date.now(), id: e.pointerId };
+    card.setPointerCapture?.(e.pointerId);
+    card.style.transition = "none";
+  });
+  document.addEventListener("pointermove", e => {
+    if (!drag || e.pointerId !== drag.id) return;
+    const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+    drag.card.style.transform = `translate(${dx}px, ${dy}px) rotate(${dx / 30}deg)`;
+    const k = Math.hypot(dx, dy) > 30 ? DIR8[(Math.round(Math.atan2(-dy, dx) / (Math.PI / 4)) + 8) % 8] : "";
+    ctxRef.app.querySelectorAll(".kbox").forEach(b => b.classList.toggle("aim", b.dataset.k === k));
+  });
+  const end = e => {
+    if (!drag || e.pointerId !== drag.id) return;
+    const { card, x, y } = drag; drag = null;
+    const dx = e.clientX - x, dy = e.clientY - y;
+    ctxRef?.app.querySelectorAll(".kbox.aim").forEach(b => b.classList.remove("aim"));
+    if (Math.hypot(dx, dy) > 40 && ctxRef) { sendTo(ctxRef, DIR8[(Math.round(Math.atan2(-dy, dx) / (Math.PI / 4)) + 8) % 8]); return; }
+    card.style.transition = "transform .15s"; card.style.transform = "";
+  };
+  document.addEventListener("pointerup", end);
+  document.addEventListener("pointercancel", end);
 }
 function refreshSort(c) {
   const box = c.app.querySelector("[data-sort]");
@@ -280,7 +335,7 @@ export const L04 = {
     if (i === 2) {
       if (sortAt < 0 || sortAt >= qs.length) { const f = qs.findIndex(q => !q.k); sortAt = f >= 0 ? f : 0; }
       return `
-        <p>出した問いを1つずつ、<b>問いの7種類</b>（教科書 p.44）に分けよう。押すと次の問いに進みます。迷ったら「${UNKNOWN}」でOK。</p>
+        <p>出した問いを1つずつ、<b>問いの7種類</b>（教科書 p.44）の箱に送ろう。迷ったら「${UNKNOWN}」でOK。</p>
         <div data-sort>${sortHtml(c)}</div>`;
     }
 
@@ -370,19 +425,7 @@ export const L04 = {
       return true;
     }
     const ty = t.closest("[data-qtype]");
-    if (ty) {
-      const idx = Number(ty.dataset.qtype), qs = qsOf(c).map(q => ({ ...q }));
-      if (!qs[idx]) return true;
-      qs[idx].k = ty.dataset.k;
-      c.set("qs", qs);
-      ty.parentElement.querySelectorAll(".kbtn").forEach(b => b.classList.toggle("on", b === ty));
-      refreshNav(c, L04.canNext(2, c));
-      // 少し見せてから、次のまだ分けていない問いへ（後ろ→前の順に探す）
-      const next = [...qs.keys()].slice(idx + 1).concat([...qs.keys()].slice(0, idx)).find(j => !qs[j].k);
-      clearTimeout(sortTimer);
-      sortTimer = setTimeout(() => { if (next !== undefined) sortAt = next; refreshSort(c); }, 280);
-      return true;
-    }
+    if (ty) { sendTo(c, ty.dataset.k); return true; }
     const go = t.closest("[data-sortgo]");
     if (go) {
       const n = qsOf(c).length, v = go.dataset.sortgo;
