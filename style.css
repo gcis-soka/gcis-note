@@ -214,26 +214,28 @@ select.ki { width: auto; padding: 3px 10px; border-radius: 999px; font-size: 15p
 .sort-q { font-size: 21px; font-weight: 700; line-height: 1.5; margin-top: 4px; }
 .kgrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
 @media (max-width: 560px) { .kgrid { grid-template-columns: repeat(2, 1fr); } }
-.kbtn { font: inherit; text-align: left; padding: 8px 10px; border-radius: 12px; border: 2px solid var(--line); background: #fff; cursor: pointer; line-height: 1.35; }
-.kbtn b { display: block; font-size: 16px; }
+.kbtn { --kc: var(--accent); font: inherit; text-align: left; padding: 8px 10px; border-radius: 12px; border: 2px solid color-mix(in srgb, var(--kc) 35%, #fff); border-left: 8px solid var(--kc); background: color-mix(in srgb, var(--kc) 7%, #fff); cursor: pointer; line-height: 1.35; }
+.kbtn b { display: block; font-size: 16px; color: var(--kc); }
 .kbtn span { display: block; font-size: 12px; color: var(--sub); }
-.kbtn:hover { border-color: var(--accent); }
-.kbtn.on { background: var(--accent); border-color: var(--accent); color: #fff; }
-.kbtn.on span { color: #e3f0eb; }
-.kbtn.unk { display: flex; align-items: center; color: var(--sub); }
+.kbtn:hover { border-color: var(--kc); }
+.kbtn.on { background: var(--kc); border-color: var(--kc); color: #fff; }
+.kbtn.on b { color: #fff; }
+.kbtn.on span { color: rgba(255,255,255,.85); }
+.kbtn.unk { display: flex; align-items: center; }
 .sort-move { display: flex; justify-content: space-between; margin: 8px 0 4px; font-size: 14px; }
 .sort-move .link:disabled { color: var(--line); cursor: default; text-decoration: none; }
 .sort-list { list-style: none; padding: 0; margin: 6px 0 0; border-top: 1px dashed var(--line); }
 .sort-list button { display: flex; gap: 10px; align-items: baseline; width: 100%; text-align: left; font: inherit; font-size: 15px; background: none; border: 0; border-bottom: 1px dashed var(--line); padding: 6px 4px; cursor: pointer; color: var(--ink); }
 .sort-list button.now { background: var(--accent-soft); font-weight: 700; }
-.sort-list em { flex: 0 0 6.2em; font-style: normal; font-size: 12px; color: var(--accent); font-weight: 700; }
-.sort-list em.none { color: var(--warn); }
+.ktag { flex: 0 0 auto; min-width: 5.6em; text-align: center; font-style: normal; font-size: 12px; font-weight: 700; color: #fff; background: var(--kc); border-radius: 999px; padding: 1px 8px; }
+.ktag.none { background: #fff; color: var(--sub); border: 1px dashed var(--sub); }
 .qgroups { display: grid; gap: 10px; margin: 8px 0 14px; }
-.qg-h { font-weight: 700; font-size: 14px; color: var(--accent); margin-bottom: 4px; display: flex; gap: 8px; align-items: baseline; }
+.qg { --kc: var(--accent); border-left: 6px solid var(--kc); padding-left: 10px; }
+.qg-h { font-weight: 700; font-size: 14px; color: var(--kc); margin-bottom: 4px; display: flex; gap: 8px; align-items: baseline; }
 .qg-h span { font-weight: 400; color: var(--sub); font-size: 13px; }
 .qpick { display: block; width: 100%; text-align: left; font: inherit; padding: 8px 12px; margin: 4px 0; border-radius: 10px; border: 2px solid var(--line); background: #fff; cursor: pointer; }
-.qpick:hover { border-color: var(--accent); }
-.qpick.on { border-color: var(--accent); background: var(--accent-soft); font-weight: 700; }
+.qpick:hover { border-color: var(--kc, var(--accent)); }
+.qpick.on { border-color: var(--kc, var(--accent)); background: color-mix(in srgb, var(--kc, var(--accent)) 10%, #fff); font-weight: 700; }
 
 /* ホームのカード：done＝提出済み（背景を少し暗く・緑に✓）／now＝いま（緑の枠・緑の輪）／todo＝まだ（点線） */
 .lesson h3 { margin: 0; }

@@ -14,15 +14,17 @@ const tail = s => String(s || "").trim().replace(/[。．.、,，！!\s　]+$/u,
 
 // 問いの7種類（課題研究メソッド p.44・1学期 第1回のスライド）
 export const QTYPES = [
-  { k: "定義", ex: "○○の意味は？" },
-  { k: "原因", ex: "なぜ○○が生じる？" },
-  { k: "信ぴょう性", ex: "本当に○○か？" },
-  { k: "比較", ex: "他ではどうか？" },
-  { k: "先行研究", ex: "これまでの取り組みは？" },
-  { k: "影響", ex: "○○で何が起こる？" },
-  { k: "方法・関連性", ex: "○○と△△の関連は？" }
+  { k: "定義", ex: "○○の意味は？", c: "#3366b8" },
+  { k: "原因", ex: "なぜ○○が生じる？", c: "#d0532a" },
+  { k: "信ぴょう性", ex: "本当に○○か？", c: "#8a46b5" },
+  { k: "比較", ex: "他ではどうか？", c: "#14868f" },
+  { k: "先行研究", ex: "これまでの取り組みは？", c: "#6f7f12" },
+  { k: "影響", ex: "○○で何が起こる？", c: "#c2366e" },
+  { k: "方法・関連性", ex: "○○と△△の関連は？", c: "#a8700a" }
 ];
 const UNKNOWN = "わからない";
+// 種類の色（わからない・まだ は灰色）
+const kc = k => `--kc:${QTYPES.find(x => x.k === k)?.c || "#8a8f98"}`;
 const TYPE_ORDER = [...QTYPES.map(x => x.k), UNKNOWN];
 
 // 調べ方（中3付録 A-5 の5種）と、選ぶ目安
@@ -116,14 +118,14 @@ function sortHtml(c) {
     </div>
     <div class="kgrid">${TYPE_ORDER.map(k => {
       const t = QTYPES.find(x => x.k === k);
-      return `<button type="button" class="kbtn ${q.k === k ? "on" : ""} ${t ? "" : "unk"}" data-qtype="${sortAt}" data-k="${k}"><b>${num(k)}${k}</b>${t ? `<span>${t.ex}</span>` : ""}</button>`;
+      return `<button type="button" class="kbtn ${q.k === k ? "on" : ""} ${t ? "" : "unk"}" style="${kc(k)}" data-qtype="${sortAt}" data-k="${k}"><b>${num(k)}${k}</b>${t ? `<span>${t.ex}</span>` : ""}</button>`;
     }).join("")}</div>
     <div class="sort-move">
       <button type="button" class="link" data-sortgo="prev" ${sortAt <= 0 ? "disabled" : ""}>← 前の問い</button>
       <button type="button" class="link" data-sortgo="next" ${sortAt >= qs.length - 1 ? "disabled" : ""}>次の問い →</button>
     </div>
     <ol class="sort-list">${qs.map((x, j) => `
-      <li><button type="button" class="${j === sortAt ? "now" : ""}" data-sortgo="${j}"><em class="${x.k ? "" : "none"}">${x.k ? esc(num(x.k) + x.k) : "まだ"}</em><span>${esc(x.t)}</span></button></li>`).join("")}
+      <li><button type="button" class="${j === sortAt ? "now" : ""}" data-sortgo="${j}"><em class="ktag ${x.k ? "" : "none"}" style="${kc(x.k)}">${x.k ? esc(num(x.k) + x.k) : "まだ"}</em><span>${esc(x.t)}</span></button></li>`).join("")}
     </ol>`;
 }
 function refreshSort(c) {
@@ -288,7 +290,7 @@ export const L04 = {
         <p>種類ごとに並べ直しました。<b>いちばん確かめてみたい問いを1つ</b>選ぼう（押すと下に入ります）。</p>
         <div class="qgroups">${groups.map(g => {
           const t = QTYPES.find(x => x.k === g.k);
-          return `<div class="qg"><div class="qg-h">${t ? `${QTYPES.indexOf(t) + 1} ${t.k}を問う` : g.k}<span>${g.items.length}</span></div>
+          return `<div class="qg" style="${kc(g.k)}"><div class="qg-h">${t ? `${QTYPES.indexOf(t) + 1} ${t.k}を問う` : g.k}<span>${g.items.length}</span></div>
             ${g.items.map(q => `<button type="button" class="qpick ${d.toi && tail(d.toi) === tail(q.t) ? "on" : ""}" data-qpick="${q.idx}">${esc(q.t)}</button>`).join("")}</div>`;
         }).join("")}</div>
         <div class="share">
