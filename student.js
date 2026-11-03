@@ -30,6 +30,7 @@ export function mountStudent({ be, user, app, asTeacher }) {
   let saveTimer = null, alive = true;
   let dirty = false, lastSaved = 0; // まだ保存していない入力があるか／最後に保存した時刻
   let lastFocus = "";               // 最後に入力した欄（書き出しボタンの入れ先）
+  let promptOnScreen = false;       // いまの画面にAIの文の箱があるか（チャットのURLが要るかの判定）
 
   const note = () => notes[cur.id];
   const isOpen = L => !L.after || !!notes[L.after]?.submitted || asTeacher; // デモの生徒は本物と同じく順に出る
@@ -98,6 +99,8 @@ export function mountStudent({ be, user, app, asTeacher }) {
 
   // AIに送る文の箱。この回のチャットのURL（chatUrl）を最初に預かり、以後は「このチャットに戻る」で必ず同じチャットを開く
   function promptBox(text, { first = false } = {}) {
+    promptOnScreen = true;
+    const need = cur.needChat ? `<b>URLを貼ると「次へ」が押せます。</b>` : "";
     const link = chatUrlOf(note().data.chatUrl), keys = snapKeys();
     return `
       <div class="prompt ${link ? "has-link" : ""}">
@@ -110,8 +113,8 @@ export function mountStudent({ be, user, app, asTeacher }) {
         <p class="note if-link">✓ ${stageLabel(cur)}のチャットを覚えています。ボタンを押すと、いつでも<b>このチャット</b>が開きます。<button class="link small" data-gemini-new>新しいチャットでやり直す</button></p>
         <div class="if-nolink">
           <p class="note" data-gemini-msg>${first
-            ? `開いたGeminiに貼って送信。<b>送信したら</b>、Geminiの窓のいちばん上の<b>URL</b>をコピーして、下に貼ろう。この回はずっとこのチャットを使います。`
-            : `⚠️ さっきの<b>Geminiの窓の同じチャットに</b>貼ってください。下にチャットのURLを貼っておくと、いつでも戻れます。`}</p>
+            ? `開いたGeminiに貼って送信。<b>送信したら</b>、Geminiの窓のいちばん上の<b>URL</b>をコピーして、下に貼ろう。この回はずっとこのチャットを使います。${need}`
+            : `⚠️ さっきの<b>Geminiの窓の同じチャットに</b>貼ってください。下にチャットのURLを貼っておくと、いつでも戻れます。${need}`}</p>
           <label class="chatlink"><span>この回のチャットのURL</span>
             <input type="url" data-key="chatUrl" value="${escapeHtml(note().data.chatUrl || "")}" placeholder="https://gemini.google.com/app/…" autocomplete="off"></label>
           <p class="hint warn-text" data-chaturl-msg hidden></p>
@@ -247,6 +250,7 @@ export function mountStudent({ be, user, app, asTeacher }) {
   }
 
   function renderStep(i) {
+    promptOnScreen = false;
     const n = note(), last = cur.steps.length - 1;
     // この生徒には要らない画面（例：入口Cのキーワード）はとばす。もどるときは手前へ
     const back = i < n.step;
@@ -272,7 +276,10 @@ export function mountStudent({ be, user, app, asTeacher }) {
   // 次へ（最後は提出）を押せるか。提出済みの最後の画面は「ホームへ」なので常に押せる
   function canGo(i, c) {
     const n = note();
-    return (i === cur.steps.length - 1 && n.submitted) || cur.canNext(i, c);
+    if (i === cur.steps.length - 1 && n.submitted) return true;
+    // needChat の回（第1回・第2回）：AIの文がある画面は、チャットのURLを貼るまで次へ進めない
+    if (cur.needChat && promptOnScreen && !chatUrlOf(n.data.chatUrl)) return false;
+    return cur.canNext(i, c);
   }
 
   function updateHints() {
@@ -347,7 +354,7 @@ export function mountStudent({ be, user, app, asTeacher }) {
     const el = e.target.closest("[data-key]");
     if (!el || !cur) return;
     note().data[el.dataset.key] = el.value;
-    if (el.dataset.key === "chatUrl") refreshChatUrl();
+    if (el.dataset.key === "chatUrl") refreshChatUrl(); // 次へ の可否は下の refreshNext で
     scheduleSave(); refreshNext(); updateHints();
   }, { signal: ac.signal });
 

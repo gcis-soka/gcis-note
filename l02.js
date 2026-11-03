@@ -80,6 +80,7 @@ export const L02 = {
     { title: "提出", mins: 2 }
   ],
   geminiKey: "gcis_gemini_L02", // 第1回とは別の、新しいチャット
+  needChat: true, // AIの文がある画面は、この回のチャットのURLを貼るまで次へ進めない（初めのうちは必須）
 
   render(i, c) {
     const { field, promptBox, chips, esc, d } = c;
