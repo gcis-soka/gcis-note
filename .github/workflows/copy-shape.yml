@@ -1,0 +1,50 @@
+# 本番のデータを「形だけ」開発版に写す（手動ボタンだけ）
+#   Actions → copy-shape → Run workflow → Branch：main → Run
+#   本番（gcis-note）は読むだけ。開発版（gcis-note-dev）の前回のダミーを消して入れ直す
+#   ID・アドレスは架空、文章は同じ長さのダミー文。ログは件数だけ（tools/copy-shape.mjs）
+#   使うアカウント：copy@gcis-note（初回だけ tools/setup-copy.sh で作る。main からだけ使える）
+#   1回で、本番の読み取りと開発版の書き込みがそれぞれ生徒数×8件ほど。1日に何度も押さない
+name: copy-shape
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: copy-shape
+  cancel-in-progress: false
+
+jobs:
+  copy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      PROJECT_PROD: gcis-note
+      PROJECT_DEV: gcis-note-dev
+    steps:
+      - name: main から実行しているか確かめる
+        if: github.ref_name != 'main'
+        run: |
+          echo "::error::Branch を main にして実行してください（本番を読む許可は main からだけ）"
+          exit 1
+
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+
+      - name: Google Cloud にログイン（鍵なし・copy@gcis-note）
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: copy@${{ env.PROJECT_PROD }}.iam.gserviceaccount.com
+
+      - name: 形だけ写す
+        run: |
+          npm i --no-save --no-package-lock --silent firebase-admin@13
+          node tools/copy-shape.mjs
+          echo "開発版：https://${PROJECT_DEV}.web.app/ の教員画面で確かめてください" >> "$GITHUB_STEP_SUMMARY"
