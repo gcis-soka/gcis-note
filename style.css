@@ -137,9 +137,10 @@ details.help { margin-top: 8px; font-size: 15px; } details.help summary { cursor
 .st { font-size: 13px; padding: 2px 8px; border-radius: 999px; white-space: nowrap; display: inline-block; }
 .st-none { background: var(--line); } .st-work { background: #fdf3dc; } .st-done { background: var(--accent); color: #fff; }
 .st-stall { background: var(--warn); color: #fff; }
+.st-miss { background: var(--warn-soft); color: var(--warn); }
 .missing { margin-top: 14px; font-size: 15px; color: var(--sub); }
-.g-line { margin: 2px 0; } .g-line + .g-line { margin-top: 6px; }   /* 学年まとめ：未提出の番号 */
-.tbl td .error { margin: 6px 0 0; font-size: 13px; }
+.g-tbl { width: auto; } .g-tbl td { padding: 4px 16px 4px 8px; vertical-align: middle; }   /* 学年まとめ：1人1行 */
+.tab.small { font-size: 13px; padding: 1px 10px; }
 dialog { border: 0; border-radius: var(--radius); padding: 0; max-width: 640px; width: calc(100% - 32px); }
 dialog::backdrop { background: rgba(0,0,0,.35); }
 .dlg { padding: 20px; } .dlg-head { display: flex; justify-content: space-between; align-items: center; }

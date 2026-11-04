@@ -305,7 +305,7 @@ export function mountTeacher({ be, app, dlg }) {
             `<button class="tab ${id === lesson ? "on" : ""}" data-lesson="${id}">${VIEWS[id].tab}</button>`).join("")}</span><button class="btn ghost small" id="csv">CSVで保存</button></div>
         </div>
         ${cls === TEST_CLASS ? `<p class="hint">テスト：期を問わず表示します（アドレス順）。先生が「生徒画面へ」で入力したものもここに出ます。</p>` : ""}
-        ${cls === GRADE ? `<p class="hint">学年まとめ：選んだ回を提出していない人と、まだログインしていない番号をクラスごとに出します。自動では更新しないので、最新にするときは「読み直す」。クラス名を押すとそのクラスの表に移ります。</p>` : ""}
+        ${cls === GRADE ? `<p class="hint">学年まとめ：選んだ回を出せていない人（まだログインしていない人も含む）を、1人1行でクラス・番号順に出します。自動では更新しないので、最新にするときは「読み直す」。クラス名を押すとそのクラスの表に移ります。</p>` : ""}
         <div id="summary" class="summary"></div>
         <div id="methods" class="methods"></div>
         <div id="table"></div>
@@ -440,47 +440,42 @@ export function mountTeacher({ be, app, dlg }) {
       <div class="sum warn"><b>${login - done}</b><span>ログインしたが未提出</span></div>
       <div class="sum warn"><b>${miss}</b><span>まだログインしていない</span></div>`;
 
-    // 未提出の人を、途中／開いていない／前が未提出 に分けて番号で並べる
-    const noneLabel = prevOf(lesson) ? "未着手" : "ログインのみ";
-    const groups = [["work", "途中", "st-work"], ["none", noneLabel, "st-none"], ["prev", "前が未提出", "st-none"]];
-    const notDone = g => groups.map(([k, label, c]) => {
-      const ps = g.people.filter(p => p.st.kind === k);
-      return ps.length
-        ? `<div class="g-line"><span class="st ${c}">${label}</span> ${ps.map(p => k === "work" ? `<span title="${esc(p.st.label)}">${esc(p.number)}</span>` : esc(p.number)).join("、")}</div>`
-        : "";
-    }).join("") || (g.people.length ? `<span class="hint">なし ✓</span>` : "");
-    const warn = g => [
-      g.dup.length ? `番号が重なっています：${g.dup.join("、")}番` : "",
-      g.extra.length ? `${g.size}番より大きい番号：${g.extra.join("、")}番` : ""
-    ].filter(Boolean).map(t => `<p class="error">${t}（入力ミスの可能性）</p>`).join("");
+    // 出せていない人を1人1行で：クラス・番号・いまの状況（まだログインしていない人も含める）
+    const fmtWhen = d => d ? d.toLocaleString("ja-JP", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "—";
+    const order = { miss: 0, prev: 1, none: 2, work: 3 };
+    const list = gs.flatMap(g => [
+      ...g.miss.map(n => ({ c: g.c, number: n, kind: "miss", label: "まだログインしていない", stc: "st-miss" })),
+      ...g.people.filter(p => p.st.kind !== "done").map(p => ({ c: g.c, number: p.number, uid: p.uid, kind: p.st.kind,
+        label: p.st.kind === "work" ? `途中：${p.st.label}` : p.st.label, stc: p.st.cls,
+        when: p.st.kind === "work" ? (grade.notes.find(n => n.uid === p.uid && n.lesson === lesson)?.updatedAt || null) : null }))
+    ]).sort((a, b) => a.c - b.c || a.number - b.number || order[a.kind] - order[b.kind]);
+    const warns = gs.flatMap(g => [
+      g.dup.length ? `${classLabel(g.c)}：番号が重なっています（${g.dup.join("、")}番）` : "",
+      g.extra.length ? `${classLabel(g.c)}：${g.size}番より大きい番号（${g.extra.join("、")}番）` : ""
+    ]).filter(Boolean);
 
-    tbl.innerHTML = `
-      <div class="tbl-wrap"><table class="tbl">
-        <thead><tr><th>クラス</th><th>ログイン</th><th>提出済み</th><th>まだログインしていない番号</th><th>${esc(V.tab)}を提出していない番号（ログインした人）</th></tr></thead>
-        <tbody>${gs.map(g => {
-          const d = g.people.filter(p => p.st.kind === "done").length;
-          return `<tr>
-            <td class="nowrap"><button class="tab" data-goto="${g.c}">${classLabel(g.c)}</button></td>
-            <td class="nowrap">${g.people.length} / ${g.size}</td>
-            <td class="nowrap">${d}</td>
-            <td>${g.miss.length ? g.miss.join("、") : `<span class="hint">全員 ✓</span>`}</td>
-            <td>${notDone(g)}${warn(g)}</td></tr>`;
-        }).join("")}</tbody></table></div>`;
+    tbl.innerHTML = list.length ? `
+      <div class="tbl-wrap"><table class="tbl g-tbl">
+        <thead><tr><th>クラス</th><th>番号</th><th>いまの状況（${esc(V.tab)}）</th><th>最後に書いた時刻</th></tr></thead>
+        <tbody>${list.map(x => `<tr>
+          <td class="nowrap"><button class="tab small" data-goto="${x.c}">${classLabel(x.c)}</button></td>
+          <td class="num">${esc(x.number)}</td>
+          <td><span class="st ${x.stc}">${esc(x.label)}</span></td>
+          <td class="nowrap">${x.kind === "work" ? fmtWhen(x.when) : ""}</td></tr>`).join("")}</tbody></table></div>`
+      : `<p class="hint">全員が${esc(V.tab)}を提出しています ✓</p>`;
+    box.innerHTML = warns.map(t => `<p class="error">${t}（入力ミスの可能性）</p>`).join("");
     tbl.querySelectorAll("[data-goto]").forEach(b => b.onclick = () => {
       cls = Number(b.dataset.goto); lsSet("gcis_t_cls", String(cls)); renderShell(); watch();
     });
   }
 
-  // 学年まとめのCSV：全クラス・全番号の状態（未ログインも1行）
+  // 学年まとめのCSV：画面と同じく、出せていない人を1人1行（まだログインしていない人も含む）
   function gradeCsvLines() {
-    return gradeRows().flatMap(g => {
-      const byNum = {};
-      g.people.forEach(p => (byNum[p.number] ||= []).push(p));
-      const nums = [...new Set([...range(g.size), ...g.people.map(p => p.number)])].sort((a, b) => a - b);
-      return nums.flatMap(n => (byNum[n] || [null]).map(p => [kiLabel(ki), classLabel(g.c), n,
-        p ? p.email : "", p ? (p.st.kind === "done" ? "提出済み" : p.st.kind === "work" ? `途中（${p.st.label}）` : p.st.label) : "まだログインしていない",
-        p ? (p.st.kind === "done" ? "" : "○") : "○"]));
-    });
+    return gradeRows().flatMap(g => [
+      ...g.miss.map(n => ({ n, email: "", label: "まだログインしていない" })),
+      ...g.people.filter(p => p.st.kind !== "done").map(p => ({ n: p.number, email: p.email,
+        label: p.st.kind === "work" ? `途中：${p.st.label}` : p.st.label }))
+    ].sort((a, b) => a.n - b.n).map(x => [kiLabel(ki), classLabel(g.c), x.n, x.label, x.email]));
   }
 
   function showDetail(uid) {
@@ -500,8 +495,8 @@ export function mountTeacher({ be, app, dlg }) {
     const V = view();
     if (cls === GRADE) {
       if (!grade?.at) return;
-      const head = ["期", "クラス", "番号", "アドレス", `進み具合（${V.tab}）`, "未提出"];
-      saveCsv([head, ...gradeCsvLines()], `${lesson}_${kiLabel(ki)}_学年まとめ.csv`);
+      const head = ["期", "クラス", "番号", `いまの状況（${V.tab}）`, "アドレス"];
+      saveCsv([head, ...gradeCsvLines()], `${lesson}_${kiLabel(ki)}_出せていない人.csv`);
       return;
     }
     const head = ["期", "クラス", "番号", "アドレス", "進み具合", ...V.csvHead, "更新"];
