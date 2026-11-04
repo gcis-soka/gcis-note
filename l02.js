@@ -109,7 +109,9 @@ export const L02 = {
       </ol>
       <p class="hint">自分で検索して見つけた記事でもOK。合う記事が見つからないときは、まだ誰も調べていないことかもしれません。それも発見です。</p>
       <h3>② 気になったこと</h3>
-      <p>読んだ記事や、ここまでのことから、<b>気になったことを「？」で終わる形で</b>書こう（1つからでOK）。</p>
+      <ol class="todo">
+        <li>読んだ記事や、ここまでのことから、<b>気になったことを「？」で終わる形で</b>書こう（1つからでOK）</li>
+      </ol>
       <div class="field"><span class="hint">書き出しを押すと、空いている欄に入ります</span>${chips(Q_CHIPS, "q1,q2,q3")}</div>
       ${field("q1", "気になったこと ①", { type: "text", qmark: true })}
       ${field("q2", "気になったこと ②", { type: "text", qmark: true })}
