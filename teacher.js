@@ -1,8 +1,11 @@
-// 教員画面：期・クラス・回ごとの進み具合（リアルタイム）
+// 教員画面：期・クラス・回ごとの進み具合（リアルタイム）＋学年まとめ（読み込みは1回・読み直しボタン）
 import {
-  escapeHtml, classLabel, kiLabel, firstYearKi, methodOf, lsGet, lsSet, quest,
-  CLASSES, MAX_NUMBER, TEST_CLASS, METHODS
+  escapeHtml, classLabel as baseClassLabel, kiLabel, firstYearKi, methodOf, lsGet, lsSet, quest, classSize,
+  CLASSES, TEST_CLASS, METHODS
 } from "./common.js";
+
+const GRADE = -1; // 「学年」タブ（全クラスのまとめ）
+const classLabel = c => c === GRADE ? "学年" : baseClassLabel(c);
 
 const MISSION = quest(1);
 const STALL_MIN = 5; // この分数以上更新がなく未提出なら「止まってる？」
@@ -256,6 +259,22 @@ const VIEWS = {
   }
 };
 const LESSON_IDS = Object.keys(VIEWS);
+const prevOf = id => LESSON_IDS[LESSON_IDS.indexOf(id) - 1] || null; // 1つ前のステージ（これを出すと次が開く）
+// 進み具合。kind：done＝提出済み／work＝途中／none＝開いていない／prev＝前のステージが未提出
+function stageStatus(id, n, before) {
+  if (!n) {
+    if (!prevOf(id)) return { label: "ログインのみ", cls: "st-none", stall: false, kind: "none" };
+    return before?.submitted
+      ? { label: "未着手", cls: "st-none", stall: false, kind: "none" }
+      : { label: "前が未提出", cls: "st-none", stall: false, kind: "prev" };
+  }
+  if (n.submitted) return { label: "提出済み", cls: "st-done", stall: false, kind: "done" };
+  const V = VIEWS[id], step = n.step ?? 0;
+  const mins = n.updatedAt ? (Date.now() - n.updatedAt.getTime()) / 60000 : 0;
+  return { label: `${step + 1}. ${V.stepNames[step] ?? ""}`, cls: "st-work", stall: !V.noStall && mins >= STALL_MIN, kind: "work" };
+}
+const range = n => Array.from({ length: n }, (_, i) => i + 1);
+const dupsOf = nums => [...new Set(nums.filter((n, i, a) => a.indexOf(n) !== i))];
 function lessonForToday() {
   const today = new Date().toLocaleDateString("sv-SE"); // YYYY-MM-DD（端末の日付）
   return [...LESSON_IDS].reverse().find(id => VIEWS[id].date <= today) || LESSON_IDS[0];
@@ -266,13 +285,15 @@ export function mountTeacher({ be, app, dlg }) {
   const KIS = [k1, String(k1 - 1), String(k1 - 2), ""]; // 1年・2年・3年・期なし
   let ki = KIS.includes(lsGet("gcis_t_ki") ?? "x") ? lsGet("gcis_t_ki") : k1;
   let cls = Number(lsGet("gcis_t_cls") ?? 1);
-  if (![...CLASSES, TEST_CLASS].includes(cls)) cls = 1;
+  if (![GRADE, ...CLASSES, TEST_CLASS].includes(cls)) cls = 1;
   let lesson = lessonForToday(); // 回は保存しない（授業日に合わせて開く）
   let unwatch = null, students = [], notes = [];
+  // 学年まとめ：{ students, notes, at（読み込んだ時刻）, lessons（読んだ回）, loading, error }
+  let grade = null, gradeToken = 0;
   const view = () => VIEWS[lesson];
 
   function renderShell() {
-    const tabs = [...CLASSES, TEST_CLASS].map(c =>
+    const tabs = [GRADE, ...CLASSES, TEST_CLASS].map(c =>
       `<button class="tab ${c === cls ? "on" : ""}" data-cls="${c}">${classLabel(c)}</button>`).join("");
     const kiOpts = KIS.map((k, i) =>
       `<option value="${k}" ${k === ki ? "selected" : ""}>${kiLabel(k)}${i < 3 && k ? `（いまの${i + 1}年）` : ""}</option>`).join("");
@@ -284,6 +305,7 @@ export function mountTeacher({ be, app, dlg }) {
             `<button class="tab ${id === lesson ? "on" : ""}" data-lesson="${id}">${VIEWS[id].tab}</button>`).join("")}</span><button class="btn ghost small" id="csv">CSVで保存</button></div>
         </div>
         ${cls === TEST_CLASS ? `<p class="hint">テスト：期を問わず表示します（アドレス順）。先生が「生徒画面へ」で入力したものもここに出ます。</p>` : ""}
+        ${cls === GRADE ? `<p class="hint">学年まとめ：選んだ回を提出していない人と、まだログインしていない番号をクラスごとに出します。自動では更新しないので、最新にするときは「読み直す」。クラス名を押すとそのクラスの表に移ります。</p>` : ""}
         <div id="summary" class="summary"></div>
         <div id="methods" class="methods"></div>
         <div id="table"></div>
@@ -292,7 +314,10 @@ export function mountTeacher({ be, app, dlg }) {
     app.querySelectorAll("[data-cls]").forEach(b => b.onclick = () => {
       cls = Number(b.dataset.cls); lsSet("gcis_t_cls", String(cls)); renderShell(); watch();
     });
-    app.querySelectorAll("[data-lesson]").forEach(b => b.onclick = () => { lesson = b.dataset.lesson; renderShell(); renderTable(); });
+    app.querySelectorAll("[data-lesson]").forEach(b => b.onclick = () => {
+      lesson = b.dataset.lesson; renderShell();
+      if (cls === GRADE) loadGrade(); else renderTable();
+    });
     document.getElementById("ki").onchange = e => { ki = e.target.value; lsSet("gcis_t_ki", ki); watch(); };
     document.getElementById("csv").onclick = downloadCsv;
   }
@@ -307,28 +332,20 @@ export function mountTeacher({ be, app, dlg }) {
       : rs.sort((a, b) => a.number - b.number);
   }
 
-  function status(r) {
-    const n = r.note;
-    if (!n) {
-      if (lesson === "L01") return { label: "ログインのみ", cls: "st-none", stall: false };
-      const before = { R01: r.l01, L02: r.r01, R02: r.l02, L03: r.r02, R03: r.l03, L04: r.r03 }[lesson];
-      return { label: before?.submitted ? "未着手" : "前が未提出", cls: "st-none", stall: false };
-    }
-    if (n.submitted) return { label: "提出済み", cls: "st-done", stall: false };
-    const mins = n.updatedAt ? (Date.now() - n.updatedAt.getTime()) / 60000 : 0;
-    return { label: `${(n.step ?? 0) + 1}. ${view().stepNames[n.step ?? 0]}`, cls: "st-work", stall: !view().noStall && mins >= STALL_MIN };
-  }
+  const status = r => stageStatus(lesson, r.note, prevOf(lesson) ? r[prevOf(lesson).toLowerCase()] : null);
 
   const fmtTime = d => d ? d.toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" }) : "—";
   const numCell = r => cls === TEST_CLASS ? escapeHtml(r.number ? `${r.number}番` : "教員") : r.number;
 
   function renderTable() {
     if (!document.getElementById("table")) return;
+    if (cls === GRADE) { renderGrade(); return; }
+    const size = classSize(ki, cls);
     const rs = rows();
     const submitted = rs.filter(r => r.note?.submitted).length;
     const stalled = rs.filter(r => status(r).stall).length;
     document.getElementById("summary").innerHTML = `
-      <div class="sum"><b>${rs.length}</b><span>ログイン${cls === TEST_CLASS ? "" : ` / ${MAX_NUMBER}`}</span></div>
+      <div class="sum"><b>${rs.length}</b><span>ログイン${cls === TEST_CLASS ? "" : ` / ${size}`}</span></div>
       <div class="sum"><b>${submitted}</b><span>提出済み</span></div>
       <div class="sum warn"><b>${stalled}</b><span>${view().noStall ? "（家でやるので数えない）" : `${STALL_MIN}分以上止まってる？`}</span></div>`;
 
@@ -354,10 +371,116 @@ export function mountTeacher({ be, app, dlg }) {
     const box = document.getElementById("missing");
     if (cls === TEST_CLASS) { box.innerHTML = ""; return; }
     const have = new Set(rs.map(r => r.number));
-    const miss = Array.from({ length: MAX_NUMBER }, (_, i) => i + 1).filter(n => !have.has(n));
+    const miss = range(size).filter(n => !have.has(n));
     box.innerHTML = miss.length ? `<b>まだログインしていない番号：</b>${miss.join("、")}` : `<b>全員ログインしています ✓</b>`;
-    const dup = rs.map(r => r.number).filter((n, i, a) => a.indexOf(n) !== i);
-    if (dup.length) box.innerHTML += `<p class="error">番号が重なっています：${[...new Set(dup)].join("、")}番（入力ミスの可能性）</p>`;
+    const dup = dupsOf(rs.map(r => r.number));
+    if (dup.length) box.innerHTML += `<p class="error">番号が重なっています：${dup.join("、")}番（入力ミスの可能性）</p>`;
+    const extra = rs.map(r => r.number).filter(n => n > size);
+    if (extra.length) box.innerHTML += `<p class="error">${size}番より大きい番号：${[...new Set(extra)].join("、")}番（入力ミスの可能性）</p>`;
+  }
+
+  // ---------- 学年まとめ ----------
+  async function loadGrade() {
+    const my = ++gradeToken, lessons = [prevOf(lesson), lesson].filter(Boolean);
+    grade = { ...(grade || {}), loading: true, error: "" };
+    renderGrade();
+    try {
+      const g = be.demo
+        ? (() => { const all = CLASSES.map(c => demoData(c)); return { students: all.flatMap(x => x[0]), notes: all.flatMap(x => x[1]) }; })()
+        : await be.getGrade({ ki }, lessons);
+      if (my !== gradeToken) return;
+      grade = { ...g, lessons, at: new Date(), loading: false, error: "" };
+    } catch (e) {
+      console.error(e);
+      if (my !== gradeToken) return;
+      grade = { students: [], notes: [], lessons, at: null, loading: false,
+        error: "読み込めません（権限エラー）。先生のアカウント（@soka.ed.jp）か、Firestoreのルールが最新か確認してください。" };
+    }
+    renderGrade();
+  }
+
+  // クラスごと：人数・ログインした人（進み具合つき）・まだログインしていない番号・重なり・大きすぎる番号
+  function gradeRows() {
+    const by = id => Object.fromEntries((grade?.notes || []).filter(n => n.lesson === id).map(n => [n.uid, n]));
+    const cur = by(lesson), bef = prevOf(lesson) ? by(prevOf(lesson)) : {};
+    return CLASSES.map(c => {
+      const size = classSize(ki, c);
+      const people = (grade?.students || []).filter(s => s.class === c).sort((a, b) => a.number - b.number)
+        .map(s => ({ ...s, st: stageStatus(lesson, cur[s.uid] || null, bef[s.uid] || null) }));
+      const have = new Set(people.map(p => p.number));
+      return {
+        c, size, people,
+        miss: range(size).filter(n => !have.has(n)),
+        dup: dupsOf(people.map(p => p.number)),
+        extra: [...new Set(people.map(p => p.number).filter(n => n > size))]
+      };
+    });
+  }
+
+  function renderGrade() {
+    const sum = document.getElementById("summary"), tbl = document.getElementById("table");
+    const mth = document.getElementById("methods"), box = document.getElementById("missing");
+    if (!tbl || cls !== GRADE) return;
+    box.innerHTML = "";
+    const at = grade?.at ? grade.at.toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" }) : "";
+    mth.innerHTML = `<span class="hint">${grade?.loading ? "読み込み中…" : at ? `${at} に読み込み` : ""}</span>
+      <button class="btn ghost small" id="reload" ${grade?.loading ? "disabled" : ""}>読み直す</button>`;
+    document.getElementById("reload").onclick = loadGrade;
+    if (grade?.error) { sum.innerHTML = ""; tbl.innerHTML = `<p class="error">${esc(grade.error)}</p>`; return; }
+    if (!grade?.at) { sum.innerHTML = ""; tbl.innerHTML = ""; return; }
+
+    const gs = gradeRows(), V = view();
+    const total = gs.reduce((a, g) => a + g.size, 0);
+    const login = gs.reduce((a, g) => a + g.people.length, 0);
+    const done = gs.reduce((a, g) => a + g.people.filter(p => p.st.kind === "done").length, 0);
+    const miss = gs.reduce((a, g) => a + g.miss.length, 0);
+    sum.innerHTML = `
+      <div class="sum"><b>${login}</b><span>ログイン / ${total}</span></div>
+      <div class="sum"><b>${done}</b><span>${esc(V.tab)}を提出済み</span></div>
+      <div class="sum warn"><b>${login - done}</b><span>ログインしたが未提出</span></div>
+      <div class="sum warn"><b>${miss}</b><span>まだログインしていない</span></div>`;
+
+    // 未提出の人を、途中／開いていない／前が未提出 に分けて番号で並べる
+    const noneLabel = prevOf(lesson) ? "未着手" : "ログインのみ";
+    const groups = [["work", "途中", "st-work"], ["none", noneLabel, "st-none"], ["prev", "前が未提出", "st-none"]];
+    const notDone = g => groups.map(([k, label, c]) => {
+      const ps = g.people.filter(p => p.st.kind === k);
+      return ps.length
+        ? `<div class="g-line"><span class="st ${c}">${label}</span> ${ps.map(p => k === "work" ? `<span title="${esc(p.st.label)}">${esc(p.number)}</span>` : esc(p.number)).join("、")}</div>`
+        : "";
+    }).join("") || (g.people.length ? `<span class="hint">なし ✓</span>` : "");
+    const warn = g => [
+      g.dup.length ? `番号が重なっています：${g.dup.join("、")}番` : "",
+      g.extra.length ? `${g.size}番より大きい番号：${g.extra.join("、")}番` : ""
+    ].filter(Boolean).map(t => `<p class="error">${t}（入力ミスの可能性）</p>`).join("");
+
+    tbl.innerHTML = `
+      <div class="tbl-wrap"><table class="tbl">
+        <thead><tr><th>クラス</th><th>ログイン</th><th>提出済み</th><th>まだログインしていない番号</th><th>${esc(V.tab)}を提出していない番号（ログインした人）</th></tr></thead>
+        <tbody>${gs.map(g => {
+          const d = g.people.filter(p => p.st.kind === "done").length;
+          return `<tr>
+            <td class="nowrap"><button class="tab" data-goto="${g.c}">${classLabel(g.c)}</button></td>
+            <td class="nowrap">${g.people.length} / ${g.size}</td>
+            <td class="nowrap">${d}</td>
+            <td>${g.miss.length ? g.miss.join("、") : `<span class="hint">全員 ✓</span>`}</td>
+            <td>${notDone(g)}${warn(g)}</td></tr>`;
+        }).join("")}</tbody></table></div>`;
+    tbl.querySelectorAll("[data-goto]").forEach(b => b.onclick = () => {
+      cls = Number(b.dataset.goto); lsSet("gcis_t_cls", String(cls)); renderShell(); watch();
+    });
+  }
+
+  // 学年まとめのCSV：全クラス・全番号の状態（未ログインも1行）
+  function gradeCsvLines() {
+    return gradeRows().flatMap(g => {
+      const byNum = {};
+      g.people.forEach(p => (byNum[p.number] ||= []).push(p));
+      const nums = [...new Set([...range(g.size), ...g.people.map(p => p.number)])].sort((a, b) => a - b);
+      return nums.flatMap(n => (byNum[n] || [null]).map(p => [kiLabel(ki), classLabel(g.c), n,
+        p ? p.email : "", p ? (p.st.kind === "done" ? "提出済み" : p.st.kind === "work" ? `途中（${p.st.label}）` : p.st.label) : "まだログインしていない",
+        p ? (p.st.kind === "done" ? "" : "○") : "○"]));
+    });
   }
 
   function showDetail(uid) {
@@ -375,20 +498,32 @@ export function mountTeacher({ be, app, dlg }) {
   const csvCell = s => `"${String(s ?? "").replace(/"/g, '""')}"`;
   function downloadCsv() {
     const V = view();
+    if (cls === GRADE) {
+      if (!grade?.at) return;
+      const head = ["期", "クラス", "番号", "アドレス", `進み具合（${V.tab}）`, "未提出"];
+      saveCsv([head, ...gradeCsvLines()], `${lesson}_${kiLabel(ki)}_学年まとめ.csv`);
+      return;
+    }
     const head = ["期", "クラス", "番号", "アドレス", "進み具合", ...V.csvHead, "更新"];
     const lines = rows().map(r =>
       [kiLabel(r.ki), classLabel(r.class), r.number || "", r.email, status(r).label, ...V.csvRow(r),
         r.note?.updatedAt?.toLocaleString("ja-JP") || ""].map(csvCell).join(","));
-    const blob = new Blob(["\ufeff" + [head.map(csvCell).join(","), ...lines].join("\r\n")], { type: "text/csv" });
+    downloadText([head.map(csvCell).join(","), ...lines].join("\r\n"),
+      cls === TEST_CLASS ? `${lesson}_テスト.csv` : `${lesson}_${kiLabel(ki)}_${classLabel(cls)}.csv`);
+  }
+  const saveCsv = (rowsArr, name) => downloadText(rowsArr.map(r => r.map(csvCell).join(",")).join("\r\n"), name);
+  function downloadText(text, name) {
+    const blob = new Blob(["\ufeff" + text], { type: "text/csv" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = cls === TEST_CLASS ? `${lesson}_テスト.csv` : `${lesson}_${kiLabel(ki)}_${classLabel(cls)}.csv`;
+    a.download = name;
     a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   }
 
   function watch() {
-    unwatch?.();
+    unwatch?.(); unwatch = null;
+    if (cls === GRADE) { loadGrade(); return; }
     students = []; notes = []; renderTable();
     if (be.demo) { [students, notes] = demoData(); renderTable(); return; }
     unwatch = be.watchGroup({ ki, cls }, null, // すべてのステージ（第2回の表に第1回の説も出すため）
@@ -402,7 +537,8 @@ export function mountTeacher({ be, app, dlg }) {
   }
 
   // デモ用の架空データ（実在の生徒ではありません）
-  function demoData() {
+  function demoData(cls0 = cls) {
+    const cls = cls0;
     const ex = [
       ["完全に静かな部屋よりも、適度な雑音がある場所の方が没頭しやすい", "【やってみる】無音と、カフェの雑音を流したときで、15分ずつ同じ問題を解いて比べる"],
       ["画面を白黒にするだけで、スマホを見る時間が激減する", "【測る】3日はいつもどおり、3日は白黒にして、スクリーンタイムを記録する"],

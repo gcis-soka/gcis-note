@@ -6,6 +6,14 @@ export const TEACHER_DOMAIN = "soka.ed.jp";       // 教員（@tokyo.soka.ed.jp 
 export const CLASSES = [1, 2, 3, 4, 5, 6, 7, 8];
 export const MAX_NUMBER = 41;
 export const TEST_CLASS = 0; // 動作確認用（教員画面では「テスト」と表示）
+// クラスの人数（番号の最大値）。期ごとに書く。数字ならどのクラスも同じ、{ 1: 40, 2: 41, … } ならクラスごと。
+// 書いていない期・クラスは MAX_NUMBER。MAX_NUMBER（41）より多くするときは firestore.rules の validNumber も変える
+export const CLASS_SIZES = { "59": 41 };
+export function classSize(ki, c) {
+  const v = CLASS_SIZES[ki];
+  const n = typeof v === "number" ? v : v?.[c];
+  return Number.isInteger(n) && n >= 1 && n <= MAX_NUMBER ? n : MAX_NUMBER;
+}
 export const GEMINI_URL = "https://gemini.google.com/app";
 // 学校図書館の蔵書検索（先生から届いたら差し替える。{q} があれば検索語が入る。なければそのページを開くだけ）
 export const LIBRARY_URL = "https://example.com/opac/search?q={q}"; // ダミー
@@ -183,6 +191,18 @@ export async function createBackend() {
       const u2 = fs.onSnapshot(fs.query(fs.collection(db, "notes"), ...nw),
         snap => onNotes(snap.docs.map(d => ({ id: d.id, ...d.data(), updatedAt: toDate(d.data().updatedAt) }))), onError);
       return () => { u1(); u2(); };
+    },
+    // 教員用：学年まとめ。1つの期の全クラスを1回だけ読む（リアルタイムにしない＝読み取り回数を抑える）
+    // lessons：読む回（いまの回と、その1つ前）。期＋回の「＝」だけの絞り込みなので複合インデックスは要らない
+    async getGrade({ ki }, lessons) {
+      const [s, ...ns] = await Promise.all([
+        fs.getDocs(fs.query(fs.collection(db, "students"), fs.where("ki", "==", ki))),
+        ...lessons.map(l => fs.getDocs(fs.query(fs.collection(db, "notes"), fs.where("ki", "==", ki), fs.where("lesson", "==", l))))
+      ]);
+      return {
+        students: s.docs.map(d => ({ uid: d.id, ...d.data() })),
+        notes: ns.flatMap(q => q.docs.map(d => ({ id: d.id, ...d.data(), updatedAt: toDate(d.data().updatedAt) })))
+      };
     }
   };
 }
