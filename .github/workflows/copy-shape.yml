@@ -1,7 +1,7 @@
-# 本番のデータを「形だけ」開発版に写す（手動ボタンだけ）
+# 本番の生徒データを開発版にそのまま写す（手動ボタンだけ。11/4 先生の判断で、ダミーにせずそのまま）
 #   Actions → copy-shape → Run workflow → Branch：main → Run
-#   本番（gcis-note）は読むだけ。開発版（gcis-note-dev）の前回のダミーを消して入れ直す
-#   ID・アドレスは架空、文章は同じ長さのダミー文。ログは件数だけ（tools/copy-shape.mjs）
+#   本番（gcis-note）は読むだけ。開発版（gcis-note-dev）へ同じ ID で上書き（何度押しても重ならない）
+#   uid はプロジェクトごとに別なので、生徒が開発版にログインしても写したノートは出ない。ログは件数だけ（tools/copy-shape.mjs）
 #   使うアカウント：copy-shape@gcis-note（初回だけ tools/setup-copy.sh で作る。main からだけ使える）
 #   1回で、本番の読み取りと開発版の書き込みがそれぞれ生徒数×8件ほど。1日に何度も押さない
 name: copy-shape
@@ -43,7 +43,7 @@ jobs:
           workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
           service_account: copy-shape@${{ env.PROJECT_PROD }}.iam.gserviceaccount.com
 
-      - name: 形だけ写す
+      - name: 本番のデータを写す
         run: |
           npm i --no-save --no-package-lock --silent firebase-admin@13
           node tools/copy-shape.mjs
