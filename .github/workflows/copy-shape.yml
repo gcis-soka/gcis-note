@@ -2,7 +2,7 @@
 #   Actions → copy-shape → Run workflow → Branch：main → Run
 #   本番（gcis-note）は読むだけ。開発版（gcis-note-dev）の前回のダミーを消して入れ直す
 #   ID・アドレスは架空、文章は同じ長さのダミー文。ログは件数だけ（tools/copy-shape.mjs）
-#   使うアカウント：copy@gcis-note（初回だけ tools/setup-copy.sh で作る。main からだけ使える）
+#   使うアカウント：copy-shape@gcis-note（初回だけ tools/setup-copy.sh で作る。main からだけ使える）
 #   1回で、本番の読み取りと開発版の書き込みがそれぞれ生徒数×8件ほど。1日に何度も押さない
 name: copy-shape
 
@@ -37,11 +37,11 @@ jobs:
         with:
           node-version: "22"
 
-      - name: Google Cloud にログイン（鍵なし・copy@gcis-note）
+      - name: Google Cloud にログイン（鍵なし・copy-shape@gcis-note）
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
-          service_account: copy@${{ env.PROJECT_PROD }}.iam.gserviceaccount.com
+          service_account: copy-shape@${{ env.PROJECT_PROD }}.iam.gserviceaccount.com
 
       - name: 形だけ写す
         run: |

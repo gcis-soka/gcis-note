@@ -27,14 +27,14 @@
 ## 開発版に本番の「形」を写す（copy-shape）
 - 本番のデータを、ID・アドレスは架空、文章は同じ長さのダミー文にして開発版に入れる。選択肢・日付・段階・テーマの例・問いの種類・数はそのまま。更新後に既存データがどう見えるかを開発版で確かめるため
 - 使い方：Actions → **copy-shape** → Run workflow → Branch：**main** → Run（2〜3分）。前回のダミーは消して入れ直す（先生のテストは残る）。結果の画面には件数だけが出る
-- 本番は読むだけ。使うのは写す専用のアカウント copy@gcis-note（main からだけ・手動だけ）。配信用の deploy@ は今までどおり生徒データを読めない
+- 本番は読むだけ。使うのは写す専用のアカウント copy-shape@gcis-note（main からだけ・手動だけ）。配信用の deploy@ は今までどおり生徒データを読めない
 - 1回で本番の読み取り・開発版の書き込みがそれぞれ数千件。無料枠の中だが、1日に何度も押さない
 - 初回だけ（gcis@・3分）：https://console.cloud.google.com/ → プロジェクト **gcis-note** → 右上の `>_` → 次の2行を貼って Enter
 ```
 curl -sLO https://raw.githubusercontent.com/gcis-soka/gcis-note/main/tools/setup-copy.sh
 bash setup-copy.sh
 ```
-- やめるとき：Cloud Console（gcis-note）→ IAM と管理 → サービス アカウント → copy@ を削除
+- やめるとき：Cloud Console（gcis-note）→ IAM と管理 → サービス アカウント → copy-shape@ を削除
 
 ---
 
