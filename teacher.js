@@ -121,13 +121,12 @@ const VIEWS = {
       return `
         <div class="recap">${item(s, "setsu", "第1回の説")}${item(s, "ippo", MISSION)}${item(s, "yosou", "予想")}</div>
         ${resultRows(r.r01?.data || {})}${item(d, "tomo", "友だちに言われたこと")}
-        <div class="tc-row"><span>気になったこと</span><b>${qs.length ? `<ul class="qs">${qs.map(q => `<li>${esc(q)}</li>`).join("")}</ul>` : "—"}</b></div>
-        <div class="tc-row"><span>Geminiのチャット</span><b>${linkCell(d.geminiLink)}</b></div>`;
+        <div class="tc-row"><span>気になったこと</span><b>${qs.length ? `<ul class="qs">${qs.map(q => `<li>${esc(q)}</li>`).join("")}</ul>` : "—"}</b></div>`;
     },
-    csvHead: ["説（第1回）", "やった／まだ", "友だちに言われたこと", "気になったこと1", "気になったこと2", "気になったこと3", "Geminiのリンク"],
+    csvHead: ["説（第1回）", "やった／まだ", "友だちに言われたこと", "気になったこと1", "気になったこと2", "気になったこと3"],
     csvRow: r => {
       const d = r.note?.data || {}, s = r.l01?.data || {};
-      return [s.setsu, r.r01?.data?.did, d.tomo, d.q1, d.q2, d.q3, d.geminiLink];
+      return [s.setsu, r.r01?.data?.did, d.tomo, d.q1, d.q2, d.q3];
     }
   },
   R02: {

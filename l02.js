@@ -1,7 +1,7 @@
 // ステージ3／第2回（11/9）同じことに関心を持つ人を探す
 // 仕様：ナレッジの L02.md「アプリ画面」／プロンプト：L02_PROMPTS（確定）
 // 結果の記録は R01（Quest 1 の結果）。ここでは R01 を読んでプロンプトに入れる
-// data：tomo・geminiLink・q1〜q3・findq（本か動画を探す言葉）
+// data：tomo・q1〜q3・findq（本か動画を探す言葉）。チャットは chatUrl（最初のAIの文の下で預かる）
 import { quest } from "./common.js";
 import { findTools, handleFind, PICK_TIPS } from "./r02.js";
 const MISSION = quest(1);
@@ -104,10 +104,8 @@ export const L02 = {
       <ol class="todo">
         <li>出てきた見出しを眺めて、いちばん「へぇ」と思った1つを読もう</li>
         <li><b>リンクを開いて、見出しと中身が合っているか見る</b>（AIは、ない記事を作ってしまうことがあります）</li>
-        <li><b>誰が出したか</b>（国・新聞・企業・個人）を見る</li>
       </ol>
-      <p class="hint">自分で検索して見つけた記事でもOK。合う記事が見つからないときは、まだ誰も調べていないことかもしれません。それも発見です。</p>
-      ${field("geminiLink", "Geminiのチャットのリンク（なくてもOK）", { type: "url", placeholder: "https://…", hint: "次回、記事を開き直すのに使います。Geminiの「共有」→「リンクをコピー」" })}`;
+      <p class="hint">自分で検索して見つけた記事でもOK。合う記事が見つからないときは、まだ誰も調べていないことかもしれません。それも発見です。</p>`;
     if (i === 2) return `
       <p>読んだ記事や、ここまでのことから、<b>気になったことを「？」で終わる形で</b>書こう（1つからでOK）。</p>
       <div class="field"><span class="hint">書き出しを押すと、空いている欄に入ります</span>${chips(Q_CHIPS, "q1,q2,q3")}</div>

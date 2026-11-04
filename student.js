@@ -31,6 +31,7 @@ export function mountStudent({ be, user, app, asTeacher }) {
   let dirty = false, lastSaved = 0; // まだ保存していない入力があるか／最後に保存した時刻
   let lastFocus = "";               // 最後に入力した欄（書き出しボタンの入れ先）
   let promptOnScreen = false;       // いまの画面にAIの文の箱があるか（チャットのURLが要るかの判定）
+  let promptCount = 0;              // いまの画面の何個目の箱か（URLの欄は1個目の箱にだけ出す）
 
   const note = () => notes[cur.id];
   const isOpen = L => !L.after || !!notes[L.after]?.submitted || asTeacher; // デモの生徒は本物と同じく順に出る
@@ -100,6 +101,7 @@ export function mountStudent({ be, user, app, asTeacher }) {
   // AIに送る文の箱。この回のチャットのURL（chatUrl）を最初に預かり、以後は「このチャットに戻る」で必ず同じチャットを開く
   function promptBox(text, { first = false } = {}) {
     promptOnScreen = true;
+    const urlHere = ++promptCount === 1; // URLの欄は、この画面の1個目の箱にだけ（2か所あると迷うため）
     const need = cur.needChat ? `<b>URLを貼ると「次へ」が押せます。</b>` : "";
     const link = chatUrlOf(note().data.chatUrl), keys = snapKeys();
     return `
@@ -114,10 +116,12 @@ export function mountStudent({ be, user, app, asTeacher }) {
         <div class="if-nolink">
           <p class="note" data-gemini-msg>${first
             ? `開いたGeminiに貼って送信。<b>送信したら</b>、Geminiの窓のいちばん上の<b>URL</b>をコピーして、下に貼ろう。この回はずっとこのチャットを使います。${need}`
-            : `⚠️ さっきの<b>Geminiの窓の同じチャットに</b>貼ってください。下にチャットのURLを貼っておくと、いつでも戻れます。${need}`}</p>
-          <label class="chatlink"><span>この回のチャットのURL</span>
+            : urlHere
+              ? `⚠️ さっきの<b>Geminiの窓の同じチャットに</b>貼ってください。下にチャットのURLを貼っておくと、いつでも戻れます。${need}`
+              : `⚠️ さっきの<b>Geminiの窓の同じチャットに</b>貼ってください。チャットのURLは<b>上の欄</b>に貼ります。`}</p>
+          ${urlHere ? `<label class="chatlink"><span>この回のチャットのURL</span>
             <input type="url" data-key="chatUrl" value="${escapeHtml(note().data.chatUrl || "")}" placeholder="https://gemini.google.com/app/…" autocomplete="off"></label>
-          <p class="hint warn-text" data-chaturl-msg hidden></p>
+          <p class="hint warn-text" data-chaturl-msg hidden></p>` : ""}
         </div>
         ${keys ? `<p class="hint snap" data-snap hidden>アプリの画面を左に寄せるには <kbd>${keys}</kbd>。Geminiと左右に並べて使おう。</p>` : ""}
       </div>`;
@@ -251,6 +255,7 @@ export function mountStudent({ be, user, app, asTeacher }) {
 
   function renderStep(i) {
     promptOnScreen = false;
+    promptCount = 0;
     const n = note(), last = cur.steps.length - 1;
     // この生徒には要らない画面（例：入口Cのキーワード）はとばす。もどるときは手前へ
     const back = i < n.step;
