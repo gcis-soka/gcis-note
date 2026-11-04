@@ -15,7 +15,9 @@ export function findTools(c, key = "findq") {
     <div class="searchbtns">
       <button type="button" class="btn" data-find="youtube" data-findkey="${key}">YouTubeで探す ↗</button>
       <button type="button" class="btn ghost" data-find="library" data-findkey="${key}">学校図書館の蔵書検索 ↗</button>
-    </div>`;
+    </div>
+    <p class="hint" data-find-msg hidden></p>
+    <p class="hint">蔵書検索でヒットしないときは、もっと広い1語にしてみよう（例：「睡眠 集中力」→「睡眠」）。</p>`;
 }
 export function handleFind(t, c) {
   const b = t.closest("[data-find]");
@@ -24,11 +26,35 @@ export function handleFind(t, c) {
   if (b.dataset.find === "youtube") {
     if (!q) { alert("先に探す言葉を入れてね"); return true; }
     window.open(YOUTUBE_SEARCH(q), "_blank", "noopener");
+  } else if (LIBRARY_URL.includes("{q}")) {
+    window.open(LIBRARY_URL.replace("{q}", encodeURIComponent(q)), "_blank", "noopener");
   } else {
-    window.open(LIBRARY_URL.includes("{q}") ? LIBRARY_URL.replace("{q}", encodeURIComponent(q)) : LIBRARY_URL, "_blank", "noopener");
+    // 蔵書検索は検索語をURLに載せられない → 言葉をコピーしてから開き、貼ってもらう
+    const copied = q ? copyText(q) : false;
+    window.open(LIBRARY_URL, "_blank", "noopener");
+    const msg = b.closest(".field, .searchbtns")?.parentElement?.querySelector("[data-find-msg]");
+    if (msg) {
+      msg.hidden = false;
+      msg.innerHTML = copied
+        ? `「${escapeText(q)}」をコピーしました。開いた蔵書検索の<b>検索欄に貼り付けて</b>（Ctrl＋V）、検索しよう。`
+        : `開いた蔵書検索の<b>検索欄に、探す言葉を入れて</b>検索しよう。`;
+    }
   }
   return true;
 }
+// 押した瞬間に同期でコピー（新しいタブに移る前に済ませる）
+function copyText(t) {
+  try {
+    const ta = document.createElement("textarea");
+    ta.value = t; ta.style.position = "fixed"; ta.style.opacity = "0";
+    document.body.appendChild(ta); ta.select();
+    const ok = document.execCommand("copy"); ta.remove();
+    if (ok) return true;
+  } catch { /* 下へ */ }
+  try { navigator.clipboard?.writeText(t); return true; } catch { return false; }
+}
+const escapeText = t => String(t).replace(/[&<>"]/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch]));
+
 export const PICK_TIPS = `
   <p class="hint">図書館に行くと、探していた本の近くにある本も見られます。気になったら手に取ってみよう。</p>`;
 

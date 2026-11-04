@@ -16,7 +16,7 @@ export function classSize(ki, c) {
 }
 export const GEMINI_URL = "https://gemini.google.com/app";
 // 学校図書館の蔵書検索（先生から届いたら差し替える。{q} があれば検索語が入る。なければそのページを開くだけ）
-export const LIBRARY_URL = "https://example.com/opac/search?q={q}"; // ダミー
+export const LIBRARY_URL = "https://lib-finder.net/tokyo_soka_lib/"; // 学校図書館の蔵書検索（11/4）。検索語をURLに載せられないので、言葉はコピーして貼ってもらう
 export const YOUTUBE_SEARCH = q => `https://www.youtube.com/results?search_query=${encodeURIComponent(q)}`;
 // 授業の外でやってくること（L01で決めた一歩）の呼び名。Quest 1, Quest 2 …（quest・question・inquiry は同じ語源）
 export const quest = n => `Quest ${n}`;
