@@ -14,9 +14,10 @@ export function findTools(c, key = "findq") {
       <input data-key="${key}" type="text" value="${esc(d[key] || "")}" placeholder="例：集中力 雑音 実験"></label></div>
     <div class="searchbtns">
       <button type="button" class="btn" data-find="youtube" data-findkey="${key}">YouTubeで探す ↗</button>
-      <button type="button" class="btn ghost" data-find="library" data-findkey="${key}">学校図書館の蔵書検索 ↗</button>
+      <button type="button" class="btn" data-find="library" data-findkey="${key}">学校図書館の蔵書検索 ↗</button>
     </div>
-    <p class="hint" data-find-msg hidden></p>
+    <p class="hint">蔵書検索のボタンを押すと、探す言葉がコピーされます。開いた検索欄に貼り付けよう（<kbd>Ctrl</kbd>＋<kbd>V</kbd>）。</p>
+    <p class="hint warn-text" data-find-msg hidden></p>
     <p class="hint">蔵書検索でヒットしないときは、もっと広い1語にしてみよう（例：「睡眠 集中力」→「睡眠」）。</p>`;
 }
 export function handleFind(t, c) {
@@ -33,11 +34,10 @@ export function handleFind(t, c) {
     const copied = q ? copyText(q) : false;
     window.open(LIBRARY_URL, "_blank", "noopener");
     const msg = b.closest(".field, .searchbtns")?.parentElement?.querySelector("[data-find-msg]");
+    // コピーできたときは何も出さない（押す前の1行で足りる）。できなかったときだけ知らせる
     if (msg) {
-      msg.hidden = false;
-      msg.innerHTML = copied
-        ? `「${escapeText(q)}」をコピーしました。開いた蔵書検索の<b>検索欄に貼り付けて</b>（Ctrl＋V）、検索しよう。`
-        : `開いた蔵書検索の<b>検索欄に、探す言葉を入れて</b>検索しよう。`;
+      msg.hidden = copied;
+      msg.innerHTML = copied ? "" : `${q ? "コピーできませんでした。" : ""}開いた蔵書検索の<b>検索欄に、探す言葉を入れて</b>検索しよう。`;
     }
   }
   return true;
@@ -53,10 +53,9 @@ function copyText(t) {
   } catch { /* 下へ */ }
   try { navigator.clipboard?.writeText(t); return true; } catch { return false; }
 }
-const escapeText = t => String(t).replace(/[&<>"]/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch]));
 
 export const PICK_TIPS = `
-  <p class="hint">図書館に行くと、探していた本の近くにある本も見られます。気になったら手に取ってみよう。</p>`;
+  <p class="hint"><b>ぴったりの本でなくても大丈夫。</b>図書館に行くと、その本の近くに似た本が並んでいます。</p>`;
 
 export const R02 = {
   id: "R02",
