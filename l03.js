@@ -111,7 +111,7 @@ export const L03 = {
         <div class="tc-row big"><span>論文</span><b>${ps.length ? `<ul class="qs">${ps.map(p => `<li>${esc(p.title)}</li>`).join("")}</ul>` : "—"}</b></div>
       </div>
       ${ps.length < 2 ? `<p class="note">論文が1本だけのときは、${quest(3)}の前にもう1本探してみよう（ホームから「見なおす」で書き足せます）。</p>` : ""}
-      <div class="share"><b>次は ${quest(3)}（第4回 12/7 まで）</b><p>2本の論文を読み切って、分かったこと・まだ分かっていないことを書こう。提出すると、ホームに出てきます。</p>
+      <div class="share"><b>次は ${quest(3)}（第4回 12/7 まで）</b><p>2本の論文を読み切ろう。読んだら、<b>ホームに戻って「${quest(3)}」を開き</b>、分かったこと・まだ分かっていないことを書こう。</p>
         <p>第4回は、ここまでのことから自分の問いを立てて、確かめる計画を作ります。</p></div>
       ${c.submitted ? `<p class="okmsg">提出済み ✓　あとから直しても自動で保存されます。</p>` : ""}`;
   },

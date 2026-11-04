@@ -137,7 +137,7 @@ export const L02 = {
         <div class="tc-row"><span>友だちに言われたこと</span><b>${esc(d.tomo || "—")}</b></div>
         <div class="tc-row big"><span>気になったこと</span><b>${qs.length ? `<ul class="qs">${qs.map(q => `<li>${esc(q)}</li>`).join("")}</ul>` : "—"}</b></div>
       </div>
-      <div class="share"><b>次は ${quest(2)}</b><p>この「？」の手がかりになりそうな本か動画を見つけよう。提出すると、ホームに出てきます。</p>
+      <div class="share"><b>次は ${quest(2)}</b><p>この「？」の手がかりになりそうな本か動画を見つけよう。見たら・読んだら、<b>ホームに戻って「${quest(2)}」を開き</b>、書こう。</p>
         <p>第3回は、持ってきたものを班で紹介し、研究を探します。</p></div>
       ${c.submitted ? `<p class="okmsg">提出済み ✓　あとから直しても自動で保存されます。</p>` : ""}`;
   },
