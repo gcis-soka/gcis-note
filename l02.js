@@ -1,9 +1,9 @@
 // ステージ3／第2回（11/9）同じことに関心を持つ人を探す
 // 仕様：ナレッジの L02.md「アプリ画面」／プロンプト：L02_PROMPTS（確定）
 // 結果の記録は R01（Quest 1 の結果）。ここでは R01 を読んでプロンプトに入れる
-// data：tomo・q1〜q3・findq・findb（動画・本を探す言葉：r02.js の findTools）。チャットは chatUrl（最初のAIの文の下で預かる）
+// data：tomo・q1〜q3・findq・findb（動画・本を探す言葉：r02.js の findTools）・douga・honTitle・isbn（見る動画・読む本：pickFields。Quest 2 に写す）。チャットは chatUrl（最初のAIの文の下で預かる）
 import { quest } from "./common.js";
-import { findTools, handleFind, PICK_TIPS } from "./r02.js";
+import { findTools, handleFind, PICK_TIPS, pickFields } from "./r02.js";
 const MISSION = quest(1);
 
 // 文末の句読点・空白を取る（プロンプトの文をつなぐため）
@@ -119,14 +119,16 @@ export const L02 = {
       ${field("q3", "気になったこと ③", { type: "text", qmark: true })}
       <p class="hint">読み終わらなかったら、あとで読んで書き足そう。提出したあとも直せます。</p>`;
     if (i === 3) return `
-      <p>${quest(2)}の準備です。この「？」の<b>手がかりになりそうな本か動画</b>を探そう。今日決まらなくてもOK。続きは家で。</p>
+      <p>${quest(2)}の準備です。この「？」の<b>手がかりになりそうな本か動画</b>を探して、<b>見る動画・読む本を授業のうちに決めよう</b>。</p>
       <div class="recap"><div class="tc-row"><span>気になったこと</span><b>${(() => { const qs = ["q1", "q2", "q3"].map(c.v).filter(Boolean); return qs.length ? `<ul class="qs">${qs.map(q => `<li>${esc(q)}</li>`).join("")}</ul>` : "—"; })()}</b></div></div>
       <h3>① 探す言葉をAIに考えてもらう</h3>
       ${promptBox(promptFind(c))}
       <h3>② 探す</h3>
       ${findTools(c)}
       ${PICK_TIPS}
-      <p class="hint">動画は合わせて5分以上。本は少し読めばOK。見たら・読んだら、ホームの「${quest(2)}」に書きます。</p>`;
+      <h3>③ 見る動画・読む本を決める</h3>
+      ${pickFields(c)}
+      <p class="hint">動画は合わせて5分以上。本はパラパラ見て、気になったページを少し読めばOK。</p>`;
     // i === 4：提出
     const qs = ["q1", "q2", "q3"].map(c.v).filter(Boolean);
     const R = res(c);
@@ -135,10 +137,11 @@ export const L02 = {
       <div class="themecard" style="margin-top:12px">
         ${done(c) ? `<div class="tc-row"><span>これだけでは言い切れないこと</span><b>${esc(R.iikire || "—")}</b></div>` : ""}
         <div class="tc-row"><span>友だちに言われたこと</span><b>${esc(d.tomo || "—")}</b></div>
+        <div class="tc-row"><span>見る動画・読む本</span><b>${esc([d.douga, d.honTitle].filter(Boolean).join(" ／ ") || "—")}</b></div>
         <div class="tc-row big"><span>気になったこと</span><b>${qs.length ? `<ul class="qs">${qs.map(q => `<li>${esc(q)}</li>`).join("")}</ul>` : "—"}</b></div>
       </div>
-      <div class="share"><b>次は ${quest(2)}</b><p>この「？」の手がかりになりそうな本か動画を見つけよう。見たら・読んだら、<b>ホームに戻って「${quest(2)}」を開き</b>、書こう。</p>
-        <p>第3回は、持ってきたものを班で紹介し、研究を探します。</p></div>
+      <div class="share"><b>次は ${quest(2)}</b><p>決めた動画を見る・本を読む。見たら・読んだら、<b>ホームに戻って「${quest(2)}」を開き</b>、書こう。</p>
+        <p>第3回は、心に残った所を班で紹介し、研究を探します。本は第3回に持ってこよう。</p></div>
       ${c.submitted ? `<p class="okmsg">提出済み ✓　あとから直しても自動で保存されます。</p>` : ""}`;
   },
 

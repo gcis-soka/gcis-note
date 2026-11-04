@@ -1,6 +1,7 @@
 // ステージ4：Quest 2（第2回→第3回）「？」の手がかりになりそうな本か動画
 // 仕様：ナレッジの L03.md「Quest 2」。授業中に始められる子は始める
-// data：findq（動画を探す言葉）・findb（本を探す言葉）・mono（見たもの・読んだもの：動画はリンク、本は題名）・kokoro（いちばん心に残った所と、ひとこと）
+// data：findq（動画を探す言葉）・findb（本を探す言葉）・douga（動画のリンク）・honTitle（本の題名）・isbn・kokoro（いちばん心に残った所と、ひとこと）・fromL02（第2回の値を写した印）
+// mono（見たもの・読んだもの：11/4 までの1欄）は古いデータの表示用に残す
 import { quest, LIBRARY_URL, YOUTUBE_SEARCH } from "./common.js";
 const Q = quest(2);
 
@@ -60,6 +61,27 @@ function copyText(t) {
   try { navigator.clipboard?.writeText(t); return true; } catch { return false; }
 }
 
+// 見る動画・読む本（第2回の最後で決める／Quest 2 で見たもの・読んだもの）。ISBN は空でも提出できる
+export function pickFields(c, { done = false } = {}) {
+  const { field } = c;
+  return `
+    <div class="findrow">
+      ${field("douga", done ? "見た動画のリンク（いくつかなら全部）" : "見る動画のリンク（いくつかなら全部）", { type: "text", placeholder: "https://youtu.be/…", hint: "YouTubeの「共有」→「コピー」" })}
+    </div>
+    <div class="findrow">
+      ${field("honTitle", done ? "読んだ本の題名" : "読む本の題名", { type: "text", placeholder: "例：『〇〇〇〇』" })}
+      ${field("isbn", "ISBN", { type: "text", placeholder: "例：9784780802047", hint: "本の裏表紙のバーコードの上か、奥付にある「978」から始まる13桁。第3回に RefNavi に登録するときに使います" })}
+    </div>`;
+}
+// Quest 2 を初めて開いたとき、第2回で入れた値（探す言葉・見る動画・読む本）を写す（同じことを2回書かせない）
+export const FROM_L02 = ["findq", "findb", "douga", "honTitle", "isbn"];
+function copyFromL02(c) {
+  if (c.d.fromL02) return;
+  const L2 = c.prev("L02");
+  FROM_L02.forEach(k => { if (!c.v(k) && String(L2[k] || "").trim()) c.d[k] = L2[k]; });
+  c.set("fromL02", 1);
+}
+
 export const PICK_TIPS = `
   <p class="hint"><b>ぴったりの本でなくても大丈夫。</b>図書館に行くと、その本の近くに似た本が並んでいます。</p>`;
 
@@ -76,36 +98,38 @@ export const R02 = {
 
   render(i, c) {
     const { field, esc } = c;
+    copyFromL02(c);
     const qs = qsOf(c.prev("L02"));
     return `
       <div class="recap">
         <div class="tc-row big"><span>第2回で気になったこと</span><b>${qs.length ? `<ul class="qs">${qs.map(q => `<li>${esc(q)}</li>`).join("")}</ul>` : "—"}</b></div>
       </div>
-      <p>この「？」の<b>手がかりになりそうな本か動画</b>を選んで、見たり読んだりしよう。<br>いちばん心に残った所を1つ、第3回に持ってきます。</p>
+      <p>この「？」の<b>手がかりになりそうな本か動画</b>を見たり読んだりしよう。<br>いちばん心に残った所を1つ、<b>第3回に班で紹介します</b>。</p>
       <div class="share">
         <b>動画なら</b>
         <ul>
           <li>合わせて5分以上見る（短い動画やショートを何本か見てもOK）</li>
-          <li>心に残った所は<b>開始位置つきのリンク</b>で：YouTubeの「共有」→「開始位置」にチェック→コピー</li>
+          <li>心に残った所は、<b>時間（例：2分05秒）</b>をひとことに書こう。開始位置つきのリンクならもっと良い（YouTubeの「共有」→「開始位置」にチェック→コピー）</li>
         </ul>
         <b>本なら</b>
         <ul>
-          <li>少し読めばOK（学校の図書館・家の本・町の図書館）</li>
-          <li>題名と、心に残ったページを書く。<b>第3回に本を持ってこよう</b></li>
+          <li>パラパラ見て、気になったページを少し読めばOK（学校の図書館・家の本・町の図書館）</li>
+          <li>題名・ISBN・心に残ったページを書く。<b>第3回に本を持ってこよう</b></li>
         </ul>
       </div>
       <h3>探す</h3>
       ${findTools(c)}
       ${PICK_TIPS}
       <h3>見たら・読んだら書く</h3>
-      ${field("mono", "見たもの・読んだもの（動画はリンク、本は題名とページ。いくつかなら全部）", { type: "text", placeholder: "例：https://youtu.be/…?t=125　／　『〇〇〇〇』p.48" })}
-      ${field("kokoro", "いちばん心に残った所と、ひとこと", { rows: 3, placeholder: "例：雑音の大きさによって、集中しやすさが逆になるという話。自分のは小さい音だったのかも" })}
+      ${pickFields(c, { done: true })}
+      ${c.v("mono") ? field("mono", "見たもの・読んだもの（前の欄）", { type: "text" }) : ""}
+      ${field("kokoro", "いちばん心に残った所と、ひとこと", { rows: 3, hint: "動画は時間（例：2分05秒）、本はページも書こう", placeholder: "例：2分05秒あたり。雑音の大きさによって、集中しやすさが逆になるという話。自分のは小さい音だったのかも" })}
       <p class="hint">手がかりにならなくても大丈夫。第3回で研究を探します。</p>
       ${c.submitted ? `<p class="okmsg">提出済み ✓　あとから直しても自動で保存されます。</p>` : ""}`;
   },
 
   canNext(i, c) {
-    return !!(c.v("mono") && c.v("kokoro"));
+    return !!((c.v("douga") || c.v("honTitle") || c.v("mono")) && c.v("kokoro"));
   },
 
   onClick(t, c) {

@@ -23,6 +23,9 @@ const qsOf = d => ["q1", "q2", "q3"].map(k => String(d[k] || "").trim()).filter(
 // Quest 2：リンクが動画サイトなら「動画」、それ以外（題名・ほかのリンク）は「本・その他」
 const kindOf = m => !String(m || "").trim() ? "" : /youtu\.?be|youtube\.com|nicovideo|tiktok\.com|vimeo\.com/i.test(m) ? "動画" : "本・その他";
 const kindChip = m => kindOf(m) ? `<span class="mchip">${kindOf(m)}</span>` : "";
+// Quest 2：本か動画（11/4 から douga・honTitle の2欄。前の1欄 mono も読む）
+const pickKind = d => [d.douga && "動画", d.honTitle && "本"].filter(Boolean).join("・") || (kindOf(d.mono) === "本・その他" ? "本" : kindOf(d.mono));
+const pickCell = d => [d.douga ? linkCell(d.douga) : "", d.honTitle ? esc(d.honTitle) : "", !d.douga && !d.honTitle && d.mono ? linkCell(d.mono) : ""].filter(Boolean).join("<br>");
 // 第3回：決めた論文（題名・URL）
 const papersOf = d => [["p1Title", "p1Url"], ["p2Title", "p2Url"]].map(([t, u]) => ({ title: String(d[t] || "").trim(), url: d[u] })).filter(p => p.title);
 const paperCell = p => p ? (safeUrl(p.url) ? `<a href="${esc(safeUrl(p.url))}" target="_blank" rel="noopener">${esc(p.title)}</a>` : esc(p.title)) : "";
@@ -121,12 +124,14 @@ const VIEWS = {
       return `
         <div class="recap">${item(s, "setsu", "第1回の説")}${item(s, "ippo", MISSION)}${item(s, "yosou", "予想")}</div>
         ${resultRows(r.r01?.data || {})}${item(d, "tomo", "友だちに言われたこと")}
-        <div class="tc-row"><span>気になったこと</span><b>${qs.length ? `<ul class="qs">${qs.map(q => `<li>${esc(q)}</li>`).join("")}</ul>` : "—"}</b></div>`;
+        <div class="tc-row"><span>気になったこと</span><b>${qs.length ? `<ul class="qs">${qs.map(q => `<li>${esc(q)}</li>`).join("")}</ul>` : "—"}</b></div>
+        <div class="tc-row"><span>見る動画</span><b>${linkCell(d.douga)}</b></div>
+        ${item(d, "honTitle", "読む本")}${item(d, "isbn", "ISBN")}`;
     },
-    csvHead: ["説（第1回）", "やった／まだ", "友だちに言われたこと", "気になったこと1", "気になったこと2", "気になったこと3"],
+    csvHead: ["説（第1回）", "やった／まだ", "友だちに言われたこと", "気になったこと1", "気になったこと2", "気になったこと3", "見る動画", "読む本", "ISBN"],
     csvRow: r => {
       const d = r.note?.data || {}, s = r.l01?.data || {};
-      return [s.setsu, r.r01?.data?.did, d.tomo, d.q1, d.q2, d.q3];
+      return [s.setsu, r.r01?.data?.did, d.tomo, d.q1, d.q2, d.q3, d.douga, d.honTitle, d.isbn];
     }
   },
   R02: {
@@ -135,26 +140,28 @@ const VIEWS = {
     head: ["気になったこと（第2回）", "本か動画", "見たもの・読んだもの", "心に残った所・ひとこと"],
     cells: r => {
       const d = r.note?.data || {};
-      return [qsOf(r.l02?.data || {}).map(esc).join("<br>"), kindChip(d.mono), d.mono ? linkCell(d.mono) : "", esc(d.kokoro || "")];
+      return [qsOf(r.l02?.data || {}).map(esc).join("<br>"), pickKind(d) ? `<span class="mchip">${pickKind(d)}</span>` : "", pickCell(d), esc(d.kokoro || "")];
     },
     nowrap: [1],
     chips(rs) {
-      const n = k => rs.filter(r => kindOf(r.note?.data?.mono) === k).length;
-      return rs.some(r => r.note?.data?.mono)
-        ? `<span class="hint">${quest(2)}：</span><span class="mchip">動画 <b>${n("動画")}</b></span><span class="mchip">本・その他 <b>${n("本・その他")}</b></span>`
+      const has = k => rs.filter(r => pickKind(r.note?.data || {}).includes(k)).length;
+      return rs.some(r => pickKind(r.note?.data || {}))
+        ? `<span class="hint">${quest(2)}：</span><span class="mchip">動画 <b>${has("動画")}</b></span><span class="mchip">本 <b>${has("本")}</b></span>`
         : "";
     },
     detail(r) {
       const d = r.note?.data || {}, qs = qsOf(r.l02?.data || {});
       return `
         <div class="recap"><div class="tc-row"><span>第2回で気になったこと</span><b>${qs.length ? `<ul class="qs">${qs.map(q => `<li>${esc(q)}</li>`).join("")}</ul>` : "—"}</b></div></div>
-        <div class="tc-row"><span>見たもの・読んだもの（${kindOf(d.mono) || "—"}）</span><b>${linkCell(d.mono)}${safeUrl(d.mono) ? `<br><span class="hint">${esc(d.mono)}</span>` : ""}</b></div>
+        <div class="tc-row"><span>見た動画</span><b>${linkCell(d.douga)}${safeUrl(d.douga) ? `<br><span class="hint">${esc(d.douga)}</span>` : ""}</b></div>
+        ${item(d, "honTitle", "読んだ本")}${item(d, "isbn", "ISBN")}
+        ${d.mono ? `<div class="tc-row"><span>見たもの・読んだもの（前の欄）</span><b>${linkCell(d.mono)}</b></div>` : ""}
         ${item(d, "kokoro", "いちばん心に残った所と、ひとこと")}`;
     },
-    csvHead: ["気になったこと1（第2回）", "気になったこと2（第2回）", "気になったこと3（第2回）", "本か動画", "見たもの・読んだもの", "心に残った所・ひとこと"],
+    csvHead: ["気になったこと1（第2回）", "気になったこと2（第2回）", "気になったこと3（第2回）", "本か動画", "見た動画", "読んだ本", "ISBN", "見たもの・読んだもの（前の欄）", "心に残った所・ひとこと"],
     csvRow: r => {
       const d = r.note?.data || {}, q = r.l02?.data || {};
-      return [q.q1, q.q2, q.q3, kindOf(d.mono), d.mono, d.kokoro];
+      return [q.q1, q.q2, q.q3, pickKind(d), d.douga, d.honTitle, d.isbn, d.mono, d.kokoro];
     }
   },
   L03: {
@@ -163,7 +170,7 @@ const VIEWS = {
     head: ["本か動画（Quest 2）", "論文①", "論文②", "試した検索語"],
     cells: r => {
       const d = r.note?.data || {}, ps = papersOf(d);
-      return [kindChip(r.r02?.data?.mono), paperCell(ps[0]), paperCell(ps[1]), esc(d.tried || "")];
+      return [pickKind(r.r02?.data || {}) ? `<span class="mchip">${pickKind(r.r02?.data || {})}</span>` : "", paperCell(ps[0]), paperCell(ps[1]), esc(d.tried || "")];
     },
     nowrap: [0],
     chips(rs) {
@@ -175,7 +182,7 @@ const VIEWS = {
     detail(r) {
       const d = r.note?.data || {}, ps = papersOf(d), q = r.r02?.data || {};
       return `
-        <div class="recap">${item(r.l01?.data || {}, "setsu", "第1回の説")}${item(q, "mono", `${quest(2)}：見たもの・読んだもの`)}${item(q, "kokoro", "心に残った所")}</div>
+        <div class="recap">${item(r.l01?.data || {}, "setsu", "第1回の説")}<div class="tc-row"><span>${quest(2)}：見たもの・読んだもの</span><b>${pickCell(q) || "—"}</b></div>${item(q, "kokoro", "心に残った所")}</div>
         ${item(d, "hanMemo", "班で出たこと")}
         ${item(d, "tried", "試した検索語")}
         ${ps.map((p, j) => `<div class="tc-row"><span>論文${j ? "②" : "①"}</span><b>${paperCell(p)}</b></div>`).join("") || `<div class="tc-row"><span>論文</span><b>—</b></div>`}
@@ -570,8 +577,8 @@ export function mountTeacher({ be, app, dlg }) {
       if (!(s2 === 4 && i % 8 !== 7)) continue;
       nt.push({ uid, lesson: "R02", step: 0, submitted: i % 4 !== 1, updatedAt: new Date(Date.now() - (i % 8) * 60000),
         data: i % 10 === 0
-          ? { mono: "https://youtu.be/xxxxxxxxxxx?t=125", kokoro: "（動画の例）雑音の大きさで、集中しやすさが逆になるという話" }
-          : { mono: "『（本の題名の例）』p.48", kokoro: "（本の例）音楽のテンポで作業の速さが変わるという実験" } });
+          ? { douga: "https://youtu.be/xxxxxxxxxxx?t=125", kokoro: "（動画の例）2分05秒あたり。雑音の大きさで、集中しやすさが逆になるという話" }
+          : { honTitle: "『（本の題名の例）』", isbn: "9784000000000", kokoro: "（本の例）p.48 音楽のテンポで作業の速さが変わるという実験" } });
       if (i % 4 === 1) continue;
       const s3 = i % 6 === 0 ? 1 : 3, two = i % 5 !== 0;
       nt.push({ uid, lesson: "L03", step: s3, submitted: s3 === 3, updatedAt: new Date(Date.now() - (i % 8) * 60000),
