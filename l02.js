@@ -74,8 +74,8 @@ export const L02 = {
   uses: ["L01", "R01"],
   steps: [
     { title: "班で報告", mins: 12 },
-    { title: "AIで、同じことに関心を持つ人を探す", mins: 20 },
-    { title: "気になったこと", mins: 8 },
+    { title: "AIで、同じことに関心を持つ人を探す", mins: 12 },
+    { title: "記事を読んで、気になったこと", mins: 16 },
     { title: "本か動画を探す", mins: 6 },
     { title: "提出", mins: 2 }
   ],
@@ -100,13 +100,15 @@ export const L02 = {
       <p>あなたの説と<b>同じことに関心を持っている人</b>が、世の中にいるか探してみよう。</p>
       ${promptBox(prompt1(c), { first: true })}
       <p>表が出たら、続けて下の文を<b>同じチャットに</b>送ろう。</p>
-      ${promptBox(PROMPT2)}
+      ${promptBox(PROMPT2)}`;
+    if (i === 2) return `
+      <h3>① 記事を読む</h3>
       <ol class="todo">
         <li>出てきた見出しを眺めて、いちばん「へぇ」と思った1つを読もう</li>
         <li><b>リンクを開いて、見出しと中身が合っているか見る</b>（AIは、ない記事を作ってしまうことがあります）</li>
       </ol>
-      <p class="hint">自分で検索して見つけた記事でもOK。合う記事が見つからないときは、まだ誰も調べていないことかもしれません。それも発見です。</p>`;
-    if (i === 2) return `
+      <p class="hint">自分で検索して見つけた記事でもOK。合う記事が見つからないときは、まだ誰も調べていないことかもしれません。それも発見です。</p>
+      <h3>② 気になったこと</h3>
       <p>読んだ記事や、ここまでのことから、<b>気になったことを「？」で終わる形で</b>書こう（1つからでOK）。</p>
       <div class="field"><span class="hint">書き出しを押すと、空いている欄に入ります</span>${chips(Q_CHIPS, "q1,q2,q3")}</div>
       ${field("q1", "気になったこと ①", { type: "text", qmark: true })}
