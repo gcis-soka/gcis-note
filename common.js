@@ -6,7 +6,18 @@ export const TEACHER_DOMAIN = "soka.ed.jp";       // 教員（@tokyo.soka.ed.jp 
 export const CLASSES = [1, 2, 3, 4, 5, 6, 7, 8];
 export const MAX_NUMBER = 41;
 export const TEST_CLASS = 0; // 動作確認用（教員画面では「テスト」と表示）
+// クラスの人数（番号の最大値）。期ごとに書く。数字ならどのクラスも同じ、{ 1: 40, 2: 41, … } ならクラスごと。
+// 書いていない期・クラスは MAX_NUMBER。MAX_NUMBER（41）より多くするときは firestore.rules の validNumber も変える
+export const CLASS_SIZES = { "59": 41 };
+export function classSize(ki, c) {
+  const v = CLASS_SIZES[ki];
+  const n = typeof v === "number" ? v : v?.[c];
+  return Number.isInteger(n) && n >= 1 && n <= MAX_NUMBER ? n : MAX_NUMBER;
+}
 export const GEMINI_URL = "https://gemini.google.com/app";
+// 学校図書館の蔵書検索（先生から届いたら差し替える。{q} があれば検索語が入る。なければそのページを開くだけ）
+export const LIBRARY_URL = "https://example.com/opac/search?q={q}"; // ダミー
+export const YOUTUBE_SEARCH = q => `https://www.youtube.com/results?search_query=${encodeURIComponent(q)}`;
 // 授業の外でやってくること（L01で決めた一歩）の呼び名。Quest 1, Quest 2 …（quest・question・inquiry は同じ語源）
 export const quest = n => `Quest ${n}`;
 
@@ -60,23 +71,56 @@ export function methodOf(ippo) {
   return word ? "その他" : "不明";
 }
 
-// Gemini を画面の右半分の別ウィンドウで開く。2回目以降は前に出すだけ（チャットを消さない）
+// Gemini を画面の右半分の別ウィンドウで開く
+// url：覚えておいたこの回のチャット（https://gemini.google.com/app/…）。あれば必ずそのチャットを開く
+//      （「前に出す」はブラウザが止めることが多く、生徒が「出てこない」と新しいチャットを開いてしまったため）
+// url がないとき：1回目は新しいチャット、2回目以降は前に出すだけ（チャットを消さない）
 // 戻り値："opened"（開いた）／"focused"（前に出した）／"lost"（開いたはずだが見つからない）／"blocked"
 // key：回ごとの印（回が変わったら新しいチャットにする）
 let geminiWin = null, geminiFor = "";
-export function openGemini({ force = false, key = "gcis_gemini" } = {}) {
-  if (geminiWin && !geminiWin.closed && geminiFor === key) { geminiWin.focus(); return "focused"; }
+export function openGemini({ force = false, key = "gcis_gemini", url = "" } = {}) {
+  const W = screen.availWidth || 1366, H = screen.availHeight || 768;
+  const feat = `popup=yes,left=${Math.round(W / 2)},top=0,width=${Math.round(W / 2)},height=${H}`;
+  if (url) {
+    const w = window.open(url, "gcis_gemini", feat) || window.open(url, "_blank");
+    if (!w) return "blocked";
+    geminiWin = w; geminiFor = key;
+    try { w.focus(); } catch { /* なし */ }
+    return "opened";
+  }
+  if (geminiWin && !geminiWin.closed && geminiFor === key && !force) { geminiWin.focus(); return "focused"; }
   let opened = false;
   try { opened = sessionStorage.getItem(key) === "1"; } catch { /* なし */ }
   if (opened && !force) return "lost"; // 新しく開くとチャットが分かれるので、先に戻ってもらう
-  const W = screen.availWidth || 1366, H = screen.availHeight || 768;
-  const feat = `popup=yes,left=${Math.round(W / 2)},top=0,width=${Math.round(W / 2)},height=${H}`;
   const w = window.open(GEMINI_URL, "gcis_gemini", feat) || window.open(GEMINI_URL, "_blank");
   if (!w) return "blocked";
   geminiWin = w; geminiFor = key;
   try { sessionStorage.setItem(key, "1"); } catch { /* なし */ }
   try { w.focus(); } catch { /* なし */ }
   return "opened";
+}
+
+// この回のチャットのURLか（https://gemini.google.com/app/… または /u/1/app/…）。共有リンクは不可
+export function chatUrlOf(s) {
+  const m = String(s || "").trim().match(/^https:\/\/gemini\.google\.com\/(?:u\/\d+\/)?app\/[0-9a-zA-Z_-]{6,}/);
+  return m ? m[0] : "";
+}
+export function chatUrlProblem(s) {
+  const t = String(s || "").trim();
+  if (!t) return "";
+  if (chatUrlOf(t)) return "";
+  if (/gemini\.google\.com\/(?:u\/\d+\/)?app\/?$/.test(t)) return "まだ送信していないかも。プロンプトを送ってから、もう一度コピーしよう（URLの最後に英数字がつきます）";
+  if (/share|g\.co/.test(t)) return "それは共有リンクです。Geminiの窓のいちばん上のURLをコピーしよう";
+  return "https://gemini.google.com/app/ で始まるURLを貼ろう";
+}
+
+// 画面を左右に並べるキー（端末ごと）
+export function snapKeys() {
+  const ua = navigator.userAgent || "";
+  if (/CrOS/.test(ua)) return "Alt ＋ [";
+  if (/Windows/.test(ua)) return "Windowsキー ＋ ←";
+  if (/Macintosh/.test(ua)) return "fn ＋ control ＋ ←";
+  return "";
 }
 
 export function lsGet(k) { try { return localStorage.getItem(k); } catch { return null; } }
@@ -126,6 +170,16 @@ export async function createBackend() {
       if (markSubmitted) data.submittedAt = fs.serverTimestamp();
       await fs.setDoc(fs.doc(db, "notes", `${uid}_${lesson}`), data, { merge: true });
     },
+    // 問いの数の順位（第4回）：counts/{期}/{回}/{uid} に数だけ置き、多い人の数を数える（読み取り2回分）
+    async scoreRank({ ki, lesson, uid, n }) {
+      const col = fs.collection(db, "counts", ki, lesson);
+      await fs.setDoc(fs.doc(col, uid), { n, updatedAt: fs.serverTimestamp() });
+      const [above, all] = await Promise.all([
+        fs.getCountFromServer(fs.query(col, fs.where("n", ">", n))),
+        fs.getCountFromServer(col)
+      ]);
+      return { rank: above.data().count + 1, total: all.data().count };
+    },
     // 教員用：1つの期・クラス（テストは期を問わない）をリアルタイムで受け取る。lesson が null ならすべての回
     watchGroup({ ki, cls }, lesson, onStudents, onNotes, onError) {
       const sw = [fs.where("class", "==", cls)];
@@ -137,6 +191,18 @@ export async function createBackend() {
       const u2 = fs.onSnapshot(fs.query(fs.collection(db, "notes"), ...nw),
         snap => onNotes(snap.docs.map(d => ({ id: d.id, ...d.data(), updatedAt: toDate(d.data().updatedAt) }))), onError);
       return () => { u1(); u2(); };
+    },
+    // 教員用：学年まとめ。1つの期の全クラスを1回だけ読む（リアルタイムにしない＝読み取り回数を抑える）
+    // lessons：読む回（いまの回と、その1つ前）。期＋回の「＝」だけの絞り込みなので複合インデックスは要らない
+    async getGrade({ ki }, lessons) {
+      const [s, ...ns] = await Promise.all([
+        fs.getDocs(fs.query(fs.collection(db, "students"), fs.where("ki", "==", ki))),
+        ...lessons.map(l => fs.getDocs(fs.query(fs.collection(db, "notes"), fs.where("ki", "==", ki), fs.where("lesson", "==", l))))
+      ]);
+      return {
+        students: s.docs.map(d => ({ uid: d.id, ...d.data() })),
+        notes: ns.flatMap(q => q.docs.map(d => ({ id: d.id, ...d.data(), updatedAt: toDate(d.data().updatedAt) })))
+      };
     }
   };
 }
@@ -160,6 +226,11 @@ function demoBackend() {
     async saveProfile(uid, p) { profiles[uid] = { ...p }; },
     async getNote(uid, lesson) { return notes[uid + lesson] ? JSON.parse(JSON.stringify(notes[uid + lesson])) : null; },
     async saveNote(uid, lesson, p, note) { notes[uid + lesson] = JSON.parse(JSON.stringify(note)); },
+    // デモ：架空の学年（160人）の中での順位
+    async scoreRank({ n }) {
+      const others = Array.from({ length: 160 }, (_, i) => Math.max(0, Math.round(12 + 6 * Math.sin(i * 1.7) + (i % 7) - 3)));
+      return { rank: others.filter(x => x > n).length + 1, total: others.length + 1 };
+    },
     watchGroup() { return () => {}; }
   };
 }

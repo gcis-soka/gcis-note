@@ -5,7 +5,7 @@ import { readFileSync } from "node:fs";
 import {
   initializeTestEnvironment, assertSucceeds, assertFails
 } from "@firebase/rules-unit-testing";
-import { doc, getDoc, setDoc, deleteDoc, collection, getDocs, query, where, serverTimestamp } from "firebase/firestore";
+import { doc, getDoc, setDoc, deleteDoc, collection, getDocs, query, where, serverTimestamp, getCountFromServer } from "firebase/firestore";
 
 const env = await initializeTestEnvironment({
   projectId: "demo-gcis",
@@ -54,10 +54,24 @@ await t("自分の R01 を読める", () => assertSucceeds(getDoc(doc(s1, "notes
 await t("他人の R01 は読めない", () => assertFails(getDoc(doc(s1, "notes", S2.uid + "_R01"))));
 await t("自分の R02（Quest 2）を書ける", () => assertSucceeds(setDoc(doc(s1, "notes", S1.uid + "_R02"), note(S1, { lesson: "R02", step: 0, data: { mono: "『本』p.48", kokoro: "ひとこと" } }))));
 await t("他人の R02 は読めない", () => assertFails(getDoc(doc(s1, "notes", S2.uid + "_R02"))));
-await t("まだないステージ（R03）は書けない", () => assertFails(setDoc(doc(s1, "notes", S1.uid + "_R03"), note(S1, { lesson: "R03" }))));
-await t("まだない回（L03）は書けない", () => assertFails(setDoc(doc(s1, "notes", S1.uid + "_L03"), note(S1, { lesson: "L03" }))));
+await t("自分の L03（第3回）を書ける", () => assertSucceeds(setDoc(doc(s1, "notes", S1.uid + "_L03"), note(S1, { lesson: "L03", data: { p1Title: "論文", p1Url: "https://example.com" } }))));
+await t("自分の R03（Quest 3）を書ける", () => assertSucceeds(setDoc(doc(s1, "notes", S1.uid + "_R03"), note(S1, { lesson: "R03", step: 0, data: { wakatta: "分かった", mada: "まだ" } }))));
+await t("他人の R03 は読めない", () => assertFails(getDoc(doc(s1, "notes", S2.uid + "_R03"))));
+await t("自分の L04（第4回）を書ける", () => assertSucceeds(setDoc(doc(s1, "notes", S1.uid + "_L04"), note(S1, { lesson: "L04", data: { toi: "なんで？", houhou: "観察" } }))));
+await t("まだないステージ（R04）は書けない", () => assertFails(setDoc(doc(s1, "notes", S1.uid + "_R04"), note(S1, { lesson: "R04" }))));
+await t("まだない回（L05）は書けない", () => assertFails(setDoc(doc(s1, "notes", S1.uid + "_L05"), note(S1, { lesson: "L05" }))));
 await t("まだない回（L99）は書けない", () => assertFails(setDoc(doc(s1, "notes", S1.uid + "_L99"), note(S1, { lesson: "L99" }))));
 await t("他人のノートは読めない", () => assertFails(getDoc(doc(s1, "notes", S2.uid + "_L01"))));
+// 問いの数（第4回の順位）
+const cnt = (n) => ({ n, updatedAt: serverTimestamp() });
+await t("自分の問いの数を書ける（同じ期）", () => assertSucceeds(setDoc(doc(s1, "counts", "59", "L04", S1.uid), cnt(12))));
+await t("ほかの期には書けない", () => assertFails(setDoc(doc(s1, "counts", "58", "L04", S1.uid), cnt(12))));
+await t("他人の数は書けない", () => assertFails(setDoc(doc(s1, "counts", "59", "L04", S2.uid), cnt(99))));
+await t("数以外の項目は入れられない", () => assertFails(setDoc(doc(s1, "counts", "59", "L04", S1.uid), { n: 3, name: "x", updatedAt: serverTimestamp() })));
+await t("数が多すぎる（501）と書けない", () => assertFails(setDoc(doc(s1, "counts", "59", "L04", S1.uid), cnt(501))));
+await t("ほかの回（L03）には書けない", () => assertFails(setDoc(doc(s1, "counts", "59", "L03", S1.uid), cnt(3))));
+await t("同じ期の人数を数えられる（順位）", () => assertSucceeds(getCountFromServer(query(collection(s1, "counts", "59", "L04"), where("n", ">", 5)))));
+await t("ほかの期は数えられない", () => assertFails(getCountFromServer(collection(s1, "counts", "58", "L04"))));
 await t("他人のノートは書けない", () => assertFails(setDoc(doc(s1, "notes", S2.uid + "_L01"), note(S2, { number: 13 }))));
 await t("ノート一覧はまとめて読めない", () => assertFails(getDocs(collection(s1, "notes"))));
 await t("ノートは消せない", () => assertFails(deleteDoc(doc(s1, "notes", S1.uid + "_L01"))));
@@ -76,6 +90,8 @@ await t("自分を3組にはできない", () => assertFails(setDoc(doc(tdb, "st
 await t("（戻す）テスト・0番", () => assertSucceeds(setDoc(doc(tdb, "students", T.uid), prof(T, { ki: "", class: 0, number: 0 }))));
 await t("自分のテストノートを書ける", () => assertSucceeds(setDoc(doc(tdb, "notes", T.uid + "_L01"), note(T, { ki: "", class: 0, number: 0 }))));
 await t("自分のテストノート（第2回）を書ける", () => assertSucceeds(setDoc(doc(tdb, "notes", T.uid + "_L02"), note(T, { lesson: "L02", ki: "", class: 0, number: 0 }))));
+await t("テストの問いの数は「t」に書ける", () => assertSucceeds(setDoc(doc(tdb, "counts", "t", "L04", T.uid), { n: 4, updatedAt: serverTimestamp() })));
+await t("生徒の期には書けない", () => assertFails(setDoc(doc(tdb, "counts", "59", "L04", T.uid), { n: 4, updatedAt: serverTimestamp() })));
 await t("生徒のノートは書き換えられない", () => assertFails(setDoc(doc(tdb, "notes", S2.uid + "_L01"), note(S2, { number: 13, step: 4 }))));
 
 console.log("学校外・未確認");

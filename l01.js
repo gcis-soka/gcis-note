@@ -109,6 +109,7 @@ export const L01 = {
     { title: "班で共有して提出", mins: 8 }
   ],
   geminiKey: "gcis_gemini", // この回の Gemini のチャット（回ごとに新しいチャット）
+  needChat: true, // AIの文がある画面は、この回のチャットのURLを貼るまで次へ進めない（初めのうちは必須）
 
   render(i, c) {
     const { field, promptBox, esc, d } = c;

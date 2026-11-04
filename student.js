@@ -1,16 +1,19 @@
 // 生徒画面の枠：ホーム・クラスと番号・保存・画面の切り替え
-// ステージ（前のステージを提出すると次が出る）の中身は l01.js・r01.js・l02.js・r02.js … に書く
+// ステージ（前のステージを提出すると次が出る）の中身は l01.js・r01.js・l02.js・r02.js・l03.js・r03.js・l04.js … に書く
 import {
-  escapeHtml, kiOf, classLabel, openGemini, quest,
+  escapeHtml, kiOf, classLabel, openGemini, chatUrlOf, chatUrlProblem, snapKeys, quest,
   CLASSES, MAX_NUMBER, TEST_CLASS
 } from "./common.js";
 import { L01 } from "./l01.js";
 import { R01 } from "./r01.js";
 import { L02 } from "./l02.js";
 import { R02 } from "./r02.js";
+import { L03 } from "./l03.js";
+import { R03 } from "./r03.js";
+import { L04 } from "./l04.js";
 
 // ステージの順。足すときはここに並べる（teacher.js の VIEWS・firestore.rules の lesson も足す）
-const LESSONS = [L01, R01, L02, R02];
+const LESSONS = [L01, R01, L02, R02, L03, R03, L04];
 const stageLabel = L => L.no ? `第${L.no}回` : L.quest ? quest(L.quest) : "";
 const MAP = ["気になる", "一歩", "文献", "問い", "計画", "着手", "RQ"];
 const SHORT_MSG = "思いついたことを、もう少しだけ足してみよう（いつ？どんなとき？）";
@@ -27,6 +30,7 @@ export function mountStudent({ be, user, app, asTeacher }) {
   let saveTimer = null, alive = true;
   let dirty = false, lastSaved = 0; // まだ保存していない入力があるか／最後に保存した時刻
   let lastFocus = "";               // 最後に入力した欄（書き出しボタンの入れ先）
+  let promptOnScreen = false;       // いまの画面にAIの文の箱があるか（チャットのURLが要るかの判定）
 
   const note = () => notes[cur.id];
   const isOpen = L => !L.after || !!notes[L.after]?.submitted || asTeacher; // デモの生徒は本物と同じく順に出る
@@ -41,7 +45,9 @@ export function mountStudent({ be, user, app, asTeacher }) {
       prev: id => notes[id]?.data || {},
       set: (k, val) => { n.data[k] = val; scheduleSave(); },
       rerender: () => renderStep(n.step),
-      field, promptBox, chips, esc: escapeHtml, app
+      field, promptBox, chips, esc: escapeHtml, app,
+      // 問いの数の順位（第4回）。学年＝期ごと。期なしは "x"、先生のテストは "t" で別に数える
+      scoreRank: n => be.scoreRank({ ki: asTeacher ? "t" : (profile?.ki || "x"), lesson: cur.id, uid: user.uid, n })
     };
   }
 
@@ -91,20 +97,44 @@ export function mountStudent({ be, user, app, asTeacher }) {
       (qmark ? `<p class="hint short" data-qmark="${key}" hidden>${QMARK_MSG}</p>` : "") + `</div>`;
   }
 
+  // AIに送る文の箱。この回のチャットのURL（chatUrl）を最初に預かり、以後は「このチャットに戻る」で必ず同じチャットを開く
   function promptBox(text, { first = false } = {}) {
+    promptOnScreen = true;
+    const need = cur.needChat ? `<b>URLを貼ると「次へ」が押せます。</b>` : "";
+    const link = chatUrlOf(note().data.chatUrl), keys = snapKeys();
     return `
-      <div class="prompt">
+      <div class="prompt ${link ? "has-link" : ""}">
         <div class="prompt-head">AIに送る文（自動でできています）</div>
         <pre class="prompt-text">${escapeHtml(text)}</pre>
         <div class="prompt-actions">
           <button class="btn" data-copy>コピーする</button>
-          <button class="btn ghost" data-gemini>${first ? "Geminiを右半分に開く ↗" : "Geminiのウィンドウを前に出す ↗"}</button>
+          <button class="btn ghost" data-gemini><span class="if-link">このチャットに戻る ↗</span><span class="if-nolink">${first ? "Geminiを右半分に開く ↗" : "Geminiの窓に戻る ↗"}</span></button>
         </div>
-        <p class="note" data-gemini-msg>${first
-          ? `開いたGeminiに貼って送信。<b>このあとも同じチャットで続けます。</b>（モデルは「Flash」のままでOK）`
-          : `⚠️ さっきの<b>Geminiのウィンドウに戻って、同じチャットに</b>貼ってください。新しいチャットにすると、AIは前の話を覚えていません。`}</p>
+        <p class="note if-link">✓ ${stageLabel(cur)}のチャットを覚えています。ボタンを押すと、いつでも<b>このチャット</b>が開きます。<button class="link small" data-gemini-new>新しいチャットでやり直す</button></p>
+        <div class="if-nolink">
+          <p class="note" data-gemini-msg>${first
+            ? `開いたGeminiに貼って送信。<b>送信したら</b>、Geminiの窓のいちばん上の<b>URL</b>をコピーして、下に貼ろう。この回はずっとこのチャットを使います。${need}`
+            : `⚠️ さっきの<b>Geminiの窓の同じチャットに</b>貼ってください。下にチャットのURLを貼っておくと、いつでも戻れます。${need}`}</p>
+          <label class="chatlink"><span>この回のチャットのURL</span>
+            <input type="url" data-key="chatUrl" value="${escapeHtml(note().data.chatUrl || "")}" placeholder="https://gemini.google.com/app/…" autocomplete="off"></label>
+          <p class="hint warn-text" data-chaturl-msg hidden></p>
+        </div>
+        ${keys ? `<p class="hint snap" data-snap hidden>アプリの画面を左に寄せるには <kbd>${keys}</kbd>。Geminiと左右に並べて使おう。</p>` : ""}
       </div>`;
   }
+
+  // チャットのURLを貼ったら、箱の表示を切り替える（全体を描き直すと入力中の欄が消えるため）
+  function refreshChatUrl() {
+    const raw = note().data.chatUrl, ok = !!chatUrlOf(raw), why = chatUrlProblem(raw);
+    app.querySelectorAll(".prompt").forEach(p => p.classList.toggle("has-link", ok));
+    app.querySelectorAll("[data-chaturl-msg]").forEach(m => { m.hidden = !why; m.textContent = why; });
+  }
+  // Geminiを開いたあと、アプリが画面いっぱいなら左に寄せるキーを出す
+  function showSnap() {
+    const wide = window.innerWidth > (screen.availWidth || 1366) * 0.75;
+    app.querySelectorAll("[data-snap]").forEach(el => { el.hidden = !wide; });
+  }
+  window.addEventListener("resize", () => { if (window.innerWidth <= (screen.availWidth || 1366) * 0.75) app.querySelectorAll("[data-snap]").forEach(el => { el.hidden = true; }); }, { signal: ac.signal });
 
   function progress(i) {
     return `<ol class="progress">${cur.steps.map((s, j) =>
@@ -177,26 +207,30 @@ export function mountStudent({ be, user, app, asTeacher }) {
     // いま取り組む回（開いていて未提出の最初の回。なければ最後に開いている回）
     const openOnes = LESSONS.filter(isOpen);
     const focus = openOnes.find(L => !notes[L.id]?.submitted) || openOnes[openOnes.length - 1];
+    // カードの状態：done（提出済み）・now（いま取り組む）・todo（まだ。先生のテストで先が開いているとき）
+    const CHECK = `<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8.5l3.2 3L13 4.5" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
     const cards = openOnes.map(L => {
       const n = notes[L.id] || blank();
       const started = n.step > 0 || Object.keys(n.data).length > 0;
       const forced = L.after && !notes[L.after]?.submitted; // 先生・デモなので開いている
+      const state = n.submitted ? "done" : L === focus ? "now" : "todo";
       return `
-        <section class="card lesson ${L === focus ? "" : "quiet"}">
-          <div>
-            <p class="eyebrow">${stageLabel(L)} ${n.submitted ? "・提出済み ✓" : ""}</p>
+        <section class="card lesson ${state}">
+          <span class="mark" aria-hidden="true">${state === "done" ? CHECK : state === "now" ? "<i></i>" : ""}</span>
+          <div class="lesson-body">
+            <p class="eyebrow">${stageLabel(L)}${n.submitted ? " ・提出済み" : ""}</p>
             <h3>${L.title}</h3>
             ${L.sub && !n.submitted ? `<p class="hint">${L.sub}</p>` : ""}
             ${forced ? `<p class="hint">（生徒には、前のステージを提出すると出ます。先生のテストなので出ています）</p>` : ""}
           </div>
-          <button class="btn ${L === focus ? "primary" : ""}" data-open="${L.id}">${n.submitted ? "見なおす" : started ? "つづきから" : "はじめる"} →</button>
+          <button class="btn ${state === "now" ? "primary" : state === "done" ? "ghost" : "ghost"}" data-open="${L.id}">${n.submitted ? "見なおす" : started ? "つづきから" : "はじめる"} →</button>
         </section>`;
     });
     app.innerHTML = `
       <section class="card hero">
         <p class="eyebrow">ゴール</p>
         <h2>1月に「もっと知りたい」と思える、自分の問いを持っている</h2>
-        <ol class="map">${MAP.map((m, i) => `<li class="${i === at ? "now" : ""}">${m}</li>`).join("")}</ol>
+        <ol class="map">${MAP.map((m, i) => `<li class="${i < at ? "done" : i === at ? "now" : ""}">${m}</li>`).join("")}</ol>
         <ul class="promise">
           <li>気になることは、何度変えてもいい</li>
           <li>空欄があってもいい</li>
@@ -216,6 +250,7 @@ export function mountStudent({ be, user, app, asTeacher }) {
   }
 
   function renderStep(i) {
+    promptOnScreen = false;
     const n = note(), last = cur.steps.length - 1;
     // この生徒には要らない画面（例：入口Cのキーワード）はとばす。もどるときは手前へ
     const back = i < n.step;
@@ -241,7 +276,10 @@ export function mountStudent({ be, user, app, asTeacher }) {
   // 次へ（最後は提出）を押せるか。提出済みの最後の画面は「ホームへ」なので常に押せる
   function canGo(i, c) {
     const n = note();
-    return (i === cur.steps.length - 1 && n.submitted) || cur.canNext(i, c);
+    if (i === cur.steps.length - 1 && n.submitted) return true;
+    // needChat の回（第1回・第2回）：AIの文がある画面は、チャットのURLを貼るまで次へ進めない
+    if (cur.needChat && promptOnScreen && !chatUrlOf(n.data.chatUrl)) return false;
+    return cur.canNext(i, c);
   }
 
   function updateHints() {
@@ -275,13 +313,15 @@ export function mountStudent({ be, user, app, asTeacher }) {
   }
 
   function gemini(btn, force = false) {
-    const r = openGemini({ force, key: cur.geminiKey });
+    const url = force ? "" : chatUrlOf(note().data.chatUrl);
+    const r = openGemini({ force, key: cur.geminiKey, url });
     const msg = btn.closest(".prompt").querySelector("[data-gemini-msg]");
-    if (r === "lost") {
-      msg.innerHTML = `Geminiのウィンドウが見つかりません。<b>開いているときは、そのウィンドウに戻ってください</b>（タスクバー、または Alt＋Tab）。閉じてしまったときは <button class="link" data-gemini-force>新しく開く</button>（前の話は引き継がれません）`;
-    } else if (r === "blocked") {
+    if (r === "lost" && msg) {
+      msg.innerHTML = `Geminiの窓が見つかりません。<b>開いているときは、その窓に戻ってください</b>（タスクバー、または Alt＋Tab）。閉じてしまったときは <button class="link" data-gemini-force>新しく開く</button>（前の話は引き継がれません）`;
+    } else if (r === "blocked" && msg) {
       msg.innerHTML = `ポップアップが止められました。アドレスバー右の表示から、このサイトのポップアップを許可してください。`;
     }
+    if (r === "opened") showSnap();
   }
 
   // 書き出しボタン：入れ先が複数（"q1,q2,q3"）なら、最後に触った欄が空ならそこ、なければ空いている最初の欄
@@ -314,6 +354,7 @@ export function mountStudent({ be, user, app, asTeacher }) {
     const el = e.target.closest("[data-key]");
     if (!el || !cur) return;
     note().data[el.dataset.key] = el.value;
+    if (el.dataset.key === "chatUrl") refreshChatUrl(); // 次へ の可否は下の refreshNext で
     scheduleSave(); refreshNext(); updateHints();
   }, { signal: ac.signal });
 
@@ -328,6 +369,10 @@ export function mountStudent({ be, user, app, asTeacher }) {
     if (op) { openLesson(op.dataset.open); return; }
     if (!cur) return;
     if (t.closest("[data-copy]")) { copyPrompt(t.closest("[data-copy]")); return; }
+    if (t.closest("[data-gemini-new]")) { // やり直す：覚えたURLを消して、新しいチャットを開く
+      note().data.chatUrl = ""; app.querySelectorAll('[data-key="chatUrl"]').forEach(i => { i.value = ""; }); scheduleSave(); refreshChatUrl();
+      gemini(t.closest(".prompt").querySelector("[data-gemini]"), true); return;
+    }
     if (t.closest("[data-gemini-force]")) { gemini(t.closest(".prompt").querySelector("[data-gemini]"), true); return; }
     if (t.closest("[data-gemini]")) { gemini(t.closest("[data-gemini]")); return; }
     if (t.closest("[data-insert]")) { insertChip(t.closest("[data-insert]")); return; }
