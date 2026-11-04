@@ -98,6 +98,28 @@ export function mountStudent({ be, user, app, asTeacher }) {
       (qmark ? `<p class="hint short" data-qmark="${key}" hidden>${QMARK_MSG}</p>` : "") + `</div>`;
   }
 
+  // チャットのURLをどこからコピーするかの図（Geminiの窓のいちばん上）。最初の箱のURL欄の上に出す（11/4 先生）
+  const URL_HOWTO = `
+    <figure class="urlhowto" aria-label="Geminiの窓のいちばん上のURLをコピーする">
+      <svg viewBox="0 0 520 150" role="img" xmlns="http://www.w3.org/2000/svg">
+        <rect x="1" y="1" width="518" height="148" rx="10" fill="#fff" stroke="#c9ced8"/>
+        <path d="M1 11a10 10 0 0 1 10-10h498a10 10 0 0 1 10 10v23H1z" fill="#e3e8f2"/>
+        <text x="16" y="23" font-size="12" fill="#3c4250">◆ Google Gemini - Google Chrome</text>
+        <text x="448" y="23" font-size="13" fill="#3c4250">—　☐　✕</text>
+        <rect x="8" y="40" width="504" height="30" rx="15" fill="#eef1f6"/>
+        <text x="22" y="60" font-size="13" fill="#5f6673">⊜</text>
+        <text x="46" y="60" font-size="15" fill="#1f2329" textLength="302" lengthAdjust="spacingAndGlyphs">gemini.google.com/app/0259e4ca932dc5af</text>
+        <rect x="38" y="42" width="318" height="26" rx="6" fill="none" stroke="#d93025" stroke-width="3"/>
+        <text x="16" y="100" font-size="13" font-weight="700" fill="#3c4250">◆ Gemini</text>
+        <rect x="200" y="86" width="300" height="26" rx="13" fill="#eef1f6"/>
+        <text x="214" y="104" font-size="12" fill="#5f6673">私は高校1年生です。「…」という説が…</text>
+        <path d="M430 132 L372 72" stroke="#d93025" stroke-width="3" fill="none"/>
+        <path d="M366 64 L382 70 L372 80 Z" fill="#d93025"/>
+        <text x="388" y="142" font-size="15" font-weight="700" fill="#d93025">ここをコピー</text>
+      </svg>
+      <figcaption>送信したあと、Geminiの窓の<b>いちばん上のURL</b>をクリック（全部が青くなる）→ <kbd>Ctrl</kbd>＋<kbd>C</kbd> → 下の欄で <kbd>Ctrl</kbd>＋<kbd>V</kbd></figcaption>
+    </figure>`;
+
   // AIに送る文の箱。この回のチャットのURL（chatUrl）を最初に預かり、以後は「このチャットに戻る」で必ず同じチャットを開く
   function promptBox(text, { first = false } = {}) {
     promptOnScreen = true;
@@ -119,7 +141,7 @@ export function mountStudent({ be, user, app, asTeacher }) {
             : urlHere
               ? `⚠️ さっきの<b>Geminiの窓の同じチャットに</b>貼ってください。下にチャットのURLを貼っておくと、いつでも戻れます。${need}`
               : `⚠️ さっきの<b>Geminiの窓の同じチャットに</b>貼ってください。チャットのURLは<b>上の欄</b>に貼ります。`}</p>
-          ${urlHere ? `<label class="chatlink"><span>この回のチャットのURL</span>
+          ${urlHere ? `${URL_HOWTO}<label class="chatlink"><span>この回のチャットのURL</span>
             <input type="url" data-key="chatUrl" value="${escapeHtml(note().data.chatUrl || "")}" placeholder="https://gemini.google.com/app/…" autocomplete="off"></label>
           <p class="hint warn-text" data-chaturl-msg hidden></p>` : ""}
         </div>
