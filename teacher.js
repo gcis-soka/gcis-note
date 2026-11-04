@@ -246,15 +246,17 @@ const VIEWS = {
         <div class="recap">${item(q, "wakatta", `${quest(3)}：分かったこと`)}${item(q, "mada", "まだ分かっていないこと")}</div>
         <div class="tc-row"><span>出した問い（${qs.length}個・チャレンジ${esc(d.rounds || 0)}回）</span><b>${qs.length ? `<ul class="qs">${qs.map(x => `<li>${esc(x.t)}${x.k ? ` <span class="mchip">${esc(x.k)}</span>` : ""}${x.a ? ` <span class="hint">AI</span>` : ""}</li>`).join("")}</ul>` : "—"}</b></div>
         ${item(d, "toi", "選んだ問い")}${item(d, "toiWhy", "選んだわけ")}
-        ${item(d, "houhou", "調べ方")}${item(d, "nani", "確かめること")}${item(d, "yotei", "予定")}
+        ${item(d, "yosou", "予想")}
+        <div class="tc-row"><span>問いへの答え</span><b>${[d.sudeni && `もう調べられていそう：${esc(d.sudeni)}`, d.kakame && `確かめたい：${esc(d.kakame)}`, d.aite && `相手：${esc(d.aite)}`].filter(Boolean).join("／") || "—"}</b></div>
+        ${item(d, "houhou", "調べ方")}${item(d, "houhou2", "あわせて使う調べ方")}${item(d, "nani", "確かめること")}${item(d, "yotei", "予定")}
         ${item(d, "hitsuyou", "必要なもの・人")}${item(d, "kuraberu", "比べるもの")}${item(d, "anzen", "気をつけること（安全・倫理）")}
         <div class="tc-row"><span>Geminiのチャット</span><b>${linkCell(d.geminiLink)}</b></div>`;
     },
-    csvHead: ["出した問い（種類）", "問いの数", "うちAI", "チャレンジ回数", "選んだ問い", "選んだわけ", "調べ方", "確かめること", "予定", "必要なもの・人", "比べるもの", "気をつけること", "Geminiのリンク"],
+    csvHead: ["出した問い（種類）", "問いの数", "うちAI", "チャレンジ回数", "選んだ問い", "選んだわけ", "予想", "もう調べられていそう", "確かめたい", "相手", "調べ方", "あわせて使う調べ方", "確かめること", "予定", "必要なもの・人", "比べるもの", "気をつけること", "Geminiのリンク"],
     csvRow: r => {
       const d = r.note?.data || {}, qs = qsList(d);
       return [qs.map(x => `${x.t}（${x.k || "未分類"}${x.a ? "・AI" : ""}）`).join(" / "), qs.length, qs.filter(x => x.a).length, d.rounds || 0,
-        d.toi, d.toiWhy, d.houhou, d.nani, d.yotei, d.hitsuyou, d.kuraberu, d.anzen, d.geminiLink];
+        d.toi, d.toiWhy, d.yosou, d.sudeni, d.kakame, d.aite, d.houhou, d.houhou2, d.nani, d.yotei, d.hitsuyou, d.kuraberu, d.anzen, d.geminiLink];
     }
   }
 };
@@ -586,6 +588,7 @@ export function mountTeacher({ be, app, dlg }) {
         data: { qs: [{ t: "なんで雑音があると集中できるの？", k: "原因" }, { t: "高校生でも同じ？", k: "比較" }, { t: "どのくらいの音の大きさがいい？", k: "方法・関連性" },
             { t: "歌詞があるとなぜ気が散る？", k: "原因" }, ...Array.from({ length: i % 9 }, (_, j) => ({ t: `（問いの例${j + 1}）`, k: "影響" })), { t: "（AIの例）", k: "定義", a: 1 }], rounds: 1 + (i % 2),
           toi: s4 >= 3 ? "高校生でも、カフェ程度の音があると問題を速く解けるか？" : "", houhou: s4 === 6 ? ["実験・制作", "アンケート", "観察"][i % 3] : "",
+          yosou: s4 === 6 ? "（予想の例）高校生も、カフェくらいの音があると速く解けると思う。" : "", kakame: s4 === 6 ? "条件で変わるか" : "", aite: s4 === 6 ? "人" : "", sudeni: s4 === 6 ? "わからない" : "",
           nani: s4 === 6 ? "（確かめることの例）" : "", yotei: s4 === 6 ? "（予定の例）冬休みに3日ずつ" : "", anzen: s4 === 6 ? "名前や連絡先は集めない。" : "" } });
     }
     return [st, nt];

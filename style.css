@@ -203,6 +203,21 @@ select.ki { width: auto; padding: 3px 10px; border-radius: 999px; font-size: 15p
 .hh:hover { border-color: var(--accent); }
 .hh.on { border-color: var(--accent); background: var(--accent-soft); }
 .hh.on b { color: var(--accent); }
+.hh { position: relative; }
+.hh.rec { border-color: var(--sun); box-shadow: 0 0 0 3px #f8e2b4; }
+.hh.rec.on { border-color: var(--accent); }
+.rec-tag, .sub-tag { position: absolute; top: -9px; right: 8px; font-style: normal; font-size: 11px; font-weight: 700; padding: 0 8px; border-radius: 999px; background: var(--sun); color: var(--ink); }
+.sub-tag { position: static; display: inline-block; margin-top: 4px; background: var(--accent-soft); color: var(--accent); }
+.bunseki { background: var(--bg); border-radius: 12px; padding: 10px 14px; margin: 10px 0 14px; }
+.bq { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; padding: 6px 0; border-bottom: 1px dashed var(--line); }
+.bq:last-child { border-bottom: 0; }
+.bq > span { font-size: 15px; flex: 1 1 14em; }
+.bq-o { display: flex; flex-wrap: wrap; gap: 6px; }
+.bopt { font: inherit; font-size: 14px; padding: 4px 12px; border-radius: 999px; border: 2px solid var(--line); background: #fff; cursor: pointer; }
+.bopt:hover { border-color: var(--accent); }
+.bopt.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+.bopt.small { font-size: 13px; padding: 2px 10px; }
+.h2-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 14px; color: var(--sub); margin: -6px 0 14px; }
 /* 第4回：問いのタイムアタック・分類・選ぶ */
 .qstart { text-align: center; margin: 18px 0; }
 .qft-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
@@ -274,3 +289,4 @@ select.ki { width: auto; padding: 3px 10px; border-radius: 999px; font-size: 15p
 .lesson.todo h3 { color: #4a4f58; }
 .map li.done { background: var(--accent-soft); color: var(--accent); font-weight: 700; }
 .map li.done::before { content: "✓ "; }
+.tc-row em.ktag { color: #fff; font-size: 12px; font-weight: 700; margin-left: 6px; }

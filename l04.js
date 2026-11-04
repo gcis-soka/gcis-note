@@ -4,7 +4,8 @@
 //       → 調べ方を選んで計画を書く → Geminiが指摘 → 提出
 // 計画の点検（安全・倫理）と着手は第5回（12/14）
 // data：qs（[{t:問い, k:種類, a:1＝AIで足した}]）・qftPhase（""/run/done）・qftEnd・rounds・rank・rankTotal・rankN
-//       ・toi・toiWhy・houhou・nani・yotei・hitsuyou・kuraberu・anzen・geminiLink
+//       ・toi・toiWhy・yosou（予想）・sudeni・kakame・aite（問いへの3つの答え）・houhou・houhou2（あわせて使う）
+//       ・nani・yotei・hitsuyou・kuraberu・anzen・geminiLink
 import { quest } from "./common.js";
 
 const QFT_MIN = 3;   // 1回のチャレンジの時間（分）。1人なので班の5分より短く。もう一度チャレンジで足せる
@@ -35,6 +36,23 @@ export const HOUHOU = [
   { name: "観察", when: "人や物が実際に「どう動くか・どうなっているか」を見たいとき" },
   { name: "実験・制作", when: "条件を変えると「どう変わるか」を確かめたい／作って試したいとき" }
 ];
+// 計画の前に、自分の問いに3つ答える → 合う調べ方が光る（1学期 第2回「問いが調べ方を決める」）
+const BUNSEKI = [
+  { key: "sudeni", q: "答えは、もう誰かが調べていそう？", opts: ["はい", "わからない", "いいえ"] },
+  { key: "kakame", q: "確かめたいのは、どれに近い？", opts: ["数・割合", "理由・経験", "様子・動き", "条件で変わるか"] },
+  { key: "aite", q: "調べる相手は？", opts: ["人", "モノ・できごと"] }
+];
+// 答え（と選んだ問いの種類）から、合いそうな調べ方
+function osusume(d, type) {
+  const s = new Set(), hito = d.aite === "人";
+  if (d.kakame === "数・割合") s.add(hito ? "アンケート" : "観察");
+  if (d.kakame === "理由・経験") s.add(hito ? "インタビュー" : "文献・データ");
+  if (d.kakame === "様子・動き") s.add("観察");
+  if (d.kakame === "条件で変わるか") s.add("実験・制作");
+  if (d.sudeni === "はい" || type === "定義" || type === "先行研究") s.add("文献・データ");
+  return [...s];
+}
+const YOSOU_CHIPS = [{ label: "型：＿＿は、＿＿と思う。", text: "＿＿は、＿＿と思う。" }];
 const AIKOTOBA = [
   ["①「？」にする", "テーマ→問いの形に"],
   ["② 既知の先を問う", "なぜ・差・例外へ"],
@@ -72,12 +90,37 @@ function promptAdd(c) {
 function promptPlan(c) {
   const v = c.v;
   return "私は高校1年生です。次の問いを確かめる計画を立てました。\n" +
-    `問い：${v("toi") || "（未記入）"}\n調べ方：${v("houhou") || "（未記入）"}\nこの調べ方で確かめること：${v("nani") || "（未記入）"}\n` +
+    `問い：${v("toi") || "（未記入）"}\n予想：${v("yosou") || "（未記入）"}\n調べ方：${v("houhou") || "（未記入）"}${v("houhou2") ? `（あわせて${v("houhou2")}）` : ""}\nこの調べ方で確かめること：${v("nani") || "（未記入）"}\n` +
     `予定（いつ・どこで・どうやって）：${v("yotei") || "（未記入）"}\n必要なもの・人：${v("hitsuyou") || "（未記入）"}\n` +
     `比べるもの：${v("kuraberu") || "（未記入）"}\n気をつけること：${v("anzen") || "（未記入）"}\n` +
     "この計画を書き直さずに、良くするための指摘を3つまでください。" +
-    "見てほしいのは、①12月から冬休みのあいだにできる量か、②この比べ方で問いに答えられるか、③必要なものや協力してくれる人がそろうか、④人を傷つけたり、個人情報を集めたりしないか、です。" +
+    "見てほしいのは、①12月から冬休みのあいだにできる量か、②この調べ方と比べ方で、予想が合っているかを確かめられるか、③必要なものや協力してくれる人がそろうか、④人を傷つけたり、個人情報を集めたりしないか、です。" +
     "指摘は質問の形にして、1つ40文字以内にしてください。最後にまとめは書かないでください。";
+}
+
+// ---------- 計画：問いに3つ答える → 調べ方を選ぶ ----------
+function typeOfToi(c) { return qsOf(c).find(q => tail(q.t) === tail(c.d.toi))?.k || ""; }
+function planHtml(c) {
+  const d = c.d, rec = osusume(d, typeOfToi(c)), done = BUNSEKI.every(b => d[b.key]);
+  const ask = BUNSEKI.map((b, j) => `
+    <div class="bq"><span>${j + 1}. ${b.q}</span><div class="bq-o">${b.opts.map(o =>
+      `<button type="button" class="bopt ${d[b.key] === o ? "on" : ""}" data-bun="${b.key}" data-v="${o}">${o}</button>`).join("")}</div></div>`).join("");
+  const card = h => {
+    const on = d.houhou === h.name, sub = d.houhou2 === h.name, r = done && rec.includes(h.name);
+    return `<button type="button" class="hh ${on ? "on" : ""} ${r ? "rec" : ""}" data-houhou="${h.name}">${r ? `<em class="rec-tag">合いそう</em>` : ""}<b>${h.name}</b><span>${h.when}</span>${sub ? `<em class="sub-tag">あわせて使う</em>` : ""}</button>`;
+  };
+  return `
+    <div class="bunseki"><b>② 自分の問いに答えよう</b>${ask}</div>
+    <p><b>③ どうやって確かめる？</b> ${done ? (rec.length ? `答えから見て<b>「合いそう」</b>が光りました。主に使う調べ方を1つ選ぼう（光っていないものでもOK）。` : "主に使う調べ方を1つ選ぼう。") : `<span class="hint">②に答えると、合いそうな調べ方が光ります。</span>`}</p>
+    ${d.sudeni === "はい" && done ? `<p class="hint">もう調べた人がいそうなら、まず<b>文献・データ</b>で確かめて、足りないところを自分で調べよう。</p>` : ""}
+    <div class="houhou">${HOUHOU.map(card).join("")}</div>
+    ${d.houhou ? `<p class="h2-row"><span>あわせて使う調べ方（なくてもOK）</span>${HOUHOU.filter(h => h.name !== d.houhou).map(h =>
+      `<button type="button" class="bopt small ${d.houhou2 === h.name ? "on" : ""}" data-houhou2="${h.name}">${h.name}</button>`).join("")}</p>` : ""}`;
+}
+function refreshPlan(c) {
+  const box = c.app.querySelector("[data-plan]");
+  if (box) box.innerHTML = planHtml(c);
+  refreshNav(c, L04.canNext(4, c));
 }
 
 // ---------- 問いのリスト ----------
@@ -268,10 +311,10 @@ export const L04 = {
   uses: ["L01", "L03", "R03"],
   steps: [
     { title: "問いを出す（タイムアタック）", mins: 10 },
-    { title: "AIで広げる（なくてもOK）", mins: 5 },
+    { title: "AIで広げる（なくてもOK）", mins: 3 },
     { title: "問いを7種類に分ける", mins: 8 },
     { title: "問いを1つ選ぶ", mins: 6 },
-    { title: "確かめる計画を書く", mins: 12 },
+    { title: "確かめる計画を書く", mins: 15 },
     { title: "AIに見てもらって直す", mins: 5 },
     { title: "提出", mins: 2 }
   ],
@@ -357,13 +400,12 @@ export const L04 = {
     }
 
     if (i === 4) {
-      const pick = d.houhou || "";
+      const k = typeOfToi(c);
       return `
-        <div class="recap"><div class="tc-row big"><span>選んだ問い</span><b>${esc(d.toi || "—")}</b></div></div>
-        <p><b>どうやって確かめる？</b> 主に使う調べ方を1つ選ぼう。</p>
-        <div class="houhou">${HOUHOU.map(h => `
-          <button type="button" class="hh ${pick === h.name ? "on" : ""}" data-houhou="${h.name}"><b>${h.name}</b><span>${h.when}</span></button>`).join("")}</div>
-        ${field("nani", "この調べ方で、何を確かめる？", { rows: 2, placeholder: "例：雑音ありとなしで、同じ問題を解いた数を比べる" })}
+        <div class="recap"><div class="tc-row big"><span>選んだ問い${k && k !== UNKNOWN ? ` <em class="ktag" style="${kc(k)}">${esc(numOf(k) + k)}</em>` : ""}</span><b>${esc(d.toi || "—")}</b></div></div>
+        ${field("yosou", "① 予想：【誰が・何が】は【どうなる】と思う？", { rows: 2, hint: "答えを予想してから調べ方を決めよう（1学期 第4回）", chips: YOSOU_CHIPS, placeholder: "例：高校生も、カフェくらいの音があると、無音のときより計算問題を速く解けると思う。" })}
+        <div data-plan>${planHtml(c)}</div>
+        ${field("nani", "④ この調べ方で、何を確かめる？", { rows: 2, placeholder: "例：雑音ありとなしで、同じ問題を解いた数を比べる" })}
         ${field("yotei", "予定（いつ・どこで・どうやって）", { rows: 3, placeholder: "例：12/14の授業で問題を作る。冬休みに家で3日ずつ、15分×2回" })}
         ${field("hitsuyou", "必要なもの・協力してくれる人", { rows: 2, placeholder: "例：計算問題（同じ難しさのもの）、タイマー、雑音の音源" })}
         ${field("kuraberu", "何と比べる？", { type: "text", placeholder: "例：無音のとき" })}
@@ -375,6 +417,7 @@ export const L04 = {
       <p>計画を<b>AIに見てもらおう</b>。AIは書き直さず、指摘だけをくれます。<b>同じチャットに</b>送ります。</p>
       ${promptBox(promptPlan(c))}
       <p>指摘を見て、計画を直そう。全部に従わなくてOK。第5回（12/14）に先生と点検してから始めます。</p>
+      ${field("yosou", "予想", { rows: 2 })}
       ${field("nani", "この調べ方で、何を確かめる？", { rows: 2 })}
       ${field("yotei", "予定（いつ・どこで・どうやって）", { rows: 3 })}
       ${field("hitsuyou", "必要なもの・協力してくれる人", { rows: 2 })}
@@ -388,7 +431,8 @@ export const L04 = {
       <div class="themecard">
         <div class="tc-row"><span>出した問い</span><b>${qs.length}個</b></div>
         <div class="tc-row big"><span>選んだ問い${picked?.k && picked.k !== UNKNOWN ? `（${esc(picked.k)}）` : ""}</span><b>${esc(d.toi || "—")}</b></div>
-        <div class="tc-row"><span>調べ方</span><b>${esc(d.houhou || "—")}</b></div>
+        <div class="tc-row"><span>予想</span><b>${esc(d.yosou || "—")}</b></div>
+        <div class="tc-row"><span>調べ方</span><b>${esc(d.houhou || "—")}${d.houhou2 ? `（あわせて${esc(d.houhou2)}）` : ""}</b></div>
         <div class="tc-row"><span>確かめること</span><b>${esc(d.nani || "—")}</b></div>
         <div class="tc-row"><span>予定</span><b>${esc(d.yotei || "—")}</b></div>
         <div class="tc-row"><span>必要なもの・人</span><b>${esc(d.hitsuyou || "—")}</b></div>
@@ -405,7 +449,8 @@ export const L04 = {
     if (i === 1) return qs.length >= MIN_Q;
     if (i === 2) return qs.length >= MIN_Q && qs.every(q => q.k);
     if (i === 3) return !!c.v("toi");
-    if (i === 4 || i === 5) return !!(c.v("houhou") && c.v("nani") && c.v("yotei"));
+    if (i === 4) return !!(c.v("yosou") && BUNSEKI.every(b => c.d[b.key]) && c.v("houhou") && c.v("nani") && c.v("yotei"));
+    if (i === 5) return !!(c.v("yosou") && c.v("houhou") && c.v("nani") && c.v("yotei"));
     return true;
   },
 
@@ -444,8 +489,12 @@ export const L04 = {
       refreshNav(c, true);
       return true;
     }
+    const bn = t.closest("[data-bun]");
+    if (bn) { c.set(bn.dataset.bun, bn.dataset.v); refreshPlan(c); return true; }
     const b = t.closest("[data-houhou]");
-    if (b) { c.set("houhou", b.dataset.houhou); c.rerender(); return true; }
+    if (b) { c.set("houhou", b.dataset.houhou); if (c.d.houhou2 === b.dataset.houhou) c.set("houhou2", ""); refreshPlan(c); return true; }
+    const b2 = t.closest("[data-houhou2]");
+    if (b2) { c.set("houhou2", c.d.houhou2 === b2.dataset.houhou2 ? "" : b2.dataset.houhou2); refreshPlan(c); return true; }
     return false;
   }
 };
