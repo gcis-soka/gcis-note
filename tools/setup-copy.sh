@@ -2,7 +2,7 @@
 # 「形だけ写す」ボタン（Actions の copy-shape）の初期設定（一度だけ・Google Cloud Shell で gcis@ が実行）
 #   使い方：bash setup-copy.sh
 # すること：
-#   1) 写す専用のアカウント copy@gcis-note を作る（配信用の deploy@ とは別。deploy@ は今までどおり生徒データを読めない）
+#   1) 写す専用のアカウント copy-shape@gcis-note を作る（名前は6〜30文字）（配信用の deploy@ とは別。deploy@ は今までどおり生徒データを読めない）
 #   2) 本番（gcis-note）は「読むだけ」、開発版（gcis-note-dev）は「読み書き」の許可を付ける
 #   3) GitHub の main ブランチからだけ使えるようにする（setup-ci.sh で作ったログイン窓口を使う）
 # 何度実行しても同じ結果になる
@@ -11,7 +11,7 @@ set -euo pipefail
 PROD="gcis-note"
 DEV="gcis-note-dev"
 POOL="github"
-SA="copy@${PROD}.iam.gserviceaccount.com"
+SA="copy-shape@${PROD}.iam.gserviceaccount.com"
 say() { printf '\n== %s\n' "$*"; }
 
 say "プロジェクトの確認"
@@ -23,7 +23,7 @@ echo "本番 $PROD（番号 $NUM）／開発版 $DEV"
 
 say "写す専用のアカウント $SA"
 if ! gcloud iam service-accounts describe "$SA" --project="$PROD" >/dev/null 2>&1; then
-  gcloud iam service-accounts create copy --project="$PROD" --display-name="本番→開発版 形だけ写す（main・手動だけ）"
+  gcloud iam service-accounts create copy-shape --project="$PROD" --display-name="copy-shape (prod to dev, main only)"
   sleep 10
 fi
 
