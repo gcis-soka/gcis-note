@@ -290,3 +290,5 @@ select.ki { width: auto; padding: 3px 10px; border-radius: 999px; font-size: 15p
 .map li.done { background: var(--accent-soft); color: var(--accent); font-weight: 700; }
 .map li.done::before { content: "✓ "; }
 .tc-row em.ktag { color: #fff; font-size: 12px; font-weight: 700; margin-left: 6px; }
+/* 1つの画面の中の区切り（例：第2回 画面3の①読む／②気になったこと） */
+hr.divider { border: none; border-top: 2px solid var(--line); margin: 24px 0 18px; }
