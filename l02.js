@@ -1,7 +1,7 @@
 // ステージ3／第2回（11/9）同じことに関心を持つ人を探す
 // 仕様：ナレッジの L02.md「アプリ画面」／プロンプト：L02_PROMPTS（確定）
 // 結果の記録は R01（Quest 1 の結果）。ここでは R01 を読んでプロンプトに入れる
-// data：tomo・q1〜q3・findq（本か動画を探す言葉）。チャットは chatUrl（最初のAIの文の下で預かる）
+// data：tomo・q1〜q3・findq・findb（動画・本を探す言葉：r02.js の findTools）。チャットは chatUrl（最初のAIの文の下で預かる）
 import { quest } from "./common.js";
 import { findTools, handleFind, PICK_TIPS } from "./r02.js";
 const MISSION = quest(1);

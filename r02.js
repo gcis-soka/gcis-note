@@ -1,24 +1,30 @@
 // ステージ4：Quest 2（第2回→第3回）「？」の手がかりになりそうな本か動画
 // 仕様：ナレッジの L03.md「Quest 2」。授業中に始められる子は始める
-// data：findq（探す言葉）・mono（見たもの・読んだもの：動画はリンク、本は題名）・kokoro（いちばん心に残った所と、ひとこと）
+// data：findq（動画を探す言葉）・findb（本を探す言葉）・mono（見たもの・読んだもの：動画はリンク、本は題名）・kokoro（いちばん心に残った所と、ひとこと）
 import { quest, LIBRARY_URL, YOUTUBE_SEARCH } from "./common.js";
 const Q = quest(2);
 
 const qsOf = d => ["q1", "q2", "q3"].map(k => String(d[k] || "").trim()).filter(Boolean);
 
-// 本か動画を探す道具（第2回の最後と Quest 2 で使う）。key：検索語を入れる欄
-export function findTools(c, key = "findq") {
+// 本か動画を探す道具（第2回の最後と Quest 2 で使う）。動画と本で言葉が違うので、欄とボタンを2組に（11/4）
+// findq＝動画を探す言葉（YouTube）／findb＝本を探す言葉（学校図書館の蔵書検索）
+export function findTools(c) {
   const { esc, d } = c;
   return `
-    <div class="field"><label><span class="label">探す言葉</span><span class="hint">AIの言葉でも、自分の言葉でもOK</span>
-      <input data-key="${key}" type="text" value="${esc(d[key] || "")}" placeholder="例：集中力 雑音 実験"></label></div>
-    <div class="searchbtns">
-      <button type="button" class="btn" data-find="youtube" data-findkey="${key}">YouTubeで探す ↗</button>
-      <button type="button" class="btn" data-find="library" data-findkey="${key}">学校図書館の蔵書検索 ↗</button>
+    <div class="findrow">
+      <div class="field"><label><span class="label">動画を探す言葉</span><span class="hint">AIの表の「YouTube」の言葉でも、自分の言葉でもOK</span>
+        <input data-key="findq" type="text" value="${esc(d.findq || "")}" placeholder="例：集中力 雑音 実験"></label></div>
+      <div class="searchbtns"><button type="button" class="btn" data-find="youtube" data-findkey="findq">YouTubeで探す ↗</button></div>
     </div>
-    <p class="hint">蔵書検索のボタンを押すと、探す言葉がコピーされます。開いた検索欄に貼り付けよう（<kbd>Ctrl</kbd>＋<kbd>V</kbd>）。</p>
-    <p class="hint warn-text" data-find-msg hidden></p>
-    <p class="hint">蔵書検索でヒットしないときは、もっと広い1語にしてみよう（例：「睡眠 集中力」→「睡眠」）。</p>`;
+    <div class="findrow">
+      <div class="field"><label><span class="label">本を探す言葉</span><span class="hint">AIの表の「学校図書館」の言葉でも、自分の言葉でもOK</span>
+        <input data-key="findb" type="text" value="${esc(d.findb || "")}" placeholder="例：睡眠不足"></label></div>
+      <div class="searchbtns"><button type="button" class="btn" data-find="library" data-findkey="findb">学校図書館の蔵書検索 ↗</button></div>
+      <p class="hint">ボタンを押すと、この言葉がコピーされます。開いた検索欄に貼り付けよう（<kbd>Ctrl</kbd>＋<kbd>V</kbd>）。</p>
+      <p class="hint warn-text" data-find-msg hidden></p>
+      <p class="hint">ヒットしないときは、もっと広い言葉にしてみよう（例：「睡眠不足」→「睡眠」）。</p>
+    </div>
+    <p class="hint">本か動画のどちらか一方でOK。</p>`;
 }
 export function handleFind(t, c) {
   const b = t.closest("[data-find]");
@@ -33,7 +39,7 @@ export function handleFind(t, c) {
     // 蔵書検索は検索語をURLに載せられない → 言葉をコピーしてから開き、貼ってもらう
     const copied = q ? copyText(q) : false;
     window.open(LIBRARY_URL, "_blank", "noopener");
-    const msg = b.closest(".field, .searchbtns")?.parentElement?.querySelector("[data-find-msg]");
+    const msg = b.closest(".findrow")?.querySelector("[data-find-msg]");
     // コピーできたときは何も出さない（押す前の1行で足りる）。できなかったときだけ知らせる
     if (msg) {
       msg.hidden = copied;
