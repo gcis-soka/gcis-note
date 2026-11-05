@@ -134,7 +134,7 @@ export function mountStudent({ be, user, app, asTeacher }) {
           <button class="btn" data-copy>コピーする</button>
           <button class="btn ghost" data-gemini><span class="if-link">このチャットに戻る ↗</span><span class="if-nolink">${first ? "Geminiを右半分に開く ↗" : "Geminiの窓に戻る ↗"}</span></button>
         </div>
-        <p class="note if-link">✓ ${stageLabel(cur)}のチャットを覚えています。ボタンを押すと、いつでも<b>このチャット</b>が開きます。<button class="link small" data-gemini-new>新しいチャットでやり直す</button></p>
+        <p class="note if-link">✓ ${stageLabel(cur)}のGeminiのチャットを登録しました。「このチャットに戻る」を押すと、いつでも<b>同じチャット</b>が開きます。<button class="link small" data-gemini-new>新しいチャットでやり直す</button></p>
         <div class="if-nolink">
           <p class="note" data-gemini-msg>${first
             ? `開いたGeminiに貼って送信。<b>送信したら</b>、Geminiの窓のいちばん上の<b>URL</b>をコピーして、下に貼ろう。この回はずっとこのチャットを使います。${need}`
