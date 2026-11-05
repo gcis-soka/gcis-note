@@ -128,13 +128,14 @@ const VIEWS = {
         <div class="recap">${item(s, "setsu", "第1回の説")}${item(s, "ippo", MISSION)}${item(s, "yosou", "予想")}</div>
         ${resultRows(r.r01?.data || {})}${item(d, "tomo", "友だちに言われたこと")}
         <div class="tc-row"><span>気になったこと</span><b>${qs.length ? `<ul class="qs">${qs.map(q => `<li>${esc(q)}</li>`).join("")}</ul>` : "—"}</b></div>
+        <div class="tc-row"><span>読んだ記事</span><b>${linksCell(listOf(d, "kiji")) || "—"}</b></div>
         <div class="tc-row"><span>見る動画</span><b>${linksCell(listOf(d, "douga")) || "—"}</b></div>
         <div class="tc-row"><span>読む本</span><b>${listOf(d, "honTitle").map(esc).join("<br>") || "—"}</b></div>`;
     },
-    csvHead: ["説（第1回）", "やった／まだ", "友だちに言われたこと", "気になったこと1", "気になったこと2", "気になったこと3", ...nCols("見る動画"), ...nCols("読む本")],
+    csvHead: ["説（第1回）", "やった／まだ", "友だちに言われたこと", "気になったこと1", "気になったこと2", "気になったこと3", "読んだ記事1", "読んだ記事2", "読んだ記事3", ...nCols("見る動画"), ...nCols("読む本")],
     csvRow: r => {
       const d = r.note?.data || {}, s = r.l01?.data || {};
-      return [s.setsu, r.r01?.data?.did, d.tomo, d.q1, d.q2, d.q3, ...nVals(d, "douga"), ...nVals(d, "honTitle")];
+      return [s.setsu, r.r01?.data?.did, d.tomo, d.q1, d.q2, d.q3, d.kiji || "", d.kiji2 || "", d.kiji3 || "", ...nVals(d, "douga"), ...nVals(d, "honTitle")];
     }
   },
   R02: {

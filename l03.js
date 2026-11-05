@@ -1,8 +1,8 @@
 // ステージ5／第3回（11/16）先行研究に出会う（A案：ニュース→本・動画→論文）
 // 仕様：ナレッジの L03.md。論文は2本決める。長すぎないものを選んで全文を読む（授業で途中まで→残りは Quest 3）
-// RefNavi への登録は授業で（URLを貼るだけ）。アプリは手伝わない（先生 10/31）
+// RefNavi への登録は授業で（URLを貼るだけ）。アプリは登録しないが、登録するもの（第2回の記事・Quest 2 の動画と本）を一覧で出す（11/5）
 // data：hanMemo・kensaku・tried・p1Title・p1Url・p2Title・p2Url・yomiMemo・geminiLink
-import { quest, listOf } from "./common.js";
+import { quest, listOf, booksOf } from "./common.js";
 // Quest 2 で見たもの・読んだもの（11/4 から動画・本の2欄。前の1欄 mono も読む）
 const pickText = R => [...listOf(R, "douga"), ...listOf(R, "honTitle")].join(" ／ ") || R.mono || "";
 
@@ -37,6 +37,19 @@ function myRecap(c) {
       <div class="tc-row"><span>${quest(2)}：見たもの・読んだもの</span><b>${esc(pickText(R2) || "—")}</b></div>
       <div class="tc-row"><span>心に残った所</span><b>${esc(R2.kokoro || "—")}</b></div>
     </div>`;
+}
+
+// RefNavi に登録するもの（第2回の記事・Quest 2 の動画と本）。コピーして使う
+function refList(c) {
+  const L2 = c.prev("L02"), R2 = c.prev("R02"), esc = c.esc;
+  const rows = [
+    ...listOf(L2, "kiji").map(u => ["記事（第2回）", u]),
+    ...listOf(R2, "douga").map(u => ["動画（" + quest(2) + "）", u]),
+    ...booksOf(R2).map(b => ["本（" + quest(2) + "）", b.title + (b.isbn ? "　ISBN " + b.isbn : "")])
+  ];
+  if (!rows.length) return "";
+  return `
+      <div class="recap"><div class="tc-row"><span>RefNaviに登録するもの（これまでに書いたもの）</span><b><ul class="qs">${rows.map(([k, v]) => `<li><span class="hint">${esc(k)}</span> ${esc(v)}</li>`).join("")}</ul></b></div></div>`;
 }
 
 const papers = c => [["p1Title", "p1Url"], ["p2Title", "p2Url"]].map(([t, u]) => ({ title: c.v(t), url: c.v(u) })).filter(p => p.title);
@@ -89,6 +102,7 @@ export const L03 = {
       ${field("p2Title", "論文②の題名", { type: "text" })}
       ${field("p2Url", "論文②のURL", { type: "url", placeholder: "https://…" })}
       <p class="hint">決めたら、RefNaviにもURLを貼って登録しよう。</p>
+      ${refList(c)}
       ${field("geminiLink", "Geminiのチャットのリンク（なくてもOK）", { type: "url", placeholder: "https://…" })}`;
     if (i === 2) {
       const ps = papers(c);

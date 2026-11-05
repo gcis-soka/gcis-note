@@ -1,7 +1,7 @@
 // ステージ3／第2回（11/9）同じことに関心を持つ人を探す
 // 仕様：ナレッジの L02.md「アプリ画面」／プロンプト：L02_PROMPTS（確定）
 // 結果の記録は R01（Quest 1 の結果）。ここでは R01 を読んでプロンプトに入れる
-// data：tomo・q1〜q3・findq・findb（動画・本を探す言葉：r02.js の findTools）・douga〜douga5・honTitle〜honTitle5（見る動画・読む本：pickFields。Quest 2 に写す）。チャットは chatUrl（最初のAIの文の下で預かる）
+// data：tomo・kiji〜kiji3（読んだ記事のリンク）・q1〜q3・findq・findb（動画・本を探す言葉：r02.js の findTools）・douga〜douga5・honTitle〜honTitle5（見る動画・読む本：pickFields。Quest 2 に写す）。チャットは chatUrl（最初のAIの文の下で預かる）
 import { quest, listOf } from "./common.js";
 import { findTools, handleFind, PICK_TIPS, pickFields } from "./r02.js";
 const MISSION = quest(1);
@@ -65,6 +65,15 @@ function myStory(c) {
     </div>`;
 }
 
+// 読んだ記事のリンク（3件まで。入力すると次の欄が出る）。第3回の RefNavi 登録で使う（11/5 先生）
+const KIJI = ["kiji", "kiji2", "kiji3"];
+function kijiFields(c) {
+  return KIJI.map((k, i) => `
+      <div class="pickone"${i ? ` data-reveal-after="${KIJI[i - 1]}" hidden` : ""}>
+        ${c.field(k, `読んだ記事のリンク${i ? `（${i + 1}つ目）` : ""}`, { type: "text", placeholder: "https://…", hint: i ? "" : "記事のページのURL。入力すると次の欄が出ます。第3回に RefNavi に登録するときに使います" })}
+      </div>`).join("");
+}
+
 export const L02 = {
   id: "L02",
   no: 2,
@@ -108,6 +117,7 @@ export const L02 = {
         <li><b>リンクを開いて、見出しと中身が合っているか見る</b>（AIは、ない記事を作ってしまうことがあります）</li>
       </ol>
       <p class="hint">自分で検索して見つけた記事でもOK。合う記事が見つからないときは、まだ誰も調べていないことかもしれません。それも発見です。</p>
+      ${kijiFields(c)}
       <hr class="divider">
       <h3>② 気になったこと</h3>
       <ol class="todo">
@@ -137,6 +147,7 @@ export const L02 = {
       <div class="themecard" style="margin-top:12px">
         ${done(c) ? `<div class="tc-row"><span>これだけでは言い切れないこと</span><b>${esc(R.iikire || "—")}</b></div>` : ""}
         <div class="tc-row"><span>友だちに言われたこと</span><b>${esc(d.tomo || "—")}</b></div>
+        <div class="tc-row"><span>読んだ記事</span><b>${esc(listOf(d, "kiji").join(" ／ ") || "—")}</b></div>
         <div class="tc-row"><span>見る動画・読む本</span><b>${esc([...listOf(d, "douga"), ...listOf(d, "honTitle")].join(" ／ ") || "—")}</b></div>
         <div class="tc-row big"><span>気になったこと</span><b>${qs.length ? `<ul class="qs">${qs.map(q => `<li>${esc(q)}</li>`).join("")}</ul>` : "—"}</b></div>
       </div>
