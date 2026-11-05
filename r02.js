@@ -18,12 +18,13 @@ export function findTools(c) {
       <div class="searchbtns"><button type="button" class="btn" data-find="youtube" data-findkey="findq">YouTubeで探す ↗</button></div>
     </div>
     <div class="findrow">
-      <div class="field"><label><span class="label">本を探す言葉</span><span class="hint">AIの表の「学校図書館」の言葉でも、自分の言葉でもOK</span>
+      <div class="field"><label><span class="label">本を探す言葉</span><span class="hint">蛍雪図書館（学校の図書館）で探します。AIの表の「学校図書館」の言葉でも、自分の言葉でもOK</span>
         <input data-key="findb" type="text" value="${esc(d.findb || "")}" placeholder="例：睡眠不足"></label></div>
-      <div class="searchbtns"><button type="button" class="btn" data-find="library" data-findkey="findb">学校図書館の蔵書検索 ↗</button></div>
+      <div class="searchbtns"><button type="button" class="btn" data-find="library" data-findkey="findb">蛍雪図書館の蔵書検索 ↗</button></div>
       <p class="hint">ボタンを押すと、この言葉がコピーされます。開いた検索欄に貼り付けよう（<kbd>Ctrl</kbd>＋<kbd>V</kbd>）。</p>
       <p class="hint warn-text" data-find-msg hidden></p>
       <p class="hint">ヒットしないときは、もっと広い言葉にしてみよう（例：「睡眠不足」→「睡眠」）。</p>
+      <p class="hint">中学校・小学校の本も出てきます。<b>所蔵館が高校の本</b>を選ぼう。</p>
     </div>
     <p class="hint">本か動画のどちらか一方でOK。</p>`;
 }
@@ -70,7 +71,7 @@ export function pickFields(c, { done = false } = {}) {
     </div>
     <div class="findrow">
       ${field("honTitle", done ? "読んだ本の題名" : "読む本の題名", { type: "text", placeholder: "例：『〇〇〇〇』" })}
-      ${done ? field("isbn", "ISBN", { type: "text", placeholder: "例：9784780802047", hint: "本の裏表紙のバーコードの上か、奥付にある「978」から始まる13桁。第3回に RefNavi に登録するときに使います" }) : ""}
+      ${done ? field("isbn", "ISBN", { type: "text", placeholder: "例：9784780802047", hint: "本の裏表紙のバーコードの上か、奥付にある「978」から始まる13桁。蛍雪図書館の本なら、蔵書検索の本の画面（書誌詳細）にもあります。第3回に RefNavi に登録するときに使います" }) : ""}
     </div>`;
 }
 // Quest 2 を初めて開いたとき、第2回で入れた値（探す言葉・見る動画・読む本）を写す（同じことを2回書かせない）
@@ -113,7 +114,7 @@ export const R02 = {
         </ul>
         <b>本なら</b>
         <ul>
-          <li>パラパラ見て、気になったページを少し読めばOK（学校の図書館・家の本・町の図書館）</li>
+          <li>パラパラ見て、気になったページを少し読めばOK（蛍雪図書館・家の本・町の図書館）</li>
           <li>題名・ISBN・心に残ったページを書く。<b>第3回に本を持ってこよう</b></li>
         </ul>
       </div>
