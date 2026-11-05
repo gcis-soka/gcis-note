@@ -1,7 +1,7 @@
 // 教員画面：期・クラス・回ごとの進み具合（リアルタイム）＋学年まとめ（読み込みは1回・読み直しボタン）
 import {
   escapeHtml, classLabel as baseClassLabel, kiLabel, firstYearKi, methodOf, lsGet, lsSet, quest, classSize,
-  CLASSES, TEST_CLASS, METHODS
+  CLASSES, TEST_CLASS, METHODS, PICK_N, listOf, booksOf
 } from "./common.js";
 
 const GRADE = -1; // 「学年」タブ（全クラスのまとめ）
@@ -23,9 +23,12 @@ const qsOf = d => ["q1", "q2", "q3"].map(k => String(d[k] || "").trim()).filter(
 // Quest 2：リンクが動画サイトなら「動画」、それ以外（題名・ほかのリンク）は「本・その他」
 const kindOf = m => !String(m || "").trim() ? "" : /youtu\.?be|youtube\.com|nicovideo|tiktok\.com|vimeo\.com/i.test(m) ? "動画" : "本・その他";
 const kindChip = m => kindOf(m) ? `<span class="mchip">${kindOf(m)}</span>` : "";
-// Quest 2：本か動画（11/4 から douga・honTitle の2欄。前の1欄 mono も読む）
-const pickKind = d => [d.douga && "動画", d.honTitle && "本"].filter(Boolean).join("・") || (kindOf(d.mono) === "本・その他" ? "本" : kindOf(d.mono));
-const pickCell = d => [d.douga ? linkCell(d.douga) : "", d.honTitle ? esc(d.honTitle) : "", !d.douga && !d.honTitle && d.mono ? linkCell(d.mono) : ""].filter(Boolean).join("<br>");
+// Quest 2：本か動画（11/5 から動画・本を5件まで。前の1欄 mono も読む）
+const pickKind = d => [listOf(d, "douga").length && "動画", listOf(d, "honTitle").length && "本"].filter(Boolean).join("・") || (kindOf(d.mono) === "本・その他" ? "本" : kindOf(d.mono));
+const linksCell = us => us.map(u => linkCell(u)).join("<br>");
+const pickCell = d => [linksCell(listOf(d, "douga")), listOf(d, "honTitle").map(esc).join("<br>"), !listOf(d, "douga").length && !listOf(d, "honTitle").length && d.mono ? linkCell(d.mono) : ""].filter(Boolean).join("<br>");
+const nCols = (label, unit) => PICK_N.map((n, i) => `${label}${i + 1}`);
+const nVals = (d, base) => PICK_N.map(n => d?.[base + n] || "");
 // 第3回：決めた論文（題名・URL）
 const papersOf = d => [["p1Title", "p1Url"], ["p2Title", "p2Url"]].map(([t, u]) => ({ title: String(d[t] || "").trim(), url: d[u] })).filter(p => p.title);
 const paperCell = p => p ? (safeUrl(p.url) ? `<a href="${esc(safeUrl(p.url))}" target="_blank" rel="noopener">${esc(p.title)}</a>` : esc(p.title)) : "";
@@ -125,13 +128,13 @@ const VIEWS = {
         <div class="recap">${item(s, "setsu", "第1回の説")}${item(s, "ippo", MISSION)}${item(s, "yosou", "予想")}</div>
         ${resultRows(r.r01?.data || {})}${item(d, "tomo", "友だちに言われたこと")}
         <div class="tc-row"><span>気になったこと</span><b>${qs.length ? `<ul class="qs">${qs.map(q => `<li>${esc(q)}</li>`).join("")}</ul>` : "—"}</b></div>
-        <div class="tc-row"><span>見る動画</span><b>${linkCell(d.douga)}</b></div>
-        ${item(d, "honTitle", "読む本")}`;
+        <div class="tc-row"><span>見る動画</span><b>${linksCell(listOf(d, "douga")) || "—"}</b></div>
+        <div class="tc-row"><span>読む本</span><b>${listOf(d, "honTitle").map(esc).join("<br>") || "—"}</b></div>`;
     },
-    csvHead: ["説（第1回）", "やった／まだ", "友だちに言われたこと", "気になったこと1", "気になったこと2", "気になったこと3", "見る動画", "読む本"],
+    csvHead: ["説（第1回）", "やった／まだ", "友だちに言われたこと", "気になったこと1", "気になったこと2", "気になったこと3", ...nCols("見る動画"), ...nCols("読む本")],
     csvRow: r => {
       const d = r.note?.data || {}, s = r.l01?.data || {};
-      return [s.setsu, r.r01?.data?.did, d.tomo, d.q1, d.q2, d.q3, d.douga, d.honTitle];
+      return [s.setsu, r.r01?.data?.did, d.tomo, d.q1, d.q2, d.q3, ...nVals(d, "douga"), ...nVals(d, "honTitle")];
     }
   },
   R02: {
@@ -153,15 +156,15 @@ const VIEWS = {
       const d = r.note?.data || {}, qs = qsOf(r.l02?.data || {});
       return `
         <div class="recap"><div class="tc-row"><span>第2回で気になったこと</span><b>${qs.length ? `<ul class="qs">${qs.map(q => `<li>${esc(q)}</li>`).join("")}</ul>` : "—"}</b></div></div>
-        <div class="tc-row"><span>見た動画</span><b>${linkCell(d.douga)}${safeUrl(d.douga) ? `<br><span class="hint">${esc(d.douga)}</span>` : ""}</b></div>
-        ${item(d, "honTitle", "読んだ本")}${item(d, "isbn", "ISBN")}
+        <div class="tc-row"><span>見た動画</span><b>${listOf(d, "douga").map(u => `${linkCell(u)} <span class="hint">${esc(u)}</span>`).join("<br>") || "—"}</b></div>
+        <div class="tc-row"><span>読んだ本（ISBN）</span><b>${booksOf(d).map(b => `${esc(b.title)}${b.isbn ? `（${esc(b.isbn)}）` : ""}`).join("<br>") || "—"}</b></div>
         ${d.mono ? `<div class="tc-row"><span>見たもの・読んだもの（前の欄）</span><b>${linkCell(d.mono)}</b></div>` : ""}
         ${item(d, "kokoro", "いちばん心に残った所と、ひとこと")}`;
     },
-    csvHead: ["気になったこと1（第2回）", "気になったこと2（第2回）", "気になったこと3（第2回）", "本か動画", "見た動画", "読んだ本", "ISBN", "見たもの・読んだもの（前の欄）", "心に残った所・ひとこと"],
+    csvHead: ["気になったこと1（第2回）", "気になったこと2（第2回）", "気になったこと3（第2回）", "本か動画", ...nCols("見た動画"), ...nCols("読んだ本"), ...nCols("ISBN"), "見たもの・読んだもの（前の欄）", "心に残った所・ひとこと"],
     csvRow: r => {
       const d = r.note?.data || {}, q = r.l02?.data || {};
-      return [q.q1, q.q2, q.q3, pickKind(d), d.douga, d.honTitle, d.isbn, d.mono, d.kokoro];
+      return [q.q1, q.q2, q.q3, pickKind(d), ...nVals(d, "douga"), ...nVals(d, "honTitle"), ...nVals(d, "isbn"), d.mono, d.kokoro];
     }
   },
   L03: {

@@ -1,8 +1,8 @@
 // ステージ4：Quest 2（第2回→第3回）「？」の手がかりになりそうな本か動画
 // 仕様：ナレッジの L03.md「Quest 2」。授業中に始められる子は始める
-// data：findq（動画を探す言葉）・findb（本を探す言葉）・douga（動画のリンク）・honTitle（本の題名）・isbn・kokoro（いちばん心に残った所と、ひとこと）・fromL02（第2回の値を写した印）
+// data：findq（動画を探す言葉）・findb（本を探す言葉）・douga〜douga5（動画のリンク）・honTitle〜honTitle5（本の題名）・isbn〜isbn5・kokoro（いちばん心に残った所と、ひとこと）・fromL02（第2回の値を写した印）
 // mono（見たもの・読んだもの：11/4 までの1欄）は古いデータの表示用に残す
-import { quest, LIBRARY_URL, YOUTUBE_SEARCH } from "./common.js";
+import { quest, LIBRARY_URL, YOUTUBE_SEARCH, PICK_N, listOf } from "./common.js";
 const Q = quest(2);
 
 const qsOf = d => ["q1", "q2", "q3"].map(k => String(d[k] || "").trim()).filter(Boolean);
@@ -62,20 +62,25 @@ function copyText(t) {
   try { navigator.clipboard?.writeText(t); return true; } catch { return false; }
 }
 
-// 見る動画・読む本（第2回の最後で決める／Quest 2 で見たもの・読んだもの）。ISBN は本を手に取る Quest 2 だけ（空でも提出できる）
+// 見る動画・読む本（第2回の最後で決める／Quest 2 で見たもの・読んだもの）。動画も本も5件まで、入力すると次の欄が出る
+// ISBN は本を手に取る Quest 2 だけ（空でも提出できる）
 export function pickFields(c, { done = false } = {}) {
   const { field } = c;
-  return `
-    <div class="findrow">
-      ${field("douga", done ? "見た動画のリンク（いくつかなら全部）" : "見る動画のリンク（いくつかなら全部）", { type: "text", placeholder: "https://youtu.be/…", hint: "YouTubeの「共有」→「コピー」" })}
-    </div>
-    <div class="findrow">
-      ${field("honTitle", done ? "読んだ本の題名" : "読む本の題名", { type: "text", placeholder: "例：『〇〇〇〇』" })}
-      ${done ? field("isbn", "ISBN", { type: "text", placeholder: "例：9784780802047", hint: "本の裏表紙のバーコードの上か、奥付にある「978」から始まる13桁。蛍雪図書館の本なら、蔵書検索の本の画面（書誌詳細）にもあります。第3回に RefNavi に登録するときに使います" }) : ""}
-    </div>`;
+  const nth = (i, unit) => i ? `（${i + 1}${unit}目）` : "";
+  const reveal = (i, prevKey) => i ? ` data-reveal-after="${prevKey}" hidden` : "";
+  const videos = PICK_N.map((n, i) => `
+      <div class="pickone"${reveal(i, "douga" + PICK_N[i - 1])}>
+        ${field("douga" + n, `${done ? "見た" : "見る"}動画のリンク${nth(i, "本")}`, { type: "text", placeholder: "https://youtu.be/…", hint: i ? "" : "YouTubeの「共有」→「コピー」。入力すると次の欄が出ます" })}
+      </div>`).join("");
+  const books = PICK_N.map((n, i) => `
+      <div class="pickone"${reveal(i, "honTitle" + PICK_N[i - 1])}>
+        ${field("honTitle" + n, `${done ? "読んだ" : "読む"}本の題名${nth(i, "冊")}`, { type: "text", placeholder: "例：『〇〇〇〇』", hint: i ? "" : "入力すると次の欄が出ます" })}
+        ${done ? field("isbn" + n, "ISBN", { type: "text", placeholder: "例：9784780802047", hint: i ? "" : "本の裏表紙のバーコードの上か、奥付にある「978」から始まる13桁。蛍雪図書館の本なら、蔵書検索の本の画面（書誌詳細）にもあります。第3回に RefNavi に登録するときに使います" }) : ""}
+      </div>`).join("");
+  return `<div class="findrow">${videos}</div><div class="findrow">${books}</div>`;
 }
 // Quest 2 を初めて開いたとき、第2回で入れた値（探す言葉・見る動画・読む本）を写す（同じことを2回書かせない）
-export const FROM_L02 = ["findq", "findb", "douga", "honTitle"];
+export const FROM_L02 = ["findq", "findb", ...PICK_N.map(n => "douga" + n), ...PICK_N.map(n => "honTitle" + n)];
 function copyFromL02(c) {
   if (c.d.fromL02) return;
   const L2 = c.prev("L02");
@@ -130,7 +135,7 @@ export const R02 = {
   },
 
   canNext(i, c) {
-    return !!((c.v("douga") || c.v("honTitle") || c.v("mono")) && c.v("kokoro"));
+    return !!((listOf(c.d, "douga").length || listOf(c.d, "honTitle").length || c.v("mono")) && c.v("kokoro"));
   },
 
   onClick(t, c) {

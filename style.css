@@ -298,3 +298,4 @@ hr.divider { border: none; border-top: 2px solid var(--line); margin: 24px 0 18p
 .urlhowto figcaption { font-size: 14px; margin-top: 6px; }
 /* 本か動画を探す：動画の組と本の組 */
 .findrow { border-left: 4px solid var(--line); padding: 2px 0 2px 12px; margin: 10px 0 14px; }
+.pickone[hidden] { display: none; }

@@ -312,6 +312,11 @@ export function mountStudent({ be, user, app, asTeacher }) {
   function updateHints() {
     if (!cur) return;
     const v = k => String(note().data[k] ?? "").trim();
+    // 入力すると次の欄が出る（data-reveal-after＝前の欄の key。自分に何か入っていれば出したまま）
+    app.querySelectorAll("[data-reveal-after]").forEach(el => {
+      const own = [...el.querySelectorAll("[data-key]")].some(i => String(i.value || "").trim());
+      el.hidden = !(v(el.dataset.revealAfter) || own);
+    });
     app.querySelectorAll("[data-short]").forEach(p => {
       const len = v(p.dataset.short).length;
       p.hidden = !(len > 0 && len < 10);

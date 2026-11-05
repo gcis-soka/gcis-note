@@ -1,8 +1,8 @@
 // ステージ3／第2回（11/9）同じことに関心を持つ人を探す
 // 仕様：ナレッジの L02.md「アプリ画面」／プロンプト：L02_PROMPTS（確定）
 // 結果の記録は R01（Quest 1 の結果）。ここでは R01 を読んでプロンプトに入れる
-// data：tomo・q1〜q3・findq・findb（動画・本を探す言葉：r02.js の findTools）・douga・honTitle（見る動画・読む本：pickFields。Quest 2 に写す）。チャットは chatUrl（最初のAIの文の下で預かる）
-import { quest } from "./common.js";
+// data：tomo・q1〜q3・findq・findb（動画・本を探す言葉：r02.js の findTools）・douga〜douga5・honTitle〜honTitle5（見る動画・読む本：pickFields。Quest 2 に写す）。チャットは chatUrl（最初のAIの文の下で預かる）
+import { quest, listOf } from "./common.js";
 import { findTools, handleFind, PICK_TIPS, pickFields } from "./r02.js";
 const MISSION = quest(1);
 
@@ -137,7 +137,7 @@ export const L02 = {
       <div class="themecard" style="margin-top:12px">
         ${done(c) ? `<div class="tc-row"><span>これだけでは言い切れないこと</span><b>${esc(R.iikire || "—")}</b></div>` : ""}
         <div class="tc-row"><span>友だちに言われたこと</span><b>${esc(d.tomo || "—")}</b></div>
-        <div class="tc-row"><span>見る動画・読む本</span><b>${esc([d.douga, d.honTitle].filter(Boolean).join(" ／ ") || "—")}</b></div>
+        <div class="tc-row"><span>見る動画・読む本</span><b>${esc([...listOf(d, "douga"), ...listOf(d, "honTitle")].join(" ／ ") || "—")}</b></div>
         <div class="tc-row big"><span>気になったこと</span><b>${qs.length ? `<ul class="qs">${qs.map(q => `<li>${esc(q)}</li>`).join("")}</ul>` : "—"}</b></div>
       </div>
       <div class="share"><b>次は ${quest(2)}</b><p>決めた動画を見る・本を読む。見たら・読んだら、<b>ホームに戻って「${quest(2)}」を開き</b>、書こう。</p>

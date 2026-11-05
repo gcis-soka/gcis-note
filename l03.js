@@ -2,9 +2,9 @@
 // 仕様：ナレッジの L03.md。論文は2本決める。長すぎないものを選んで全文を読む（授業で途中まで→残りは Quest 3）
 // RefNavi への登録は授業で（URLを貼るだけ）。アプリは手伝わない（先生 10/31）
 // data：hanMemo・kensaku・tried・p1Title・p1Url・p2Title・p2Url・yomiMemo・geminiLink
-import { quest } from "./common.js";
+import { quest, listOf } from "./common.js";
 // Quest 2 で見たもの・読んだもの（11/4 から動画・本の2欄。前の1欄 mono も読む）
-const pickText = R => [R.douga, R.honTitle].filter(Boolean).join(" ／ ") || R.mono || "";
+const pickText = R => [...listOf(R, "douga"), ...listOf(R, "honTitle")].join(" ／ ") || R.mono || "";
 
 const qsOf = d => ["q1", "q2", "q3"].map(k => String(d[k] || "").trim()).filter(Boolean);
 const tail = s => String(s || "").trim().replace(/[。．.、,，！!\s　]+$/u, "");

@@ -234,3 +234,9 @@ function demoBackend() {
     watchGroup() { return () => {}; }
   };
 }
+
+// 本か動画（第2回の③・Quest 2）：動画のリンク・本の題名・ISBN を5件まで（douga, douga2…douga5 のように持つ。1件目は前からの名前のまま）11/5
+export const PICK_N = ["", "2", "3", "4", "5"];
+export const listOf = (d, base) => PICK_N.map(n => String(d?.[base + n] ?? "").trim()).filter(Boolean);
+// 本の題名と ISBN の組（題名のある分だけ）
+export const booksOf = d => PICK_N.map(n => ({ title: String(d?.["honTitle" + n] ?? "").trim(), isbn: String(d?.["isbn" + n] ?? "").trim() })).filter(b => b.title);
