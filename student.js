@@ -340,13 +340,16 @@ export function mountStudent({ be, user, app, asTeacher }) {
     const p = app.querySelector("[data-need]");
     if (!p || !cur) return;
     const n = note(), c = ctx();
-    let miss = [];
+    let msg = "";
     if (!canGo(n.step, c)) {
-      if (cur.needChat && promptOnScreen && !chatUrlOf(n.data.chatUrl)) miss = ["この回のチャットのURL"];
-      else miss = cur.need?.(n.step, c) || [];
+      if (cur.needChat && promptOnScreen && !chatUrlOf(n.data.chatUrl)) msg = "この回のチャットのURLが貼れたら、次へ進もう";
+      else {
+        const miss = cur.need?.(n.step, c) || [];
+        if (miss.length) msg = `${miss.map(m => escapeHtml(m)).join("と")}が書けたら、次へ進もう`;
+      }
     }
-    p.hidden = !miss.length;
-    p.innerHTML = miss.length ? `${miss.map(m => escapeHtml(m)).join("と")}が書けたら、次へ進もう` : "";
+    p.hidden = !msg;
+    p.innerHTML = msg;
   }
 
   async function copyPrompt(btn) {
