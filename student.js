@@ -171,7 +171,8 @@ export function mountStudent({ be, user, app, asTeacher }) {
       <div class="nav">
         ${i > 0 ? `<button class="btn ghost" data-go="${i - 1}">← もどる</button>` : `<button class="btn ghost" data-home>ホーム</button>`}
         <button class="btn primary" data-go="${i + 1}" ${canNext ? "" : "disabled"}>${nextLabel} →</button>
-      </div>`;
+      </div>
+      <p class="need-msg" data-need hidden></p>`;
   }
 
   // ---------- 画面 ----------
@@ -297,7 +298,7 @@ export function mountStudent({ be, user, app, asTeacher }) {
         ${nav(n.step, canGo(n.step, c), nextLabel)}
       </section>`;
     window.scrollTo(0, 0);
-    updateHints();
+    updateHints(); refreshNeed();
   }
 
   // 次へ（最後は提出）を押せるか。提出済みの最後の画面は「ホームへ」なので常に押せる
@@ -331,6 +332,21 @@ export function mountStudent({ be, user, app, asTeacher }) {
     const n = note();
     const btn = app.querySelector(".nav .primary");
     if (btn) btn.disabled = !canGo(n.step, ctx());
+    refreshNeed();
+  }
+  // 次へが押せないとき、何が書けたら進めるかを出す（11/5 先生：「〜が書けたら、次へ進もう」）
+  // 各回の need(i, c) が足りないものの名前の配列を返す。need がない回は何も出さない
+  function refreshNeed() {
+    const p = app.querySelector("[data-need]");
+    if (!p || !cur) return;
+    const n = note(), c = ctx();
+    let miss = [];
+    if (!canGo(n.step, c)) {
+      if (cur.needChat && promptOnScreen && !chatUrlOf(n.data.chatUrl)) miss = ["この回のチャットのURL"];
+      else miss = cur.need?.(n.step, c) || [];
+    }
+    p.hidden = !miss.length;
+    p.innerHTML = miss.length ? `${miss.map(m => escapeHtml(m)).join("と")}が書けたら、次へ進もう` : "";
   }
 
   async function copyPrompt(btn) {

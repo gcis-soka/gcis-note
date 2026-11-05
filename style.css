@@ -299,3 +299,5 @@ hr.divider { border: none; border-top: 2px solid var(--line); margin: 24px 0 18p
 /* 本か動画を探す：動画の組と本の組 */
 .findrow { border-left: 4px solid var(--line); padding: 2px 0 2px 12px; margin: 10px 0 14px; }
 .pickone[hidden] { display: none; }
+/* 次へが押せないときの一言（何が書けたら進めるか） */
+.need-msg { text-align: right; font-size: 14px; color: var(--accent); font-weight: 700; margin: 6px 2px 0; }

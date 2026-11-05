@@ -149,6 +149,10 @@ export const L02 = {
     if (i === 2) return ["q1", "q2", "q3"].some(k => c.v(k));
     return true;
   },
+  // 次へが押せないときに出す名前（「〜が書けたら、次へ進もう」）
+  need(i, c) {
+    return i === 2 && !this.canNext(i, c) ? ["「気になったこと」を1つ"] : [];
+  },
 
   onClick(t, c) {
     return handleFind(t, c);

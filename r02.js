@@ -7,6 +7,42 @@ const Q = quest(2);
 
 const qsOf = d => ["q1", "q2", "q3"].map(k => String(d[k] || "").trim()).filter(Boolean);
 
+// 蔵書検索の使い方の図（トップ→詳細検索→書名に貼る→高等学校だけ）。詳細検索のURLは直接開けないのでトップから（11/5）
+const LIB_HOWTO = `
+  <figure class="urlhowto libhowto" aria-label="蔵書検索の使い方：詳細検索を押し、書名に貼り付け、高等学校だけにチェックして検索">
+    <svg viewBox="0 0 540 222" role="img" xmlns="http://www.w3.org/2000/svg">
+      <rect x="1" y="1" width="250" height="220" rx="10" fill="#fff" stroke="#c9ced8"/>
+      <rect x="1" y="1" width="250" height="34" rx="10" fill="#fff"/>
+      <text x="14" y="24" font-size="14" font-weight="700" fill="#2e7d32">創価学園図書館</text>
+      <rect x="2" y="38" width="248" height="172" fill="#7fd8f0"/>
+      <rect x="16" y="70" width="220" height="110" rx="8" fill="#f0f0f0"/>
+      <text x="26" y="104" font-size="12" fill="#333">蔵書検索</text>
+      <rect x="80" y="88" width="90" height="24" rx="3" fill="#fff" stroke="#aaa"/>
+      <rect x="174" y="88" width="56" height="24" rx="3" fill="#388e3c"/>
+      <text x="179" y="105" font-size="11" fill="#fff" textLength="46" lengthAdjust="spacingAndGlyphs">検索する</text>
+      <text x="104" y="150" font-size="13" fill="#1a0dab" text-decoration="underline">› 詳細検索</text>
+      <rect x="96" y="134" width="80" height="24" rx="6" fill="none" stroke="#d93025" stroke-width="3"/>
+      <circle cx="196" cy="146" r="12" fill="#d93025"/><text x="191" y="151" font-size="14" font-weight="700" fill="#fff">1</text>
+      <path d="M258 120 L278 120" stroke="#d93025" stroke-width="3"/><path d="M276 112 L288 120 L276 128 Z" fill="#d93025"/>
+      <rect x="289" y="1" width="250" height="220" rx="10" fill="#fff" stroke="#c9ced8"/>
+      <text x="302" y="26" font-size="14" font-weight="700" fill="#222">🔍 詳細検索</text>
+      <path d="M300 36 H528" stroke="#2e7d32" stroke-width="2"/>
+      <rect x="302" y="52" width="54" height="24" rx="3" fill="#fff" stroke="#aaa"/><text x="308" y="69" font-size="12" fill="#333">書名 ▾</text>
+      <rect x="362" y="52" width="110" height="24" rx="3" fill="#fff" stroke="#aaa"/>
+      <text x="370" y="69" font-size="12" fill="#999">ここに貼り付け</text>
+      <rect x="359" y="49" width="116" height="30" rx="5" fill="none" stroke="#d93025" stroke-width="3"/>
+      <circle cx="494" cy="64" r="12" fill="#d93025"/><text x="489" y="69" font-size="14" font-weight="700" fill="#fff">2</text>
+      <text x="302" y="118" font-size="12" fill="#1a0dab" text-decoration="underline">⌃ 所蔵館を指定する</text>
+      <text x="302" y="148" font-size="12" fill="#333">☐ 小学校　☐ 中学校</text>
+      <text x="428" y="148" font-size="12" font-weight="700" fill="#333">☑ 高等学校</text>
+      <rect x="422" y="131" width="78" height="24" rx="5" fill="none" stroke="#d93025" stroke-width="3"/>
+      <circle cx="518" cy="143" r="11" fill="#d93025"/><text x="513" y="148" font-size="14" font-weight="700" fill="#fff">3</text>
+      <rect x="370" y="176" width="88" height="30" rx="4" fill="#388e3c"/>
+      <text x="386" y="196" font-size="14" font-weight="700" fill="#fff">検索する</text>
+    </svg>
+    <figcaption>① 開いたページの「<b>詳細検索</b>」を押す → ② 「<b>書名</b>」の欄に貼り付け（<kbd>Ctrl</kbd>＋<kbd>V</kbd>）→ ③ 「所蔵館を指定する」で「<b>高等学校</b>」だけにチェックして「検索する」</figcaption>
+  </figure>`;
+
 // 本か動画を探す道具（第2回の最後と Quest 2 で使う）。動画と本で言葉が違うので、欄とボタンを2組に（11/4）
 // findq＝動画を探す言葉（YouTube）／findb＝本を探す言葉（学校図書館の蔵書検索）
 export function findTools(c) {
@@ -21,10 +57,10 @@ export function findTools(c) {
       <div class="field"><label><span class="label">本を探す言葉</span><span class="hint">蛍雪図書館（学校の図書館）で探します。AIの表の「学校図書館」の言葉でも、自分の言葉でもOK</span>
         <input data-key="findb" type="text" value="${esc(d.findb || "")}" placeholder="例：睡眠不足"></label></div>
       <div class="searchbtns"><button type="button" class="btn" data-find="library" data-findkey="findb">蛍雪図書館の蔵書検索 ↗</button></div>
-      <p class="hint">ボタンを押すと、この言葉がコピーされます。開いた検索欄に貼り付けよう（<kbd>Ctrl</kbd>＋<kbd>V</kbd>）。</p>
+      <p class="hint">ボタンを押すと、この言葉がコピーされます。開いたページで、下の図のとおりに探そう。</p>
       <p class="hint warn-text" data-find-msg hidden></p>
+      ${LIB_HOWTO}
       <p class="hint">ヒットしないときは、もっと広い言葉にしてみよう（例：「睡眠不足」→「睡眠」）。</p>
-      <p class="hint">中学校・小学校の本も出てきます。<b>所蔵館が高校の本</b>を選ぼう。</p>
     </div>
     <p class="hint">本か動画のどちらか一方でOK。</p>`;
 }
@@ -45,7 +81,7 @@ export function handleFind(t, c) {
     // コピーできたときは何も出さない（押す前の1行で足りる）。できなかったときだけ知らせる
     if (msg) {
       msg.hidden = copied;
-      msg.innerHTML = copied ? "" : `${q ? "コピーできませんでした。" : ""}開いた蔵書検索の<b>検索欄に、探す言葉を入れて</b>検索しよう。`;
+      msg.innerHTML = copied ? "" : `${q ? "コピーできませんでした。" : ""}下の図の②で、<b>「書名」の欄に探す言葉を入れて</b>検索しよう。`;
     }
   }
   return true;
@@ -136,6 +172,13 @@ export const R02 = {
 
   canNext(i, c) {
     return !!((listOf(c.d, "douga").length || listOf(c.d, "honTitle").length || c.v("mono")) && c.v("kokoro"));
+  },
+  // 次へが押せないときに出す名前（「〜が書けたら、次へ進もう」）
+  need(i, c) {
+    const m = [];
+    if (!(listOf(c.d, "douga").length || listOf(c.d, "honTitle").length || c.v("mono"))) m.push("「見た動画のリンク」か「読んだ本の題名」");
+    if (!c.v("kokoro")) m.push("「ひとこと」");
+    return m;
   },
 
   onClick(t, c) {
