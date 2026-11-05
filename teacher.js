@@ -436,8 +436,10 @@ export function mountTeacher({ be, app, dlg }) {
     box.innerHTML = "";
     const at = grade?.at ? grade.at.toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" }) : "";
     mth.innerHTML = `<span class="hint">${grade?.loading ? "読み込み中…" : at ? `${at} に読み込み` : ""}</span>
-      <button class="btn ghost small" id="reload" ${grade?.loading ? "disabled" : ""}>読み直す</button>`;
+      <button class="btn ghost small" id="reload" ${grade?.loading ? "disabled" : ""}>読み直す</button>
+      ${grade?.at && !grade?.error && gradeList().length ? `<button class="btn ghost small" id="slips">出せていない人の個票を印刷</button>` : ""}`;
     document.getElementById("reload").onclick = loadGrade;
+    const sb = document.getElementById("slips"); if (sb) sb.onclick = printSlips;
     if (grade?.error) { sum.innerHTML = ""; tbl.innerHTML = `<p class="error">${esc(grade.error)}</p>`; return; }
     if (!grade?.at) { sum.innerHTML = ""; tbl.innerHTML = ""; return; }
 
@@ -454,13 +456,7 @@ export function mountTeacher({ be, app, dlg }) {
 
     // 出せていない人を1人1行で：クラス・番号・いまの状況（まだログインしていない人も含める）
     const fmtWhen = d => d ? d.toLocaleString("ja-JP", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "—";
-    const order = { miss: 0, prev: 1, none: 2, work: 3 };
-    const list = gs.flatMap(g => [
-      ...g.miss.map(n => ({ c: g.c, number: n, kind: "miss", label: "まだログインしていない", stc: "st-miss" })),
-      ...g.people.filter(p => p.st.kind !== "done").map(p => ({ c: g.c, number: p.number, uid: p.uid, kind: p.st.kind,
-        label: p.st.kind === "work" ? `途中：${p.st.label}` : p.st.label, stc: p.st.cls,
-        when: p.st.kind === "work" ? (grade.notes.find(n => n.uid === p.uid && n.lesson === lesson)?.updatedAt || null) : null }))
-    ]).sort((a, b) => a.c - b.c || a.number - b.number || order[a.kind] - order[b.kind]);
+    const list = gradeList(gs);
     const warns = gs.flatMap(g => [
       g.dup.length ? `${classLabel(g.c)}：番号が重なっています（${g.dup.join("、")}番）` : "",
       g.extra.length ? `${classLabel(g.c)}：${g.size}番より大きい番号（${g.extra.join("、")}番）` : ""
@@ -479,6 +475,73 @@ export function mountTeacher({ be, app, dlg }) {
     tbl.querySelectorAll("[data-goto]").forEach(b => b.onclick = () => {
       cls = Number(b.dataset.goto); lsSet("gcis_t_cls", String(cls)); renderShell(); watch();
     });
+  }
+
+  // 出せていない人の一覧（画面の表と個票で共通）
+  function gradeList(gs = gradeRows()) {
+    const order = { miss: 0, prev: 1, none: 2, work: 3 };
+    return gs.flatMap(g => [
+      ...g.miss.map(n => ({ c: g.c, number: n, kind: "miss", label: "まだログインしていない", stc: "st-miss" })),
+      ...g.people.filter(p => p.st.kind !== "done").map(p => ({ c: g.c, number: p.number, uid: p.uid, kind: p.st.kind,
+        label: p.st.kind === "work" ? `途中：${p.st.label}` : p.st.label, stc: p.st.cls,
+        when: p.st.kind === "work" ? (grade.notes.find(n => n.uid === p.uid && n.lesson === lesson)?.updatedAt || null) : null }))
+    ]).sort((a, b) => a.c - b.c || a.number - b.number || order[a.kind] - order[b.kind]);
+  }
+
+  // 個票：出せていない人に「提出してね」の紙を配る（A4に10枚・切り取り線つき）。名前・アドレスは載せない
+  function printSlips() {
+    const list = gradeList(); if (!list.length) return;
+    const tab = view().tab, prevTab = prevOf(lesson) ? VIEWS[prevOf(lesson)].tab : "";
+    const at = grade.at.toLocaleString("ja-JP", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" });
+    const url = "gcis-note.web.app"; // 開発版で印刷しても、生徒には本番の入口を案内する
+    const now = x => x.kind === "miss" ? "まだ探究ノートにログインしていないようです。"
+      : x.kind === "prev" ? `先に「${prevTab}」を提出すると、ホームに「${tab}」が出ます。`
+      : x.kind === "work" ? (view().stepNames.length > 1 ? `「${x.label.replace(/^途中：/, "")}」まで進んでいます。続きからでOK！` : "書きかけになっています。続きからでOK！")
+      : `「${tab}」をまだ始めていないようです。`;
+    const slip = x => `<div class="slip" data-c="${x.c}">
+        <div class="who"><b>${esc(classLabel(x.c))} ${esc(x.number)}番</b> さんへ</div>
+        <h2>探究ノート「${esc(tab)}」を提出してね</h2>
+        <p class="now">${esc(now(x))}</p>
+        <ol><li>Classroom のリンクから開く（<b>${url}</b>）</li>
+          <li>学校のアカウントでログイン${x.kind === "miss" ? "して、クラスと番号を入れる" : ""}</li>
+          <li>${x.kind === "prev" ? `「${esc(prevTab)}」を提出 → 「${esc(tab)}」も書いて提出` : `ホームの「${esc(tab)}」を書いて「提出する」`}</li></ol>
+        <div class="foot"><span class="due">締め切り：<span class="due-v"></span></span><span class="at">${esc(at)} 時点<br>行き違いならごめんね</span></div>
+      </div>`;
+    const w = window.open("", "_blank");
+    if (!w) { alert("新しいタブを開けませんでした。ポップアップを許可してから、もう一度押してください。"); return; }
+    w.document.write(`<!doctype html><html lang="ja"><head><meta charset="utf-8"><title>${esc(tab)} 個票（${list.length}枚）</title><style>
+      @page { size: A4; margin: 8mm; }
+      * { box-sizing: border-box; }
+      body { margin: 0; font-family: "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", sans-serif; color: #111; }
+      .bar { position: sticky; top: 0; background: #f4f4f0; border-bottom: 1px solid #ccc; padding: 10px 14px; display: flex; gap: 16px; align-items: center; flex-wrap: wrap; font-size: 14px; }
+      .bar input[type=text] { font-size: 14px; padding: 4px 8px; width: 12em; }
+      .bar button { font-size: 15px; padding: 6px 16px; font-weight: bold; cursor: pointer; }
+      .sheet { width: 194mm; margin: 12px auto; display: grid; grid-template-columns: 1fr 1fr; }
+      .slip { height: 55mm; padding: 4mm 5mm; border: 1px dashed #999; margin: -0.5px 0 0 -0.5px; display: flex; flex-direction: column; break-inside: avoid; }
+      .who { font-size: 13pt; } .who b { font-size: 15pt; }
+      h2 { font-size: 13pt; margin: 1.5mm 0; }
+      .now { font-size: 9.5pt; margin: 0 0 1mm; line-height: 1.4; }
+      ol { font-size: 9.5pt; margin: 0; padding-left: 5mm; line-height: 1.45; }
+      .foot { margin-top: auto; display: flex; justify-content: space-between; align-items: flex-end; gap: 3mm; font-size: 7.5pt; color: #555; }
+      .due { font-size: 10pt; color: #111; white-space: nowrap; } .due-v { display: inline-block; min-width: 26mm; border-bottom: 1px solid #111; }
+      .at { text-align: right; }
+      .by-class .sheet + .sheet { break-before: page; }
+      body.nobrk .by-class, body:not(.nobrk) .all { display: none; }
+      @media print { .bar { display: none; } .sheet { margin: 0 auto; } }
+    </style></head><body>
+      <div class="bar"><span><b>${list.length}枚</b>（${esc(tab)}・${esc(at)} 時点）</span>
+        <label>締め切り <input type="text" id="due" placeholder="例：11/9（月）の朝"></label>
+        <label><input type="checkbox" id="brk"> クラスごとに改ページ</label>
+        <button id="go">印刷する</button></div>
+      <div class="all"><div class="sheet">${list.map(slip).join("")}</div></div>
+      <div class="by-class">${[...new Set(list.map(x => x.c))].map(c => `<div class="sheet">${list.filter(x => x.c === c).map(slip).join("")}</div>`).join("")}</div>
+    </body></html>`);
+    w.document.close();
+    const d = w.document;
+    d.body.classList.add("nobrk");
+    d.getElementById("due").oninput = e => d.querySelectorAll(".due-v").forEach(s => s.textContent = e.target.value);
+    d.getElementById("brk").onchange = e => d.body.classList.toggle("nobrk", !e.target.checked);
+    d.getElementById("go").onclick = () => w.print();
   }
 
   // 学年まとめのCSV：画面と同じく、出せていない人を1人1行（まだログインしていない人も含む）
