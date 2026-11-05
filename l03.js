@@ -2,7 +2,9 @@
 // 仕様：ナレッジの L03.md。論文は2本決める。長すぎないものを選んで全文を読む（授業で途中まで→残りは Quest 3）
 // RefNavi への登録は授業で（URLを貼るだけ）。アプリは手伝わない（先生 10/31）
 // data：hanMemo・kensaku・tried・p1Title・p1Url・p2Title・p2Url・yomiMemo・geminiLink
-import { quest } from "./common.js";
+import { quest, listOf } from "./common.js";
+// Quest 2 で見たもの・読んだもの（11/4 から動画・本の2欄。前の1欄 mono も読む）
+const pickText = R => [...listOf(R, "douga"), ...listOf(R, "honTitle")].join(" ／ ") || R.mono || "";
 
 const qsOf = d => ["q1", "q2", "q3"].map(k => String(d[k] || "").trim()).filter(Boolean);
 const tail = s => String(s || "").trim().replace(/[。．.、,，！!\s　]+$/u, "");
@@ -32,7 +34,7 @@ function myRecap(c) {
     <div class="recap">
       <div class="tc-row"><span>説（第1回）</span><b>${esc(L1.setsu || "—")}</b></div>
       <div class="tc-row"><span>気になったこと（第2回）</span><b>${qs.length ? `<ul class="qs">${qs.map(q => `<li>${esc(q)}</li>`).join("")}</ul>` : "—"}</b></div>
-      <div class="tc-row"><span>${quest(2)}：見たもの・読んだもの</span><b>${esc(R2.mono || "—")}</b></div>
+      <div class="tc-row"><span>${quest(2)}：見たもの・読んだもの</span><b>${esc(pickText(R2) || "—")}</b></div>
       <div class="tc-row"><span>心に残った所</span><b>${esc(R2.kokoro || "—")}</b></div>
     </div>`;
 }
@@ -107,11 +109,11 @@ export const L03 = {
     const ps = papers(c);
     return `
       <div class="themecard">
-        <div class="tc-row"><span>本か動画</span><b>${esc(c.prev("R02").mono || "—")}</b></div>
+        <div class="tc-row"><span>本か動画</span><b>${esc(pickText(c.prev("R02")) || "—")}</b></div>
         <div class="tc-row big"><span>論文</span><b>${ps.length ? `<ul class="qs">${ps.map(p => `<li>${esc(p.title)}</li>`).join("")}</ul>` : "—"}</b></div>
       </div>
       ${ps.length < 2 ? `<p class="note">論文が1本だけのときは、${quest(3)}の前にもう1本探してみよう（ホームから「見なおす」で書き足せます）。</p>` : ""}
-      <div class="share"><b>次は ${quest(3)}（第4回 12/7 まで）</b><p>2本の論文を読み切って、分かったこと・まだ分かっていないことを書こう。提出すると、ホームに出てきます。</p>
+      <div class="share"><b>次は ${quest(3)}（第4回 12/7 まで）</b><p>2本の論文を読み切ろう。読んだら、<b>ホームに戻って「${quest(3)}」を開き</b>、分かったこと・まだ分かっていないことを書こう。</p>
         <p>第4回は、ここまでのことから自分の問いを立てて、確かめる計画を作ります。</p></div>
       ${c.submitted ? `<p class="okmsg">提出済み ✓　あとから直しても自動で保存されます。</p>` : ""}`;
   },

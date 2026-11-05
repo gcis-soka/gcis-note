@@ -31,6 +31,7 @@ export function mountStudent({ be, user, app, asTeacher }) {
   let dirty = false, lastSaved = 0; // まだ保存していない入力があるか／最後に保存した時刻
   let lastFocus = "";               // 最後に入力した欄（書き出しボタンの入れ先）
   let promptOnScreen = false;       // いまの画面にAIの文の箱があるか（チャットのURLが要るかの判定）
+  let promptCount = 0;              // いまの画面の何個目の箱か（URLの欄は1個目の箱にだけ出す）
 
   const note = () => notes[cur.id];
   const isOpen = L => !L.after || !!notes[L.after]?.submitted || asTeacher; // デモの生徒は本物と同じく順に出る
@@ -97,9 +98,32 @@ export function mountStudent({ be, user, app, asTeacher }) {
       (qmark ? `<p class="hint short" data-qmark="${key}" hidden>${QMARK_MSG}</p>` : "") + `</div>`;
   }
 
+  // チャットのURLをどこからコピーするかの図（Geminiの窓のいちばん上）。最初の箱のURL欄の上に出す（11/4 先生）
+  const URL_HOWTO = `
+    <figure class="urlhowto" aria-label="Geminiの窓のいちばん上のURLをコピーする">
+      <svg viewBox="0 0 520 150" role="img" xmlns="http://www.w3.org/2000/svg">
+        <rect x="1" y="1" width="518" height="148" rx="10" fill="#fff" stroke="#c9ced8"/>
+        <path d="M1 11a10 10 0 0 1 10-10h498a10 10 0 0 1 10 10v23H1z" fill="#e3e8f2"/>
+        <text x="16" y="23" font-size="12" fill="#3c4250">◆ Google Gemini - Google Chrome</text>
+        <text x="448" y="23" font-size="13" fill="#3c4250">—　☐　✕</text>
+        <rect x="8" y="40" width="504" height="30" rx="15" fill="#eef1f6"/>
+        <text x="22" y="60" font-size="13" fill="#5f6673">⊜</text>
+        <text x="46" y="60" font-size="15" fill="#1f2329" textLength="302" lengthAdjust="spacingAndGlyphs">gemini.google.com/app/0259e4ca932dc5af</text>
+        <rect x="38" y="42" width="318" height="26" rx="6" fill="none" stroke="#d93025" stroke-width="3"/>
+        <text x="16" y="100" font-size="13" font-weight="700" fill="#3c4250">◆ Gemini</text>
+        <rect x="200" y="86" width="300" height="26" rx="13" fill="#eef1f6"/>
+        <text x="214" y="104" font-size="12" fill="#5f6673">私は高校1年生です。「…」という説が…</text>
+        <path d="M430 132 L372 72" stroke="#d93025" stroke-width="3" fill="none"/>
+        <path d="M366 64 L382 70 L372 80 Z" fill="#d93025"/>
+        <text x="388" y="142" font-size="15" font-weight="700" fill="#d93025">ここをコピー</text>
+      </svg>
+      <figcaption>送信したあと、Geminiの窓の<b>いちばん上のURL</b>をクリック（全部が青くなる）→ <kbd>Ctrl</kbd>＋<kbd>C</kbd> → 下の欄で <kbd>Ctrl</kbd>＋<kbd>V</kbd></figcaption>
+    </figure>`;
+
   // AIに送る文の箱。この回のチャットのURL（chatUrl）を最初に預かり、以後は「このチャットに戻る」で必ず同じチャットを開く
   function promptBox(text, { first = false } = {}) {
     promptOnScreen = true;
+    const urlHere = ++promptCount === 1; // URLの欄は、この画面の1個目の箱にだけ（2か所あると迷うため）
     const need = cur.needChat ? `<b>URLを貼ると「次へ」が押せます。</b>` : "";
     const link = chatUrlOf(note().data.chatUrl), keys = snapKeys();
     return `
@@ -110,14 +134,16 @@ export function mountStudent({ be, user, app, asTeacher }) {
           <button class="btn" data-copy>コピーする</button>
           <button class="btn ghost" data-gemini><span class="if-link">このチャットに戻る ↗</span><span class="if-nolink">${first ? "Geminiを右半分に開く ↗" : "Geminiの窓に戻る ↗"}</span></button>
         </div>
-        <p class="note if-link">✓ ${stageLabel(cur)}のチャットを覚えています。ボタンを押すと、いつでも<b>このチャット</b>が開きます。<button class="link small" data-gemini-new>新しいチャットでやり直す</button></p>
+        <p class="note if-link">✓ ${stageLabel(cur)}のGeminiのチャットを登録しました。「このチャットに戻る」を押すと、いつでも<b>同じチャット</b>が開きます。<button class="link small" data-gemini-new>新しいチャットでやり直す</button></p>
         <div class="if-nolink">
           <p class="note" data-gemini-msg>${first
             ? `開いたGeminiに貼って送信。<b>送信したら</b>、Geminiの窓のいちばん上の<b>URL</b>をコピーして、下に貼ろう。この回はずっとこのチャットを使います。${need}`
-            : `⚠️ さっきの<b>Geminiの窓の同じチャットに</b>貼ってください。下にチャットのURLを貼っておくと、いつでも戻れます。${need}`}</p>
-          <label class="chatlink"><span>この回のチャットのURL</span>
+            : urlHere
+              ? `⚠️ さっきの<b>Geminiの窓の同じチャットに</b>貼ってください。下にチャットのURLを貼っておくと、いつでも戻れます。${need}`
+              : `⚠️ さっきの<b>Geminiの窓の同じチャットに</b>貼ってください。チャットのURLは<b>上の欄</b>に貼ります。`}</p>
+          ${urlHere ? `${URL_HOWTO}<label class="chatlink"><span>この回のチャットのURL</span>
             <input type="url" data-key="chatUrl" value="${escapeHtml(note().data.chatUrl || "")}" placeholder="https://gemini.google.com/app/…" autocomplete="off"></label>
-          <p class="hint warn-text" data-chaturl-msg hidden></p>
+          <p class="hint warn-text" data-chaturl-msg hidden></p>` : ""}
         </div>
         ${keys ? `<p class="hint snap" data-snap hidden>アプリの画面を左に寄せるには <kbd>${keys}</kbd>。Geminiと左右に並べて使おう。</p>` : ""}
       </div>`;
@@ -145,7 +171,8 @@ export function mountStudent({ be, user, app, asTeacher }) {
       <div class="nav">
         ${i > 0 ? `<button class="btn ghost" data-go="${i - 1}">← もどる</button>` : `<button class="btn ghost" data-home>ホーム</button>`}
         <button class="btn primary" data-go="${i + 1}" ${canNext ? "" : "disabled"}>${nextLabel} →</button>
-      </div>`;
+      </div>
+      <p class="need-msg" data-need hidden></p>`;
   }
 
   // ---------- 画面 ----------
@@ -251,6 +278,7 @@ export function mountStudent({ be, user, app, asTeacher }) {
 
   function renderStep(i) {
     promptOnScreen = false;
+    promptCount = 0;
     const n = note(), last = cur.steps.length - 1;
     // この生徒には要らない画面（例：入口Cのキーワード）はとばす。もどるときは手前へ
     const back = i < n.step;
@@ -270,7 +298,7 @@ export function mountStudent({ be, user, app, asTeacher }) {
         ${nav(n.step, canGo(n.step, c), nextLabel)}
       </section>`;
     window.scrollTo(0, 0);
-    updateHints();
+    updateHints(); refreshNeed();
   }
 
   // 次へ（最後は提出）を押せるか。提出済みの最後の画面は「ホームへ」なので常に押せる
@@ -285,6 +313,11 @@ export function mountStudent({ be, user, app, asTeacher }) {
   function updateHints() {
     if (!cur) return;
     const v = k => String(note().data[k] ?? "").trim();
+    // 入力すると次の欄が出る（data-reveal-after＝前の欄の key。自分に何か入っていれば出したまま）
+    app.querySelectorAll("[data-reveal-after]").forEach(el => {
+      const own = [...el.querySelectorAll("[data-key]")].some(i => String(i.value || "").trim());
+      el.hidden = !(v(el.dataset.revealAfter) || own);
+    });
     app.querySelectorAll("[data-short]").forEach(p => {
       const len = v(p.dataset.short).length;
       p.hidden = !(len > 0 && len < 10);
@@ -299,6 +332,24 @@ export function mountStudent({ be, user, app, asTeacher }) {
     const n = note();
     const btn = app.querySelector(".nav .primary");
     if (btn) btn.disabled = !canGo(n.step, ctx());
+    refreshNeed();
+  }
+  // 次へが押せないとき、何が書けたら進めるかを出す（11/5 先生：「〜が書けたら、次へ進もう」）
+  // 各回の need(i, c) が足りないものの名前の配列を返す。need がない回は何も出さない
+  function refreshNeed() {
+    const p = app.querySelector("[data-need]");
+    if (!p || !cur) return;
+    const n = note(), c = ctx();
+    let msg = "";
+    if (!canGo(n.step, c)) {
+      if (cur.needChat && promptOnScreen && !chatUrlOf(n.data.chatUrl)) msg = "この回のチャットのURLが貼れたら、次へ進もう";
+      else {
+        const miss = cur.need?.(n.step, c) || [];
+        if (miss.length) msg = `${miss.map(m => escapeHtml(m)).join("と")}が書けたら、次へ進もう`;
+      }
+    }
+    p.hidden = !msg;
+    p.innerHTML = msg;
   }
 
   async function copyPrompt(btn) {

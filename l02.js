@@ -1,9 +1,9 @@
 // ステージ3／第2回（11/9）同じことに関心を持つ人を探す
 // 仕様：ナレッジの L02.md「アプリ画面」／プロンプト：L02_PROMPTS（確定）
 // 結果の記録は R01（Quest 1 の結果）。ここでは R01 を読んでプロンプトに入れる
-// data：tomo・geminiLink・q1〜q3・findq（本か動画を探す言葉）
-import { quest } from "./common.js";
-import { findTools, handleFind, PICK_TIPS } from "./r02.js";
+// data：tomo・q1〜q3・findq・findb（動画・本を探す言葉：r02.js の findTools）・douga〜douga5・honTitle〜honTitle5（見る動画・読む本：pickFields。Quest 2 に写す）。チャットは chatUrl（最初のAIの文の下で預かる）
+import { quest, listOf } from "./common.js";
+import { findTools, handleFind, PICK_TIPS, pickFields } from "./r02.js";
 const MISSION = quest(1);
 
 // 文末の句読点・空白を取る（プロンプトの文をつなぐため）
@@ -41,12 +41,12 @@ function prompt1(c) {
     "列は「媒体｜日付｜見出し｜だれが何をしているか（30文字以内）｜リンク」の表にしてください。" +
     "無料で読めるものを優先してください。表のあとには何も書かないでください。";
 }
-// 本か動画を探す言葉（同じチャットで。試作・未試行）。題名は作り話が出やすいので、言葉だけ
+// 本か動画を探す言葉（同じチャットで。試作・未試行。蔵書検索は題名に入りそうな4〜6文字の熟語で 11/4）。題名は作り話が出やすいので、言葉だけ
 function promptFind(c) {
   const qs = ["q1", "q2", "q3"].map(c.v).filter(Boolean);
   const q = qs.length ? qs.map(x => `「${x}」`).join("") : "（気になったこと）";
   return `ありがとうございます。最後に、私が気になった${q}の手がかりになりそうな本や動画を探すための言葉を考えてください。` +
-    "①YouTubeで検索する言葉を、近いもの3つ・少し遠いもの3つ。②図書館の蔵書検索で本を探す言葉を3つ。" +
+    "①YouTubeで検索する言葉を、近いもの3つ・少し遠いもの1つ。②学校の図書館の蔵書検索で使う言葉を3つ。本の題名に入っていそうな、4〜6文字くらいの言葉にしてください（例：「色彩心理」「睡眠不足」「読書離れ」「絵本作家」）。「色」「本」のような1文字・2文字の広すぎる言葉は避けてください。" +
     "本や動画の題名は書かないでください。「種類｜言葉｜選んだわけ（20文字以内）」の表にしてください。表のあとには何も書かないでください。";
 }
 const PROMPT2 = "ありがとうございます。今度は、この説とはまったく別の分野や場面で、同じしくみに注目している人や、似たことで困っている人が分かる記事を5つ、同じ表で出してください。表のあとには何も書かないでください。";
@@ -74,8 +74,8 @@ export const L02 = {
   uses: ["L01", "R01"],
   steps: [
     { title: "班で報告", mins: 12 },
-    { title: "AIで、同じことに関心を持つ人を探す", mins: 20 },
-    { title: "気になったこと", mins: 8 },
+    { title: "AIで、同じことに関心を持つ人を探す", mins: 12 },
+    { title: "記事を読んで、気になったこと", mins: 16 },
     { title: "本か動画を探す", mins: 6 },
     { title: "提出", mins: 2 }
   ],
@@ -95,35 +95,40 @@ export const L02 = {
           <li>結果を伝える</li>
         </ol>
       </div>
-      ${field("tomo", "友だちに言われたこと（なくてもOK）", { rows: 2, placeholder: "例：「部活のあとでも同じになる？」と聞かれた" })}`;
+      ${field("tomo", "友だちに言われたこと", { rows: 2, placeholder: "例：「部活のあとでも同じになる？」と聞かれた" })}`;
     if (i === 1) return `
       <p>あなたの説と<b>同じことに関心を持っている人</b>が、世の中にいるか探してみよう。</p>
       ${promptBox(prompt1(c), { first: true })}
       <p>表が出たら、続けて下の文を<b>同じチャットに</b>送ろう。</p>
-      ${promptBox(PROMPT2)}
+      ${promptBox(PROMPT2)}`;
+    if (i === 2) return `
+      <h3>① 記事を読む</h3>
       <ol class="todo">
         <li>出てきた見出しを眺めて、いちばん「へぇ」と思った1つを読もう</li>
         <li><b>リンクを開いて、見出しと中身が合っているか見る</b>（AIは、ない記事を作ってしまうことがあります）</li>
-        <li><b>誰が出したか</b>（国・新聞・企業・個人）を見る</li>
       </ol>
       <p class="hint">自分で検索して見つけた記事でもOK。合う記事が見つからないときは、まだ誰も調べていないことかもしれません。それも発見です。</p>
-      ${field("geminiLink", "Geminiのチャットのリンク（なくてもOK）", { type: "url", placeholder: "https://…", hint: "次回、記事を開き直すのに使います。Geminiの「共有」→「リンクをコピー」" })}`;
-    if (i === 2) return `
-      <p>読んだ記事や、ここまでのことから、<b>気になったことを「？」で終わる形で</b>書こう（1つからでOK）。</p>
+      <hr class="divider">
+      <h3>② 気になったこと</h3>
+      <ol class="todo">
+        <li>読んだ記事や、ここまでのことから、<b>気になったことを「？」で終わる形で</b>書こう</li>
+      </ol>
       <div class="field"><span class="hint">書き出しを押すと、空いている欄に入ります</span>${chips(Q_CHIPS, "q1,q2,q3")}</div>
       ${field("q1", "気になったこと ①", { type: "text", qmark: true })}
       ${field("q2", "気になったこと ②", { type: "text", qmark: true })}
       ${field("q3", "気になったこと ③", { type: "text", qmark: true })}
       <p class="hint">読み終わらなかったら、あとで読んで書き足そう。提出したあとも直せます。</p>`;
     if (i === 3) return `
-      <p>${quest(2)}の準備です。この「？」の<b>手がかりになりそうな本か動画</b>を探そう。今日決まらなくてもOK。続きは家で。</p>
+      <p>${quest(2)}の準備です。この「？」の<b>手がかりになりそうな本か動画</b>を探して、<b>見る動画・読む本を授業のうちに決めよう</b>。</p>
       <div class="recap"><div class="tc-row"><span>気になったこと</span><b>${(() => { const qs = ["q1", "q2", "q3"].map(c.v).filter(Boolean); return qs.length ? `<ul class="qs">${qs.map(q => `<li>${esc(q)}</li>`).join("")}</ul>` : "—"; })()}</b></div></div>
       <h3>① 探す言葉をAIに考えてもらう</h3>
       ${promptBox(promptFind(c))}
       <h3>② 探す</h3>
       ${findTools(c)}
       ${PICK_TIPS}
-      <p class="hint">動画は合わせて5分以上。本は少し読めばOK。見たら・読んだら、ホームの「${quest(2)}」に書きます。</p>`;
+      <h3>③ 見る動画・読む本を決める</h3>
+      ${pickFields(c)}
+      <p class="hint">動画は合わせて5分以上。本はパラパラ見て、気になったページを少し読めばOK。</p>`;
     // i === 4：提出
     const qs = ["q1", "q2", "q3"].map(c.v).filter(Boolean);
     const R = res(c);
@@ -132,16 +137,25 @@ export const L02 = {
       <div class="themecard" style="margin-top:12px">
         ${done(c) ? `<div class="tc-row"><span>これだけでは言い切れないこと</span><b>${esc(R.iikire || "—")}</b></div>` : ""}
         <div class="tc-row"><span>友だちに言われたこと</span><b>${esc(d.tomo || "—")}</b></div>
+        <div class="tc-row"><span>見る動画・読む本</span><b>${esc([...listOf(d, "douga"), ...listOf(d, "honTitle")].join(" ／ ") || "—")}</b></div>
         <div class="tc-row big"><span>気になったこと</span><b>${qs.length ? `<ul class="qs">${qs.map(q => `<li>${esc(q)}</li>`).join("")}</ul>` : "—"}</b></div>
       </div>
-      <div class="share"><b>次は ${quest(2)}</b><p>この「？」の手がかりになりそうな本か動画を見つけよう。提出すると、ホームに出てきます。</p>
-        <p>第3回は、持ってきたものを班で紹介し、研究を探します。</p></div>
+      <div class="share"><b>次は ${quest(2)}</b><p>決めた動画を見る・本を読む。見たら・読んだら、<b>ホームに戻って「${quest(2)}」を開き</b>、書こう。</p>
+        <p>第3回は、心に残った所を班で紹介し、研究を探します。本は第3回に持ってこよう。</p></div>
       ${c.submitted ? `<p class="okmsg">提出済み ✓　あとから直しても自動で保存されます。</p>` : ""}`;
   },
 
   canNext(i, c) {
     if (i === 2) return ["q1", "q2", "q3"].some(k => c.v(k));
+    if (i === 3) return !!(listOf(c.d, "douga").length || listOf(c.d, "honTitle").length); // 見る動画か読む本のどちらか（授業内で決める 11/5）
     return true;
+  },
+  // 次へが押せないときに出す名前（「〜が書けたら、次へ進もう」）
+  need(i, c) {
+    if (this.canNext(i, c)) return [];
+    if (i === 2) return ["「気になったこと」"];
+    if (i === 3) return ["「見る動画のリンク」か「読む本の題名」"];
+    return [];
   },
 
   onClick(t, c) {

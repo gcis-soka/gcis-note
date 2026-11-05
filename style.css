@@ -290,3 +290,14 @@ select.ki { width: auto; padding: 3px 10px; border-radius: 999px; font-size: 15p
 .map li.done { background: var(--accent-soft); color: var(--accent); font-weight: 700; }
 .map li.done::before { content: "✓ "; }
 .tc-row em.ktag { color: #fff; font-size: 12px; font-weight: 700; margin-left: 6px; }
+/* 1つの画面の中の区切り（例：第2回 画面3の①読む／②気になったこと） */
+hr.divider { border: none; border-top: 2px solid var(--line); margin: 24px 0 18px; }
+/* チャットのURLをどこからコピーするかの図 */
+.urlhowto { margin: 10px 0 4px; }
+.urlhowto svg { display: block; width: 100%; max-width: 520px; height: auto; font-family: var(--font); }
+.urlhowto figcaption { font-size: 14px; margin-top: 6px; }
+/* 本か動画を探す：動画の組と本の組 */
+.findrow { border-left: 4px solid var(--line); padding: 2px 0 2px 12px; margin: 10px 0 14px; }
+.pickone[hidden] { display: none; }
+/* 次へが押せないときの一言（何が書けたら進めるか） */
+.need-msg { text-align: right; font-size: 14px; color: var(--accent); font-weight: 700; margin: 6px 2px 0; }
