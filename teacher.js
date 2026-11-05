@@ -126,12 +126,12 @@ const VIEWS = {
         ${resultRows(r.r01?.data || {})}${item(d, "tomo", "友だちに言われたこと")}
         <div class="tc-row"><span>気になったこと</span><b>${qs.length ? `<ul class="qs">${qs.map(q => `<li>${esc(q)}</li>`).join("")}</ul>` : "—"}</b></div>
         <div class="tc-row"><span>見る動画</span><b>${linkCell(d.douga)}</b></div>
-        ${item(d, "honTitle", "読む本")}${item(d, "isbn", "ISBN")}`;
+        ${item(d, "honTitle", "読む本")}`;
     },
-    csvHead: ["説（第1回）", "やった／まだ", "友だちに言われたこと", "気になったこと1", "気になったこと2", "気になったこと3", "見る動画", "読む本", "ISBN"],
+    csvHead: ["説（第1回）", "やった／まだ", "友だちに言われたこと", "気になったこと1", "気になったこと2", "気になったこと3", "見る動画", "読む本"],
     csvRow: r => {
       const d = r.note?.data || {}, s = r.l01?.data || {};
-      return [s.setsu, r.r01?.data?.did, d.tomo, d.q1, d.q2, d.q3, d.douga, d.honTitle, d.isbn];
+      return [s.setsu, r.r01?.data?.did, d.tomo, d.q1, d.q2, d.q3, d.douga, d.honTitle];
     }
   },
   R02: {

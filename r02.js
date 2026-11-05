@@ -61,7 +61,7 @@ function copyText(t) {
   try { navigator.clipboard?.writeText(t); return true; } catch { return false; }
 }
 
-// 見る動画・読む本（第2回の最後で決める／Quest 2 で見たもの・読んだもの）。ISBN は空でも提出できる
+// 見る動画・読む本（第2回の最後で決める／Quest 2 で見たもの・読んだもの）。ISBN は本を手に取る Quest 2 だけ（空でも提出できる）
 export function pickFields(c, { done = false } = {}) {
   const { field } = c;
   return `
@@ -70,11 +70,11 @@ export function pickFields(c, { done = false } = {}) {
     </div>
     <div class="findrow">
       ${field("honTitle", done ? "読んだ本の題名" : "読む本の題名", { type: "text", placeholder: "例：『〇〇〇〇』" })}
-      ${field("isbn", "ISBN", { type: "text", placeholder: "例：9784780802047", hint: "本の裏表紙のバーコードの上か、奥付にある「978」から始まる13桁。第3回に RefNavi に登録するときに使います" })}
+      ${done ? field("isbn", "ISBN", { type: "text", placeholder: "例：9784780802047", hint: "本の裏表紙のバーコードの上か、奥付にある「978」から始まる13桁。第3回に RefNavi に登録するときに使います" }) : ""}
     </div>`;
 }
 // Quest 2 を初めて開いたとき、第2回で入れた値（探す言葉・見る動画・読む本）を写す（同じことを2回書かせない）
-export const FROM_L02 = ["findq", "findb", "douga", "honTitle", "isbn"];
+export const FROM_L02 = ["findq", "findb", "douga", "honTitle"];
 function copyFromL02(c) {
   if (c.d.fromL02) return;
   const L2 = c.prev("L02");
