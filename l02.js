@@ -95,7 +95,7 @@ export const L02 = {
           <li>結果を伝える</li>
         </ol>
       </div>
-      ${field("tomo", "友だちに言われたこと（なくてもOK）", { rows: 2, placeholder: "例：「部活のあとでも同じになる？」と聞かれた" })}`;
+      ${field("tomo", "友だちに言われたこと", { rows: 2, placeholder: "例：「部活のあとでも同じになる？」と聞かれた" })}`;
     if (i === 1) return `
       <p>あなたの説と<b>同じことに関心を持っている人</b>が、世の中にいるか探してみよう。</p>
       ${promptBox(prompt1(c), { first: true })}
@@ -111,7 +111,7 @@ export const L02 = {
       <hr class="divider">
       <h3>② 気になったこと</h3>
       <ol class="todo">
-        <li>読んだ記事や、ここまでのことから、<b>気になったことを「？」で終わる形で</b>書こう（1つからでOK）</li>
+        <li>読んだ記事や、ここまでのことから、<b>気になったことを「？」で終わる形で</b>書こう</li>
       </ol>
       <div class="field"><span class="hint">書き出しを押すと、空いている欄に入ります</span>${chips(Q_CHIPS, "q1,q2,q3")}</div>
       ${field("q1", "気になったこと ①", { type: "text", qmark: true })}
@@ -147,11 +147,15 @@ export const L02 = {
 
   canNext(i, c) {
     if (i === 2) return ["q1", "q2", "q3"].some(k => c.v(k));
+    if (i === 3) return !!(listOf(c.d, "douga").length || listOf(c.d, "honTitle").length); // 見る動画か読む本のどちらか（授業内で決める 11/5）
     return true;
   },
   // 次へが押せないときに出す名前（「〜が書けたら、次へ進もう」）
   need(i, c) {
-    return i === 2 && !this.canNext(i, c) ? ["「気になったこと」"] : [];
+    if (this.canNext(i, c)) return [];
+    if (i === 2) return ["「気になったこと」"];
+    if (i === 3) return ["「見る動画のリンク」か「読む本の題名」"];
+    return [];
   },
 
   onClick(t, c) {
