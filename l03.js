@@ -79,8 +79,7 @@ function myRecap(c) {
 
 // ---------- RefNavi に登録する（11/7 追加：班で紹介のあと） ----------
 const REFNAVI_URL = "https://www.refnavi.net/index.php";
-// RefNavi 公式の操作説明動画（BGMなし）の再生リスト。先生から（11/7）。④が「資料の登録方法」
-const REFNAVI_HOWTO_VIDEO = "https://www.youtube.com/playlist?list=PLQX5mUcFrfL4";
+// 生徒に RefNavi の動画は見せない。アプリの図と手順だけで登録できるようにする（11/7 先生）
 // ログインの図（トップ→Googleでログイン→学校のアカウント）。先生の画面写真（11/7）をもとに描いた
 const REF_LOGIN_HOWTO = `
   <figure class="urlhowto libhowto" aria-label="RefNaviのログイン：Googleでログインを押し、学校のアカウントを選ぶ">
@@ -191,7 +190,6 @@ function refStep(c) {
         <li>動画は YouTube のURLだけ登録できます</li>
         <li>初めて RefNavi に入る人は、「児童・生徒」を選び、先生が伝える<b>グループコード</b>を入れます</li>
       </ul>
-      <p class="hint">画面の進み方は、RefNavi 公式の動画でも見られます（④が「資料の登録方法」）：<a href="${REFNAVI_HOWTO_VIDEO}" target="_blank" rel="noopener">RefNavi マニュアル動画 ↗</a></p>
       <h3>④ できたら押そう</h3>
       <div class="choice small">${REF_CHECKS.map(([k, label]) => `<button type="button" class="choice-btn ${d[k] ? "on" : ""}" data-refchk="${k}">${d[k] ? "✓ " : ""}${label}</button>`).join("")}</div>`;
 }
