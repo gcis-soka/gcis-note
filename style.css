@@ -299,5 +299,34 @@ hr.divider { border: none; border-top: 2px solid var(--line); margin: 24px 0 18p
 /* 本か動画を探す：動画の組と本の組 */
 .findrow { border-left: 4px solid var(--line); padding: 2px 0 2px 12px; margin: 10px 0 14px; }
 .pickone[hidden] { display: none; }
+/* 動画のリンク欄の右に「この動画を開く」（11/7） */
+.urlrow { display: flex; align-items: flex-end; gap: 10px; }
+.urlrow .field { flex: 1; min-width: 0; }
+.openurl { margin: 0 0 21px; white-space: nowrap; text-decoration: none; display: inline-block; }
+.openurl[hidden] { display: none; }
+/* 折りたたみ（Quest 2 の「探す」：11/7） */
+.fold { border: 2px solid var(--line); border-radius: 12px; padding: 4px 14px; margin: 12px 0; }
+.fold > summary { cursor: pointer; font-weight: 700; padding: 8px 0; }
+.fold[open] > summary { border-bottom: 1px solid var(--line); margin-bottom: 6px; }
 /* 次へが押せないときの一言（何が書けたら進めるか） */
 .need-msg { text-align: right; font-size: 14px; color: var(--accent); font-weight: 700; margin: 6px 2px 0; }
+
+/* 論文を読みながらメモ（reader.js・11/7 試作）。カードより広く使う */
+main:has(.reader) { max-width: 1240px; }
+.reader { margin: 12px 0; }
+.reader-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 4px; }
+.reader-bar .btn { margin-left: auto; }
+.reader-tabs { display: inline-flex; gap: 6px; }
+.reader-tabs .choice-btn { flex: none; min-width: 0; padding: 6px 14px; font-size: 14px; border-radius: 10px; }
+.reader-grid { display: grid; grid-template-columns: minmax(0, 3fr) minmax(280px, 2fr); gap: 14px; align-items: start; }
+.reader-frame { width: 100%; height: 78vh; border: 2px solid var(--line); border-radius: 12px; background: #fff; }
+.reader-memo { position: sticky; top: 12px; }
+.reader-memo .field { margin-top: 0; }
+@media (max-width: 900px) { .reader-grid { grid-template-columns: 1fr; } .reader-frame { height: 65vh; } .reader-memo { position: static; } }
+/* RefNavi に登録するもの（第3回） */
+.reflist { list-style: none; padding: 0; margin: 6px 0 12px; }
+.refrow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--line); }
+.refrow .reftext { flex: 1; min-width: 12em; word-break: break-all; }
+.refrow .openurl { margin: 0; }
+.paperbox { border-left: 4px solid var(--line); padding: 0 0 0 12px; margin: 8px 0 14px; }
+.paperbox .field { margin: 8px 0; }
