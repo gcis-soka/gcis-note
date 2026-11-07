@@ -318,6 +318,12 @@ export function mountStudent({ be, user, app, asTeacher }) {
       const own = [...el.querySelectorAll("[data-key]")].some(i => String(i.value || "").trim());
       el.hidden = !(v(el.dataset.revealAfter) || own);
     });
+    // リンクを開くボタン（data-open-url＝欄の key）。http(s) のURLが入っているときだけ出す（11/7）
+    app.querySelectorAll("[data-open-url]").forEach(a => {
+      const u = v(a.dataset.openUrl), ok = /^https?:\/\/\S+$/i.test(u);
+      a.hidden = !ok;
+      if (ok) a.href = u; else a.removeAttribute("href");
+    });
     app.querySelectorAll("[data-short]").forEach(p => {
       const len = v(p.dataset.short).length;
       p.hidden = !(len > 0 && len < 10);

@@ -105,7 +105,10 @@ export function pickFields(c, { done = false } = {}) {
   const reveal = (i, prevKey) => i ? ` data-reveal-after="${prevKey}" hidden` : "";
   const videos = PICK_N.map((n, i) => `
       <div class="pickone"${reveal(i, "douga" + PICK_N[i - 1])}>
-        ${field("douga" + n, `${done ? "見た" : "見る"}動画のリンク${nth(i, "本")}`, { type: "text", placeholder: "https://youtu.be/…", hint: i ? "" : "YouTubeの「共有」→「コピー」。入力すると次の欄が出ます" })}
+        <div class="urlrow">
+          ${field("douga" + n, `${done ? "見た" : "見る"}動画のリンク${nth(i, "本")}`, { type: "text", placeholder: "https://youtu.be/…", hint: i ? "" : "YouTubeの「共有」→「コピー」。入力すると次の欄が出ます" })}
+          <a class="btn small ghost openurl" data-open-url="douga${n}" target="_blank" rel="noopener" hidden>この動画を開く ↗</a>
+        </div>
       </div>`).join("");
   const books = PICK_N.map((n, i) => `
       <div class="pickone"${reveal(i, "honTitle" + PICK_N[i - 1])}>
