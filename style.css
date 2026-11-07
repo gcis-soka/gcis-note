@@ -310,3 +310,21 @@ hr.divider { border: none; border-top: 2px solid var(--line); margin: 24px 0 18p
 .fold[open] > summary { border-bottom: 1px solid var(--line); margin-bottom: 6px; }
 /* 次へが押せないときの一言（何が書けたら進めるか） */
 .need-msg { text-align: right; font-size: 14px; color: var(--accent); font-weight: 700; margin: 6px 2px 0; }
+
+/* 論文を読みながらメモ（reader.js・11/7 試作）。カードより広く使う */
+main:has(.reader) { max-width: 1240px; }
+.reader { margin: 12px 0; }
+.reader-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 4px; }
+.reader-bar .btn { margin-left: auto; }
+.reader-tabs { display: inline-flex; gap: 6px; }
+.reader-tabs .choice-btn { flex: none; min-width: 0; padding: 6px 14px; font-size: 14px; border-radius: 10px; }
+.reader-grid { display: grid; grid-template-columns: minmax(0, 3fr) minmax(280px, 2fr); gap: 14px; align-items: start; }
+.reader-frame { width: 100%; height: 78vh; border: 2px solid var(--line); border-radius: 12px; background: #fff; }
+.reader-memo { position: sticky; top: 12px; }
+.reader-memo .field { margin-top: 0; }
+@media (max-width: 900px) { .reader-grid { grid-template-columns: 1fr; } .reader-frame { height: 65vh; } .reader-memo { position: static; } }
+/* RefNavi に登録するもの（第3回） */
+.reflist { list-style: none; padding: 0; margin: 6px 0 12px; }
+.refrow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--line); }
+.refrow .reftext { flex: 1; min-width: 12em; word-break: break-all; }
+.refrow .openurl { margin: 0; }

@@ -30,6 +30,10 @@ const nVals = (d, base) => PICK_N.map(n => d?.[base + n] || "");
 // 論文は URL だけ（題名は RefNavi：11/7）
 const papersOf = d => ["p1Url", "p2Url"].map(k => ({ url: String(d[k] || "").trim() })).filter(p => p.url);
 const paperCell = p => p ? linkCell(p.url) : "";
+// 第3回：RefNavi の進み具合（生徒が自分で押す：l03.js の REF_CHECKS と同じ）
+const REF_LABELS = [["refLogin", "ログイン"], ["refDouga", "動画"], ["refHon", "本"], ["refHan", "班の全員"]];
+const refDone = d => !!(d.refDouga || d.refHon);
+const refCell = d => d.refLogin || refDone(d) ? `<span class="mchip ${refDone(d) ? "" : "zero"}">${refDone(d) ? "登録" : "ログイン"}</span>` : "";
 const yomiChip = x => x ? `<span class="mchip ${x === "全部読んだ" ? "" : "zero"}">${esc(x)}</span>` : "";
 const qsList = d => Array.isArray(d.qs) ? d.qs : []; // 第4回の問い [{t, k, a}]
 
@@ -167,17 +171,17 @@ const VIEWS = {
   },
   L03: {
     tab: "第3回", date: "2026-11-16",
-    stepNames: ["班", "研究を探す", "読む", "提出"],
-    head: ["本か動画（Quest 2）", "論文①", "論文②", "試した検索語"],
+    stepNames: ["班", "RefNavi", "研究を探す", "読む", "提出"],
+    head: ["本か動画（Quest 2）", "RefNavi", "論文①", "論文②", "試した検索語"],
     cells: r => {
       const d = r.note?.data || {}, ps = papersOf(d);
-      return [pickKind(r.r02?.data || {}) ? `<span class="mchip">${pickKind(r.r02?.data || {})}</span>` : "", paperCell(ps[0]), paperCell(ps[1]), esc(d.tried || "")];
+      return [pickKind(r.r02?.data || {}) ? `<span class="mchip">${pickKind(r.r02?.data || {})}</span>` : "", refCell(d), paperCell(ps[0]), paperCell(ps[1]), esc(d.tried || "")];
     },
-    nowrap: [0],
+    nowrap: [0, 1],
     chips(rs) {
       const n = k => rs.filter(r => r.note && papersOf(r.note.data || {}).length === k).length;
       return rs.some(r => r.note)
-        ? `<span class="hint">決めた論文：</span><span class="mchip">2本 <b>${n(2)}</b></span><span class="mchip">1本 <b>${n(1)}</b></span><span class="mchip zero">0本 <b>${n(0)}</b></span>`
+        ? `<span class="hint">RefNavi：</span><span class="mchip">登録できた <b>${rs.filter(r => refDone(r.note?.data || {})).length}</b></span><span class="hint">決めた論文：</span><span class="mchip">2本 <b>${n(2)}</b></span><span class="mchip">1本 <b>${n(1)}</b></span><span class="mchip zero">0本 <b>${n(0)}</b></span>`
         : "";
     },
     detail(r) {
@@ -185,14 +189,15 @@ const VIEWS = {
       return `
         <div class="recap">${item(r.l01?.data || {}, "setsu", "第1回の説")}<div class="tc-row"><span>${quest(2)}：見たもの・読んだもの</span><b>${pickCell(q) || "—"}</b></div>${item(q, "kokoro", "心に残った所")}</div>
         ${item(d, "hanMemo", "班で出たこと")}
+        <div class="tc-row"><span>RefNavi</span><b>${REF_LABELS.filter(([k]) => d[k]).map(([, l]) => esc(l)).join("・") || "—"}</b></div>
         ${item(d, "tried", "試した検索語")}
         ${ps.map((p, j) => `<div class="tc-row"><span>論文${j ? "②" : "①"}</span><b>${paperCell(p)}</b></div>`).join("") || `<div class="tc-row"><span>論文</span><b>—</b></div>`}
         ${item(d, "yomiMemo", "読みながらのメモ")}`;
     },
-    csvHead: ["試した検索語", "論文1のURL", "論文2のURL", "読みながらのメモ", "班で出たこと"],
+    csvHead: ["試した検索語", "論文1のURL", "論文2のURL", "読みながらのメモ", "班で出たこと", ...REF_LABELS.map(([, l]) => "RefNavi：" + l)],
     csvRow: r => {
       const d = r.note?.data || {};
-      return [d.tried, d.p1Url, d.p2Url, d.yomiMemo, d.hanMemo];
+      return [d.tried, d.p1Url, d.p2Url, d.yomiMemo, d.hanMemo, ...REF_LABELS.map(([k]) => d[k] ? "○" : "")];
     }
   },
   R03: {
@@ -643,11 +648,11 @@ export function mountTeacher({ be, app, dlg }) {
           ? { douga: "https://youtu.be/xxxxxxxxxxx?t=125", kokoro: "（動画の例）2分05秒あたり。雑音の大きさで、集中しやすさが逆になるという話" }
           : { honTitle: "『（本の題名の例）』", isbn: "9784000000000", kokoro: "（本の例）p.48 音楽のテンポで作業の速さが変わるという実験" } });
       if (i % 4 === 1) continue;
-      const s3 = i % 6 === 0 ? 1 : 3, two = i % 5 !== 0;
-      nt.push({ uid, lesson: "L03", step: s3, submitted: s3 === 3, updatedAt: new Date(Date.now() - (i % 8) * 60000),
-        data: { tried: "雑音 集中 / noise concentration", p1Url: "https://www.jstage.jst.go.jp/article/example/a",
+      const s3 = i % 6 === 0 ? 2 : 4, two = i % 5 !== 0;
+      nt.push({ uid, lesson: "L03", step: s3, submitted: s3 === 4, updatedAt: new Date(Date.now() - (i % 8) * 60000),
+        data: { refLogin: 1, refDouga: i % 3 ? 1 : "", refHon: i % 2 ? 1 : "", tried: "雑音 集中 / noise concentration", p1Url: "https://www.jstage.jst.go.jp/article/example/a",
           p2Url: two ? "https://example.com/b" : "" } });
-      if (s3 !== 3) continue;
+      if (s3 !== 4) continue;
       nt.push({ uid, lesson: "R03", step: 0, submitted: i % 3 !== 0, updatedAt: new Date(Date.now() - (i % 8) * 60000),
         data: { yomi1: i % 2 ? "全部読んだ" : "途中まで", yomi2: two ? (i % 3 ? "途中まで" : "全部読んだ") : "",
           wakatta: "（分かったことの例）大学生40人で、カフェ程度の音のときに作業が速かった", mada: "（まだ分かっていないことの例）高校生や、歌詞のある音楽の場合は調べていない", q1: "部活のあとでも同じ？" } });

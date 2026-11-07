@@ -86,7 +86,7 @@ export function handleFind(t, c) {
   return true;
 }
 // 押した瞬間に同期でコピー（新しいタブに移る前に済ませる）
-function copyText(t) {
+export function copyText(t) {
   try {
     const ta = document.createElement("textarea");
     ta.value = t; ta.style.position = "fixed"; ta.style.opacity = "0";

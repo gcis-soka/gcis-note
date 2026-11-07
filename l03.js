@@ -1,9 +1,11 @@
 // ステージ5／第3回（11/16）先行研究に出会う（A案：ニュース→本・動画→論文）
 // 仕様：ナレッジの L03.md。論文は2本決める。長すぎないものを選んで全文を読む（授業で途中まで→残りは Quest 3）
 // RefNavi への登録は授業で（URLを貼るだけ）。アプリは登録しないが、登録するもの（第2回の記事・Quest 2 の動画と本）を一覧で出す（11/5）
-// data：hanMemo・kensaku・tried・p1Url・p2Url・yomiMemo
+// data：hanMemo・refLogin・refDouga・refHon・refHan（RefNavi の進み具合）・kensaku・tried・p1Url・p2Url・yomiMemo
 // 論文は URL だけ（題名は RefNavi に入れる：11/7）。Geminiのチャットは AIの文の下の chatUrl で預かる（共有リンク欄は 11/7 廃止）
 import { quest, listOf, booksOf } from "./common.js";
+import { copyText } from "./r02.js";
+import { readerHtml, handleReader } from "./reader.js";
 // Quest 2 で見たもの・読んだもの（動画・本の2欄）
 const pickText = R => [...listOf(R, "douga"), ...listOf(R, "honTitle")].join(" ／ ");
 
@@ -40,18 +42,90 @@ function myRecap(c) {
     </div>`;
 }
 
-// RefNavi に登録するもの（第2回の記事・Quest 2 の動画と本）。コピーして使う
+// ---------- RefNavi に登録する（11/7 追加：班で紹介のあと） ----------
+const REFNAVI_URL = "https://www.refnavi.net/index.php";
+// RefNavi 公式の操作説明動画「④資料の登録方法」（BGMなし）。refnavi.net/wp/manual/ から
+const REFNAVI_HOWTO_VIDEO = "https://www.youtube.com/watch?v=pmeFojS4UDs";
+// ログインの図（トップ→Googleでログイン→学校のアカウント）。先生の画面写真（11/7）をもとに描いた
+const REF_LOGIN_HOWTO = `
+  <figure class="urlhowto libhowto" aria-label="RefNaviのログイン：Googleでログインを押し、学校のアカウントを選ぶ">
+    <svg viewBox="0 0 540 222" role="img" xmlns="http://www.w3.org/2000/svg">
+      <rect x="1" y="1" width="250" height="220" rx="10" fill="#fff" stroke="#c9ced8"/>
+      <rect x="10" y="10" width="232" height="22" rx="11" fill="#eef1f6"/>
+      <text x="22" y="25" font-size="11" fill="#5f6673">refnavi.net/index.php</text>
+      <text x="126" y="78" font-size="30" font-weight="700" fill="#4a4a4a" text-anchor="middle">RefNavi</text>
+      <text x="126" y="98" font-size="9" fill="#3d7a4f" text-anchor="middle">Better Information, Better Inquiry</text>
+      <rect x="56" y="114" width="140" height="30" rx="3" fill="#fff" stroke="#bbb"/>
+      <text x="70" y="134" font-size="13" font-weight="700" fill="#4285f4">G</text>
+      <text x="88" y="134" font-size="12" fill="#333">Googleでログイン</text>
+      <rect x="52" y="110" width="148" height="38" rx="6" fill="none" stroke="#d93025" stroke-width="3"/>
+      <circle cx="216" cy="129" r="12" fill="#d93025"/><text x="211" y="134" font-size="14" font-weight="700" fill="#fff">1</text>
+      <rect x="56" y="156" width="140" height="30" rx="3" fill="#fff" stroke="#ddd"/>
+      <text x="70" y="176" font-size="12" fill="#aaa">Microsoftでログイン</text>
+      <path d="M258 120 L278 120" stroke="#d93025" stroke-width="3"/><path d="M276 112 L288 120 L276 128 Z" fill="#d93025"/>
+      <rect x="289" y="1" width="250" height="220" rx="10" fill="#fff" stroke="#c9ced8"/>
+      <text x="414" y="34" font-size="14" font-weight="700" fill="#222" text-anchor="middle">アカウントの選択</text>
+      <path d="M300 48 H528" stroke="#e3e3e3"/>
+      <circle cx="318" cy="76" r="12" fill="#1e6b57"/><text x="313" y="81" font-size="12" fill="#fff">S</text>
+      <text x="338" y="73" font-size="12" font-weight="700" fill="#222">学校のアカウント</text>
+      <text x="338" y="89" font-size="11" fill="#5f6673">…@tokyo.soka.ed.jp</text>
+      <rect x="300" y="56" width="200" height="42" rx="6" fill="none" stroke="#d93025" stroke-width="3"/>
+      <circle cx="516" cy="77" r="12" fill="#d93025"/><text x="511" y="82" font-size="14" font-weight="700" fill="#fff">2</text>
+      <path d="M300 108 H528" stroke="#e3e3e3"/>
+      <circle cx="318" cy="132" r="12" fill="#bbb"/><text x="313" y="137" font-size="12" fill="#fff">?</text>
+      <text x="338" y="136" font-size="12" fill="#999">ほかのアカウント（使わない）</text>
+    </svg>
+    <figcaption>① 「<b>Googleでログイン</b>」を押す → ② <b>学校のアカウント</b>（…@tokyo.soka.ed.jp）を選ぶ</figcaption>
+  </figure>`;
+// 班の進み具合（自分で押す）。教員画面にも出る
+const REF_CHECKS = [
+  ["refLogin", "ログインできた"],
+  ["refDouga", "動画を登録できた（見た人）"],
+  ["refHon", "本を登録できた（読んだ人）"],
+  ["refHan", "班の全員が登録できた"]
+];
+// RefNavi に登録するもの（Quest 2 の動画と本、第2回の記事）。1行ずつコピーできる
 function refList(c) {
   const L2 = c.prev("L02"), R2 = c.prev("R02"), esc = c.esc;
-  const rows = [
-    ...listOf(L2, "kiji").map(u => ["記事（第2回）", u]),
-    ...listOf(R2, "douga").map(u => ["動画（" + quest(2) + "）", u]),
-    ...booksOf(R2).map(b => ["本（" + quest(2) + "）", b.title + (b.isbn ? "　ISBN " + b.isbn : "")])
-  ];
-  if (!rows.length) return "";
+  const row = (kind, label, copy, open) => `
+    <li class="refrow"><span class="hint">${esc(kind)}</span> <span class="reftext">${esc(label)}</span>
+      <button type="button" class="btn small ghost" data-copytext="${esc(copy)}">コピー</button>${open ? ` <a class="btn small ghost openurl" href="${esc(open)}" target="_blank" rel="noopener">開く ↗</a>` : ""}</li>`;
+  const videos = listOf(R2, "douga").map(u => row("動画", u, u, safeUrl(u)));
+  const books = booksOf(R2).map(b => b.isbn ? row("本", `${b.title}　ISBN ${b.isbn}`, b.isbn, "") : row("本", `${b.title}（ISBNなし）`, b.title, ""));
+  const arts = listOf(L2, "kiji").map(u => row("記事", u, u, safeUrl(u)));
+  if (!videos.length && !books.length && !arts.length) return `<p class="note">${quest(2)} に動画も本もありません。ホームの「${quest(2)}」から書き足そう。</p>`;
   return `
-      <div class="recap"><div class="tc-row"><span>RefNaviに登録するもの（これまでに書いたもの）</span><b><ul class="qs">${rows.map(([k, v]) => `<li><span class="hint">${esc(k)}</span> ${esc(v)}</li>`).join("")}</ul></b></div></div>`;
+    ${videos.length || books.length ? `<ul class="reflist">${videos.join("")}${books.join("")}</ul>` : ""}
+    ${arts.length ? `<p class="hint">時間があれば、第2回に読んだ記事も</p><ul class="reflist">${arts.join("")}</ul>` : ""}`;
 }
+function refStep(c) {
+  const { d } = c;
+  return `
+      <p class="lead">班で協力して、<b>${quest(2)} で見た動画・読んだ本を RefNavi に登録</b>しよう。</p>
+      <div class="share">
+        <b>班で進めよう</b>
+        <ul>
+          <li>みんなで同時に進める。1つできたら「できた！」と声をかけよう</li>
+          <li>できた人は、となりの人の画面をのぞいて手伝おう</li>
+        </ul>
+      </div>
+      <h3>① RefNavi を開いて、ログイン</h3>
+      <div class="searchbtns"><button type="button" class="btn" data-refnavi>RefNavi を右半分に開く ↗</button></div>
+      ${REF_LOGIN_HOWTO}
+      <h3>② 登録するもの</h3>
+      <p class="hint">「コピー」を押して、RefNavi に貼ろう。動画はURL、本はISBNで登録します。</p>
+      ${refList(c)}
+      <h3>③ RefNavi で登録する</h3>
+      <ol class="todo">
+        <li>動画は<b>URL</b>を、本は<b>ISBN</b>を貼って、資料の情報を読みこむ</li>
+        <li>出てきた題名などを確かめて、登録する</li>
+        <li>ISBNがない本は、持ってきた本の裏のバーコードの上（「978」から始まる13桁）を見よう</li>
+      </ol>
+      <p class="hint">画面の進み方は、RefNavi 公式の動画でも見られます：<a href="${REFNAVI_HOWTO_VIDEO}" target="_blank" rel="noopener">資料の登録方法 ↗</a></p>
+      <h3>④ できたら押そう</h3>
+      <div class="choice small">${REF_CHECKS.map(([k, label]) => `<button type="button" class="choice-btn ${d[k] ? "on" : ""}" data-refchk="${k}">${d[k] ? "✓ " : ""}${label}</button>`).join("")}</div>`;
+}
+
 
 const hostOf = u => { try { return new URL(u).hostname.replace(/^www\./, ""); } catch { return ""; } };
 const papers = c => ["p1Url", "p2Url"].map((k, j) => ({ no: j ? "②" : "①", url: c.v(k) })).filter(p => p.url);
@@ -67,8 +141,9 @@ export const L03 = {
   uses: ["L01", "L02", "R02"],
   steps: [
     { title: "班で紹介", mins: 8 },
-    { title: "研究を探して、論文を2本決める", mins: 20 },
-    { title: "読みはじめる", mins: 15 },
+    { title: "RefNaviに登録する", mins: 8 },
+    { title: "研究を探して、論文を2本決める", mins: 17 },
+    { title: "読みはじめる", mins: 10 },
     { title: "提出", mins: 2 }
   ],
   geminiKey: "gcis_gemini_L03", // 第3回の新しいチャット
@@ -87,7 +162,8 @@ export const L03 = {
         <p class="hint">話し終わったら、話した人が「ありがとう！じゃあ次、〇〇さん」と次の人を指名します。</p>
       </div>
       ${field("hanMemo", "班で出たこと・友だちの紹介で気になったこと（なくてもOK）", { rows: 2 })}`;
-    if (i === 1) return `
+    if (i === 1) return refStep(c);
+    if (i === 2) return `
       <p>記事や本・動画で、同じことに関心を持つ人がいました。その中には、<b>研究者</b>もいます。<br>研究では、どこまで分かっているんだろう？</p>
       <h3>① 検索語をAIに考えてもらう</h3>
       ${promptBox(promptWords(c), { first: true })}
@@ -107,13 +183,12 @@ export const L03 = {
         ${field(`p${n}Url`, `論文${n === "1" ? "①" : "②"}のURL`, { type: "url", placeholder: "https://…", hint: n === "1" ? "論文のページのURLをコピーして貼ろう" : "" })}
         <a class="btn small ghost openurl" data-open-url="p${n}Url" target="_blank" rel="noopener" hidden>この論文を開く ↗</a>
       </div>`).join("")}
-      <p class="hint">決めたら、RefNaviにもURLを貼って登録しよう。</p>
-      ${refList(c)}`;
-    if (i === 2) {
+      <p class="hint">決めたら、RefNaviにもURLを貼って登録しよう。</p>`;
+    if (i === 3) {
       const ps = papers(c);
       return `
         <p><b>論文①から読みはじめよう。</b>今日は途中まででOK。残りは${quest(3)}で読み切ります。</p>
-        <div class="recap">${ps.length ? ps.map(p => `<div class="tc-row"><span>論文${p.no}</span><b>${paperLink(p, esc)}</b></div>`).join("") : `<div class="tc-row"><span>論文</span><b>—</b></div>`}</div>
+        ${ps.length ? "" : `<p class="note">論文がまだありません。「もどる」で論文のURLを入れよう。</p>`}
         <div class="share">
           <b>読み方のコツ</b>
           <ul>
@@ -122,9 +197,9 @@ export const L03 = {
             <li>最後の「まとめ・今後の課題」に、<b>まだ分かっていないこと</b>が書いてあることが多い</li>
           </ul>
         </div>
-        ${field("yomiMemo", "読みながらのメモ（なくてもOK）", { rows: 4, placeholder: "例：大学生30人で調べていた。高校生ではどうなんだろう" })}`;
+        ${readerHtml(c, ps, field("yomiMemo", "読みながらのメモ（なくてもOK）", { rows: 14, placeholder: "例：大学生30人で調べていた。高校生ではどうなんだろう" }))}`;
     }
-    // i === 3：提出
+    // i === 4：提出
     const ps = papers(c);
     return `
       <div class="themecard">
@@ -138,11 +213,27 @@ export const L03 = {
   },
 
   canNext(i, c) {
-    if (i === 1) return !!c.v("p1Url"); // 2本が目標。見つからない生徒も先へ進める
+    if (i === 2) return !!c.v("p1Url"); // 2本が目標。見つからない生徒も先へ進める
     return true;
   },
 
   onClick(t, c) {
+    if (handleReader(t, c)) return true;
+    const k = t.closest("[data-refchk]");
+    if (k) { c.set(k.dataset.refchk, c.d[k.dataset.refchk] ? "" : 1); c.rerender(); return true; }
+    const cp = t.closest("[data-copytext]");
+    if (cp) {
+      copyText(cp.dataset.copytext);
+      const was = cp.textContent; cp.textContent = "コピーしました ✓";
+      setTimeout(() => { cp.textContent = was; }, 1500);
+      return true;
+    }
+    if (t.closest("[data-refnavi]")) {
+      const W = screen.availWidth || 1366, H = screen.availHeight || 768;
+      const w = window.open(REFNAVI_URL, "gcis_refnavi", `popup=yes,left=${Math.round(W / 2)},top=0,width=${Math.round(W / 2)},height=${H}`) || window.open(REFNAVI_URL, "_blank");
+      try { w?.focus(); } catch { /* なし */ }
+      return true;
+    }
     const s = t.closest("[data-search]");
     if (s) {
       const q = c.v("kensaku");
