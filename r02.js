@@ -1,7 +1,7 @@
 // ステージ4：Quest 2（第2回→第3回）「？」の手がかりになりそうな本か動画
 // 仕様：ナレッジの L03.md「Quest 2」。授業中に始められる子は始める
 // data：findq（動画を探す言葉）・findb（本を探す言葉）・douga〜douga5（動画のリンク）・honTitle〜honTitle5（本の題名）・isbn〜isbn5・kokoro（いちばん心に残った所と、ひとこと）・fromL02（第2回の値を写した印）
-// mono（見たもの・読んだもの：11/4 までの1欄）は古いデータの表示用に残す
+// mono（見たもの・読んだもの：11/4 までの1欄）は、開いたときに新しい欄へ移して空にする（11/7。欄は出さない）
 import { quest, LIBRARY_URL, YOUTUBE_SEARCH, PICK_N, listOf } from "./common.js";
 const Q = quest(2);
 
@@ -123,9 +123,19 @@ function copyFromL02(c) {
   FROM_L02.forEach(k => { if (!c.v(k) && String(L2[k] || "").trim()) c.d[k] = L2[k]; });
   c.set("fromL02", 1);
 }
+// 古い1欄（mono）の中身を、空いている新しい欄へ移す。URLなら動画、それ以外は本の題名（11/7）
+function moveMono(c) {
+  const old = c.v("mono");
+  if (!old) return;
+  const key = /^https?:\/\//.test(old) ? "douga" : "honTitle";
+  const free = PICK_N.map(n => key + n).find(k => !c.v(k));
+  if (!free) return;
+  c.d[free] = old;
+  c.set("mono", "");
+}
 
 export const PICK_TIPS = `
-  <p class="hint"><b>ぴったりの本でなくても大丈夫。</b>図書館に行くと、その本の近くに似た本が並んでいます。</p>`;
+  <p class="hint">図書館に行って、同じ棚に他にどんな本が並んでいるかも見てみよう。</p>`;
 
 export const R02 = {
   id: "R02",
@@ -141,6 +151,7 @@ export const R02 = {
   render(i, c) {
     const { field, esc } = c;
     copyFromL02(c);
+    moveMono(c);
     const qs = qsOf(c.prev("L02"));
     return `
       <div class="recap">
@@ -164,7 +175,6 @@ export const R02 = {
       ${PICK_TIPS}
       <h3>見たら・読んだら書く</h3>
       ${pickFields(c, { done: true })}
-      ${c.v("mono") ? field("mono", "見たもの・読んだもの（前の欄）", { type: "text" }) : ""}
       ${field("kokoro", "いちばん心に残った所と、ひとこと", { rows: 3, hint: "動画は時間（例：2分05秒）、本はページも書こう", placeholder: "例：2分05秒あたり。雑音の大きさによって、集中しやすさが逆になるという話。自分のは小さい音だったのかも" })}
       <p class="hint">手がかりにならなくても大丈夫。第3回で研究を探します。</p>
       ${c.submitted ? `<p class="okmsg">提出済み ✓　あとから直しても自動で保存されます。</p>` : ""}`;
