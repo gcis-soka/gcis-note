@@ -76,6 +76,40 @@ const REF_LOGIN_HOWTO = `
     </svg>
     <figcaption>① 「<b>Googleでログイン</b>」を押す → ② <b>学校のアカウント</b>（…@tokyo.soka.ed.jp）を選ぶ</figcaption>
   </figure>`;
+// 登録の図（ホームの「メディアの選択」→「ISBN コード／DOI コード／URL」欄→照合・解析）。
+// RefNavi 操作マニュアル（RefNavi_manual_52, 2026/10）の名前どおり。並びは図式（実際の画面写真があれば描き直す）
+const REF_ADD_HOWTO = `
+  <figure class="urlhowto libhowto" aria-label="RefNaviの登録：メディアの選択で種類を選び、ISBNかURLを貼って照合・解析し、確かめて登録">
+    <svg viewBox="0 0 540 222" role="img" xmlns="http://www.w3.org/2000/svg">
+      <rect x="1" y="1" width="250" height="220" rx="10" fill="#fff" stroke="#c9ced8"/>
+      <text x="16" y="28" font-size="14" font-weight="700" fill="#222">ホーム</text>
+      <path d="M12 40 H240" stroke="#e3e3e3"/>
+      <text x="20" y="66" font-size="12" font-weight="700" fill="#333">メディアの選択</text>
+      <rect x="20" y="80" width="64" height="40" rx="6" fill="#f4f6f8" stroke="#bbb"/><text x="52" y="105" font-size="12" fill="#333" text-anchor="middle">図書</text>
+      <rect x="92" y="80" width="64" height="40" rx="6" fill="#f4f6f8" stroke="#bbb"/><text x="124" y="105" font-size="12" fill="#333" text-anchor="middle">動画</text>
+      <rect x="164" y="80" width="64" height="40" rx="6" fill="#f4f6f8" stroke="#ddd"/><text x="196" y="105" font-size="12" fill="#999" text-anchor="middle">…</text>
+      <rect x="16" y="76" width="144" height="48" rx="8" fill="none" stroke="#d93025" stroke-width="3"/>
+      <circle cx="40" cy="146" r="12" fill="#d93025"/><text x="35" y="151" font-size="14" font-weight="700" fill="#fff">1</text>
+      <text x="60" y="144" font-size="11" fill="#333">本は「図書」</text>
+      <text x="60" y="160" font-size="11" fill="#333">動画は「動画」を選ぶ</text>
+      <path d="M258 120 L278 120" stroke="#d93025" stroke-width="3"/><path d="M276 112 L288 120 L276 128 Z" fill="#d93025"/>
+      <rect x="289" y="1" width="250" height="220" rx="10" fill="#fff" stroke="#c9ced8"/>
+      <text x="304" y="28" font-size="14" font-weight="700" fill="#222">情報登録</text>
+      <path d="M300 40 H528" stroke="#e3e3e3"/>
+      <text x="304" y="62" font-size="11" fill="#333">ISBN コード／DOI コード／URL</text>
+      <rect x="304" y="70" width="150" height="28" rx="3" fill="#fff" stroke="#aaa"/>
+      <text x="312" y="89" font-size="11" fill="#999">ここに貼り付け</text>
+      <rect x="460" y="70" width="64" height="28" rx="4" fill="#388e3c"/><text x="492" y="89" font-size="11" fill="#fff" text-anchor="middle">照合／解析</text>
+      <rect x="300" y="66" width="228" height="36" rx="6" fill="none" stroke="#d93025" stroke-width="3"/>
+      <circle cx="316" cy="124" r="12" fill="#d93025"/><text x="311" y="129" font-size="14" font-weight="700" fill="#fff">2</text>
+      <text x="336" y="122" font-size="11" fill="#333">本＝ISBN →「照合」</text>
+      <text x="336" y="138" font-size="11" fill="#333">動画＝URL →「解析」</text>
+      <rect x="304" y="152" width="220" height="22" rx="3" fill="#f4f6f8"/><text x="312" y="167" font-size="11" fill="#555"><tspan fill="#d93025">*</tspan> 書名・著者などが自動で入る</text>
+      <circle cx="316" cy="196" r="12" fill="#d93025"/><text x="311" y="201" font-size="14" font-weight="700" fill="#fff">3</text>
+      <text x="336" y="200" font-size="11" fill="#333">確かめて、登録する</text>
+    </svg>
+    <figcaption>① ホームの「<b>メディアの選択</b>」で、本は「図書」、動画は「動画」→ ② 「<b>ISBN コード／DOI コード／URL</b>」の欄に貼って、本は「<b>照合</b>」、動画は「<b>解析</b>」→ ③ 赤い「＊」の欄が埋まっているか確かめて登録</figcaption>
+  </figure>`;
 // 班の進み具合（自分で押す）。教員画面にも出る
 const REF_CHECKS = [
   ["refLogin", "ログインできた"],
@@ -115,11 +149,12 @@ function refStep(c) {
       <p class="hint">「コピー」を押して、RefNavi に貼ろう。動画はURL、本はISBNで登録します。</p>
       ${refList(c)}
       <h3>③ RefNavi で登録する</h3>
-      <ol class="todo">
-        <li>動画は<b>URL</b>を、本は<b>ISBN</b>を貼って、資料の情報を読みこむ</li>
-        <li>出てきた題名などを確かめて、登録する</li>
-        <li>ISBNがない本は、持ってきた本の裏のバーコードの上（「978」から始まる13桁）を見よう</li>
-      </ol>
+      ${REF_ADD_HOWTO}
+      <ul class="todo">
+        <li>ISBNがない本は、カメラのボタンで<b>持ってきた本のバーコード</b>を読み取れます（裏表紙の「978」から始まる方）</li>
+        <li>動画は YouTube のURLだけ登録できます</li>
+        <li>初めて RefNavi に入る人は、「児童・生徒」を選び、先生が伝える<b>グループコード</b>を入れます</li>
+      </ul>
       <p class="hint">画面の進み方は、RefNavi 公式の動画でも見られます：<a href="${REFNAVI_HOWTO_VIDEO}" target="_blank" rel="noopener">資料の登録方法 ↗</a></p>
       <h3>④ できたら押そう</h3>
       <div class="choice small">${REF_CHECKS.map(([k, label]) => `<button type="button" class="choice-btn ${d[k] ? "on" : ""}" data-refchk="${k}">${d[k] ? "✓ " : ""}${label}</button>`).join("")}</div>`;
