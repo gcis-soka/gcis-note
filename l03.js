@@ -169,8 +169,9 @@ const REF_ADD_HOWTO = `
     <figcaption>① ホームの「<b>メディアの選択</b>」で、本は「図書」、動画は「動画」→ ② 「<b>ISBN コード／DOI コード／URL</b>」の欄に貼って、本は「<b>照合</b>」、動画は「<b>解析</b>」→ ③ 赤い「＊」の欄が埋まっているか確かめて登録</figcaption>
   </figure>`;
 // 出力して貼る（11/7 先生：RefNavi を「楽だ」と早く感じる場面。第3回で出力→アプリに貼る、Quest 3 で貼り直す、RQシートに自動で載る）
-// 書式は1学期に教えたもの（『課題研究メソッド』の引用文献の書式。先生のスライド待ち）。決まったら REF_FORMAT に RefNavi の書式名を書く
-export const REF_FORMAT = "";
+// 書式は1学期 GCIS 第2回のスライド（「著者名（年）.『書名』. 出版社.」など、著者と年が先に来る形）にいちばん近い RefNavi の出力形式。
+// RefNavi の形式：MLA 第9版・APA・ハーバード式・Bibtex・SIST02・学びの技（初期設定）・Refnavi。仮に APA（11/7。先生が RefNavi で出力を確かめたら確定）
+export const REF_FORMAT = "APA";
 const fmtName = () => REF_FORMAT ? `「${REF_FORMAT}」` : "先生が指定した書式";
 // 出力の図（「整理する」→「リスト」→チェック→「出力」→書式→クリップボードにコピー）。RefNavi_manual_52 の名前どおり、並びは図式
 const refOutHowto = () => `
