@@ -65,7 +65,7 @@ export const R03 = {
       ${field("q1", "①", { type: "text", qmark: true })}
       ${field("q2", "②", { type: "text", qmark: true })}
       ${field("q3", "③", { type: "text", qmark: true })}
-      <p class="hint">難しくて読み切れなくても大丈夫。読めたところまでで書こう。</p>
+      <p class="hint">がんばって、読めるところまで読んでみよう！ 途中で別の論文にしたくなったら、もう一度探して変えてもOK（ホームの「第3回」の「見なおす」で、論文のURLを入れ直せます）。</p>
       ${c.submitted ? `<p class="okmsg">提出済み ✓　あとから直しても自動で保存されます。</p>` : ""}`;
   },
 
