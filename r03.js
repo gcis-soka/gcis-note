@@ -65,7 +65,7 @@ export const R03 = {
       ${field("q1", "①", { type: "text", qmark: true })}
       ${field("q2", "②", { type: "text", qmark: true })}
       ${field("q3", "③", { type: "text", qmark: true })}
-      <p class="hint">難しくて読み切れなくても大丈夫。読めたところまでで書こう。第4回のはじめにも、読む時間があります。</p>
+      <p class="hint">難しくて読み切れなくても大丈夫。読めたところまでで書こう。</p>
       ${c.submitted ? `<p class="okmsg">提出済み ✓　あとから直しても自動で保存されます。</p>` : ""}`;
   },
 
