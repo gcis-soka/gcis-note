@@ -19,6 +19,42 @@ const SEARCH = [
   { id: "cinii", label: "CiNii", url: q => `https://cir.nii.ac.jp/all?q=${encodeURIComponent(q)}` }
 ];
 
+// 論文を探す道具（検索語・Scholar／J-STAGE／CiNii・試した言葉・選び方）。第3回と Quest 3（折りたたみ）で使う
+export function searchTools(c) {
+  const { esc, d } = c;
+  return `
+      <div class="field"><label><span class="label">検索語</span><span class="hint">AIの言葉でも、自分の言葉でもOK。何度でも試そう</span>
+        <input data-key="kensaku" type="text" value="${esc(d.kensaku || "")}" placeholder="例：雑音 集中 作業効率"></label></div>
+      <div class="searchbtns">${SEARCH.map((s, j) => `<button type="button" class="btn ${j ? "ghost" : ""}" data-search="${s.id}">${s.label} ↗</button>`).join("")}</div>
+      ${d.tried ? `<p class="hint">試した言葉：${esc(d.tried)}</p>` : ""}
+      <ul class="todo">
+        <li><b>長すぎないもの</b>を選ぼう（ページ数を見る）。全部読みます</li>
+        <li>右に<b>[PDF]</b>があるもの・J-STAGEなど、<b>無料で読めるもの</b>から</li>
+        <li>見つからないときは、日本語だけ／英語で／言葉を変えて。それでもなければ「研究が少ない」のも発見です</li>
+      </ul>`;
+}
+// 論文①②のURL欄（右に「この論文を開く」）
+export function paperFields(c) {
+  return ["1", "2"].map(n => `
+      <div class="urlrow">
+        ${c.field(`p${n}Url`, `論文${n === "1" ? "①" : "②"}のURL`, { type: "url", placeholder: "https://…", hint: n === "1" ? "論文のページのURLをコピーして貼ろう" : "" })}
+        <a class="btn small ghost openurl" data-open-url="p${n}Url" target="_blank" rel="noopener" hidden>この論文を開く ↗</a>
+      </div>`).join("");
+}
+// 検索ボタン（試した言葉を残す：新しい順・10個まで）
+export function handleSearch(t, c) {
+  const s = t.closest("[data-search]");
+  if (!s) return false;
+  const q = c.v("kensaku");
+  if (!q) { alert("先に検索語を入れてね"); return true; }
+  const S = SEARCH.find(x => x.id === s.dataset.search);
+  window.open(S.url(q), "_blank", "noopener");
+  const list = String(c.d.tried || "").split(" / ").filter(Boolean).filter(x => x !== q);
+  c.set("tried", [q, ...list].slice(0, 10).join(" / "));
+  c.rerender();
+  return true;
+}
+
 // ---------- プロンプト（試作・未試行：L03.md「検索語プロンプト」） ----------
 function promptWords(c) {
   const L1 = c.prev("L01"), qs = qsOf(c.prev("L02")), R2 = c.prev("R02");
@@ -43,8 +79,8 @@ function myRecap(c) {
 
 // ---------- RefNavi に登録する（11/7 追加：班で紹介のあと） ----------
 const REFNAVI_URL = "https://www.refnavi.net/index.php";
-// RefNavi 公式の操作説明動画「④資料の登録方法」（BGMなし）。refnavi.net/wp/manual/ から
-const REFNAVI_HOWTO_VIDEO = "https://www.youtube.com/watch?v=pmeFojS4UDs";
+// RefNavi 公式の操作説明動画（BGMなし）の再生リスト。先生から（11/7）。④が「資料の登録方法」
+const REFNAVI_HOWTO_VIDEO = "https://www.youtube.com/playlist?list=PLQX5mUcFrfL4";
 // ログインの図（トップ→Googleでログイン→学校のアカウント）。先生の画面写真（11/7）をもとに描いた
 const REF_LOGIN_HOWTO = `
   <figure class="urlhowto libhowto" aria-label="RefNaviのログイン：Googleでログインを押し、学校のアカウントを選ぶ">
@@ -155,7 +191,7 @@ function refStep(c) {
         <li>動画は YouTube のURLだけ登録できます</li>
         <li>初めて RefNavi に入る人は、「児童・生徒」を選び、先生が伝える<b>グループコード</b>を入れます</li>
       </ul>
-      <p class="hint">画面の進み方は、RefNavi 公式の動画でも見られます：<a href="${REFNAVI_HOWTO_VIDEO}" target="_blank" rel="noopener">資料の登録方法 ↗</a></p>
+      <p class="hint">画面の進み方は、RefNavi 公式の動画でも見られます（④が「資料の登録方法」）：<a href="${REFNAVI_HOWTO_VIDEO}" target="_blank" rel="noopener">RefNavi マニュアル動画 ↗</a></p>
       <h3>④ できたら押そう</h3>
       <div class="choice small">${REF_CHECKS.map(([k, label]) => `<button type="button" class="choice-btn ${d[k] ? "on" : ""}" data-refchk="${k}">${d[k] ? "✓ " : ""}${label}</button>`).join("")}</div>`;
 }
@@ -201,21 +237,9 @@ export const L03 = {
       <h3>① 検索語をAIに考えてもらう</h3>
       ${promptBox(promptWords(c), { first: true })}
       <h3>② 自分で探す</h3>
-      <div class="field"><label><span class="label">検索語</span><span class="hint">AIの言葉でも、自分の言葉でもOK。何度でも試そう</span>
-        <input data-key="kensaku" type="text" value="${esc(d.kensaku || "")}" placeholder="例：雑音 集中 作業効率"></label></div>
-      <div class="searchbtns">${SEARCH.map((s, j) => `<button type="button" class="btn ${j ? "ghost" : ""}" data-search="${s.id}">${s.label} ↗</button>`).join("")}</div>
-      ${d.tried ? `<p class="hint">試した言葉：${esc(d.tried)}</p>` : ""}
-      <ul class="todo">
-        <li><b>長すぎないもの</b>を選ぼう（ページ数を見る）。全部読みます</li>
-        <li>右に<b>[PDF]</b>があるもの・J-STAGEなど、<b>無料で読めるもの</b>から</li>
-        <li>見つからないときは、日本語だけ／英語で／言葉を変えて。それでもなければ「研究が少ない」のも発見です</li>
-      </ul>
+      ${searchTools(c)}
       <h3>③ 論文を2本決める</h3>
-      ${["1", "2"].map(n => `
-      <div class="urlrow">
-        ${field(`p${n}Url`, `論文${n === "1" ? "①" : "②"}のURL`, { type: "url", placeholder: "https://…", hint: n === "1" ? "論文のページのURLをコピーして貼ろう" : "" })}
-        <a class="btn small ghost openurl" data-open-url="p${n}Url" target="_blank" rel="noopener" hidden>この論文を開く ↗</a>
-      </div>`).join("")}
+      ${paperFields(c)}
       <p class="hint">決めたら、RefNaviにもURLを貼って登録しよう。</p>`;
     // i === 3：提出（提出すると Quest 3 が出る。授業の残りの時間で Quest 3 を読みはじめる：11/7）
     const ps = papers(c);
@@ -251,18 +275,6 @@ export const L03 = {
       try { w?.focus(); } catch { /* なし */ }
       return true;
     }
-    const s = t.closest("[data-search]");
-    if (s) {
-      const q = c.v("kensaku");
-      if (!q) { alert("先に検索語を入れてね"); return true; }
-      const S = SEARCH.find(x => x.id === s.dataset.search);
-      window.open(S.url(q), "_blank", "noopener");
-      // 試した言葉を残す（新しい順・10個まで）
-      const list = String(c.d.tried || "").split(" / ").filter(Boolean).filter(x => x !== q);
-      c.set("tried", [q, ...list].slice(0, 10).join(" / "));
-      c.rerender();
-      return true;
-    }
-    return false;
+    return handleSearch(t, c);
   }
 };

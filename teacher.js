@@ -205,7 +205,7 @@ const VIEWS = {
     stepNames: ["記録"],
     head: ["論文①", "論文②", "分かったこと", "まだ分かっていないこと"],
     cells: r => {
-      const d = r.note?.data || {}, ps = papersOf(r.l03?.data || {});
+      const d = r.note?.data || {}, ps = papersOf(d.fromL03 ? d : r.l03?.data || {});
       return [`${yomiChip(d.yomi1)} ${paperCell(ps[0])}`, `${yomiChip(d.yomi2)} ${paperCell(ps[1])}`, esc(d.wakatta || ""), esc(d.mada || "")];
     },
     nowrap: [],
@@ -217,7 +217,7 @@ const VIEWS = {
         : "";
     },
     detail(r) {
-      const d = r.note?.data || {}, ps = papersOf(r.l03?.data || {}), qs = qsOf(d);
+      const d = r.note?.data || {}, ps = papersOf(d.fromL03 ? d : r.l03?.data || {}), qs = qsOf(d);
       return `
         <div class="recap">${ps.map((p, j) => `<div class="tc-row"><span>論文${j ? "②" : "①"}（${esc(d[j ? "yomi2" : "yomi1"] || "—")}）</span><b>${paperCell(p)}</b></div>`).join("") || `<div class="tc-row"><span>論文</span><b>—</b></div>`}</div>
         ${item(d, "wakatta", "分かったこと")}${item(d, "mada", "まだ分かっていないこと")}
@@ -225,7 +225,7 @@ const VIEWS = {
     },
     csvHead: ["論文1のURL", "論文1を読んだか", "論文2のURL", "論文2を読んだか", "分かったこと", "まだ分かっていないこと", "気になったこと1", "気になったこと2", "気になったこと3"],
     csvRow: r => {
-      const d = r.note?.data || {}, l = r.l03?.data || {};
+      const d = r.note?.data || {}, l = d.fromL03 ? d : r.l03?.data || {}; // 論文は Quest 3 で変えられる（11/7）
       return [l.p1Url, d.yomi1, l.p2Url, d.yomi2, d.wakatta, d.mada, d.q1, d.q2, d.q3];
     }
   },

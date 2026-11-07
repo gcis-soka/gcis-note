@@ -1,8 +1,18 @@
 // ステージ6：Quest 3（第3回→第4回 12/7・期末をはさむ）論文を読み切った結果。第3回の授業の残りの時間で始める（11/7）
 // 仕様：ナレッジの L03.md「Quest 3」（先生 10/31：分かったこと／まだ分かっていないこと＋気になったこと）
-// data：yomi1・yomi2（全部読んだ／途中まで／まだ）・wakatta・mada・q1〜q3
+// data：yomi1・yomi2（全部読んだ／途中まで／まだ）・wakatta・mada・q1〜q3・p1Url・p2Url・kensaku・tried（第3回から写し、ここで変えられる）・fromL03
 import { quest } from "./common.js";
 import { readerHtml, handleReader } from "./reader.js";
+import { searchTools, paperFields, handleSearch } from "./l03.js";
+
+// 初めて開いたとき、第3回の論文のURLと検索語を写す（論文を変えるのは Quest 3 の中で：11/7）
+const FROM_L03 = ["p1Url", "p2Url", "kensaku", "tried"];
+function copyFromL03(c) {
+  if (c.d.fromL03) return;
+  const L3 = c.prev("L03");
+  FROM_L03.forEach(k => { if (!c.v(k) && String(L3[k] || "").trim()) c.d[k] = L3[k]; });
+  c.set("fromL03", 1);
+}
 const Q = quest(3);
 
 const safeUrl = u => /^https?:\/\//i.test(String(u || "").trim()) ? String(u).trim() : "";
@@ -39,16 +49,21 @@ export const R03 = {
 
   render(i, c) {
     const { field, chips, esc, d } = c;
-    const L3 = c.prev("L03");
-    // 論文は第3回の URL だけ（題名は RefNavi：11/7）
+    copyFromL03(c);
+    // 論文は URL だけ（題名は RefNavi：11/7）。第3回から写した値を、ここで変えられる
     const ps = [["p1Url", "yomi1"], ["p2Url", "yomi2"]]
-      .map(([u, k], j) => ({ no: j ? "②" : "①", raw: String(L3[u] || "").trim(), url: safeUrl(L3[u]), key: k }))
+      .map(([u, k], j) => ({ no: j ? "②" : "①", raw: c.v(u), url: safeUrl(c.v(u)), key: k }))
       .filter(p => p.raw);
     const rows = ps.map(p => `
       <div class="tc-row"><span>論文${p.no}</span><b>${p.url ? `<a href="${esc(p.url)}" target="_blank" rel="noopener">開く ↗</a> <span class="hint">${esc(hostOf(p.url))}</span>` : esc(p.raw)}</b></div>
       <div class="choice small">${YOMI.map(y => `<button type="button" class="choice-btn ${d[p.key] === y ? "on" : ""}" data-yomi="${p.key}" data-val="${y}">${y}</button>`).join("")}</div>`).join("");
     return `
-      <div class="recap">${rows || `<div class="tc-row"><span>論文</span><b>第3回で決めた論文がありません。ホームの「第3回」から書き足そう</b></div>`}</div>
+      <div class="recap">${rows || `<div class="tc-row"><span>論文</span><b>論文がありません。下の「論文を探す」で見つけよう</b></div>`}</div>
+      <details class="fold">
+        <summary>論文を探す（変えたくなったとき・見つけ直すとき）</summary>
+        ${searchTools(c)}
+        ${paperFields(c)}
+      </details>
       <p><b>論文①から読みはじめよう。</b>第3回の授業の残りの時間で始めて、続きは授業の外で読み切ります。読みながら、<b>分かったこと</b>と<b>まだ分かっていないこと</b>を書こう。2本まとめてでOK。</p>
       <div class="share">
         <b>読み方のコツ</b>
@@ -65,7 +80,7 @@ export const R03 = {
       ${field("q1", "①", { type: "text", qmark: true })}
       ${field("q2", "②", { type: "text", qmark: true })}
       ${field("q3", "③", { type: "text", qmark: true })}
-      <p class="hint">がんばって、読めるところまで読んでみよう！ 途中で別の論文にしたくなったら、もう一度探して変えてもOK（ホームの「第3回」の「見なおす」で、論文のURLを入れ直せます）。</p>
+      <p class="hint">がんばって、読めるところまで読んでみよう！ 途中で別の論文にしたくなったら、もう一度探して変えてもOK（上の「論文を探す」を開いて、URLを入れ直そう）。</p>
       ${c.submitted ? `<p class="okmsg">提出済み ✓　あとから直しても自動で保存されます。</p>` : ""}`;
   },
 
@@ -75,6 +90,7 @@ export const R03 = {
 
   onClick(t, c) {
     if (handleReader(t, c)) return true;
+    if (handleSearch(t, c)) return true;
     const b = t.closest("[data-yomi]");
     if (b) { c.set(b.dataset.yomi, b.dataset.val); c.rerender(); return true; }
     return false;
