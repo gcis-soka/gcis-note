@@ -171,7 +171,7 @@ const VIEWS = {
   },
   L03: {
     tab: "第3回", date: "2026-11-16",
-    stepNames: ["班", "RefNavi", "研究を探す", "読む", "提出"],
+    stepNames: ["班", "RefNavi", "研究を探す", "提出"],
     head: ["本か動画（Quest 2）", "RefNavi", "論文①", "論文②", "試した検索語"],
     cells: r => {
       const d = r.note?.data || {}, ps = papersOf(d);
@@ -192,12 +192,12 @@ const VIEWS = {
         <div class="tc-row"><span>RefNavi</span><b>${REF_LABELS.filter(([k]) => d[k]).map(([, l]) => esc(l)).join("・") || "—"}</b></div>
         ${item(d, "tried", "試した検索語")}
         ${ps.map((p, j) => `<div class="tc-row"><span>論文${j ? "②" : "①"}</span><b>${paperCell(p)}</b></div>`).join("") || `<div class="tc-row"><span>論文</span><b>—</b></div>`}
-        ${item(d, "yomiMemo", "読みながらのメモ")}`;
+        `;
     },
-    csvHead: ["試した検索語", "論文1のURL", "論文2のURL", "読みながらのメモ", "班で出たこと", ...REF_LABELS.map(([, l]) => "RefNavi：" + l)],
+    csvHead: ["試した検索語", "論文1のURL", "論文2のURL", "班で出たこと", ...REF_LABELS.map(([, l]) => "RefNavi：" + l)],
     csvRow: r => {
       const d = r.note?.data || {};
-      return [d.tried, d.p1Url, d.p2Url, d.yomiMemo, d.hanMemo, ...REF_LABELS.map(([k]) => d[k] ? "○" : "")];
+      return [d.tried, d.p1Url, d.p2Url, d.hanMemo, ...REF_LABELS.map(([k]) => d[k] ? "○" : "")];
     }
   },
   R03: {
@@ -648,11 +648,11 @@ export function mountTeacher({ be, app, dlg }) {
           ? { douga: "https://youtu.be/xxxxxxxxxxx?t=125", kokoro: "（動画の例）2分05秒あたり。雑音の大きさで、集中しやすさが逆になるという話" }
           : { honTitle: "『（本の題名の例）』", isbn: "9784000000000", kokoro: "（本の例）p.48 音楽のテンポで作業の速さが変わるという実験" } });
       if (i % 4 === 1) continue;
-      const s3 = i % 6 === 0 ? 2 : 4, two = i % 5 !== 0;
-      nt.push({ uid, lesson: "L03", step: s3, submitted: s3 === 4, updatedAt: new Date(Date.now() - (i % 8) * 60000),
+      const s3 = i % 6 === 0 ? 2 : 3, two = i % 5 !== 0;
+      nt.push({ uid, lesson: "L03", step: s3, submitted: s3 === 3, updatedAt: new Date(Date.now() - (i % 8) * 60000),
         data: { refLogin: 1, refDouga: i % 3 ? 1 : "", refHon: i % 2 ? 1 : "", tried: "雑音 集中 / noise concentration", p1Url: "https://www.jstage.jst.go.jp/article/example/a",
           p2Url: two ? "https://example.com/b" : "" } });
-      if (s3 !== 4) continue;
+      if (s3 !== 3) continue;
       nt.push({ uid, lesson: "R03", step: 0, submitted: i % 3 !== 0, updatedAt: new Date(Date.now() - (i % 8) * 60000),
         data: { yomi1: i % 2 ? "全部読んだ" : "途中まで", yomi2: two ? (i % 3 ? "途中まで" : "全部読んだ") : "",
           wakatta: "（分かったことの例）大学生40人で、カフェ程度の音のときに作業が速かった", mada: "（まだ分かっていないことの例）高校生や、歌詞のある音楽の場合は調べていない", q1: "部活のあとでも同じ？" } });

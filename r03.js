@@ -1,4 +1,4 @@
-// ステージ6：Quest 3（第3回→第4回 12/7・期末をはさむ）論文を読み切った結果
+// ステージ6：Quest 3（第3回→第4回 12/7・期末をはさむ）論文を読み切った結果。第3回の授業の残りの時間で始める（11/7）
 // 仕様：ナレッジの L03.md「Quest 3」（先生 10/31：分かったこと／まだ分かっていないこと＋気になったこと）
 // data：yomi1・yomi2（全部読んだ／途中まで／まだ）・wakatta・mada・q1〜q3
 import { quest } from "./common.js";
@@ -49,7 +49,15 @@ export const R03 = {
       <div class="choice small">${YOMI.map(y => `<button type="button" class="choice-btn ${d[p.key] === y ? "on" : ""}" data-yomi="${p.key}" data-val="${y}">${y}</button>`).join("")}</div>`).join("");
     return `
       <div class="recap">${rows || `<div class="tc-row"><span>論文</span><b>第3回で決めた論文がありません。ホームの「第3回」から書き足そう</b></div>`}</div>
-      <p>読みながら、<b>分かったこと</b>と<b>まだ分かっていないこと</b>を書こう。2本まとめてでOK。</p>
+      <p><b>論文①から読みはじめよう。</b>第3回の授業の残りの時間で始めて、続きは授業の外で読み切ります。読みながら、<b>分かったこと</b>と<b>まだ分かっていないこと</b>を書こう。2本まとめてでOK。</p>
+      <div class="share">
+        <b>読み方のコツ</b>
+        <ul>
+          <li>知らない言葉は、すぐ調べなくてOK。印をつけて先へ</li>
+          <li>「何を・誰に・どうやって調べたか」と「何が分かったか」を探しながら読む</li>
+          <li>最後の「まとめ・今後の課題」に、<b>まだ分かっていないこと</b>が書いてあることが多い</li>
+        </ul>
+      </div>
       ${readerHtml(c, ps.map(p => ({ no: p.no, url: p.url })), `
         ${field("wakatta", "分かったこと（何を・誰に・どうやって調べて、何が分かった？）", { rows: 6, hint: "書き出しを押すと入ります", chips: WAKATTA_CHIPS })}
         ${field("mada", "まだ分かっていないこと", { rows: 5, hint: "論文の最後の「今後の課題」や、自分の場面との違いを見てみよう", chips: MADA_CHIPS })}`)}

@@ -1,11 +1,10 @@
 // ステージ5／第3回（11/16）先行研究に出会う（A案：ニュース→本・動画→論文）
 // 仕様：ナレッジの L03.md。論文は2本決める。長すぎないものを選んで全文を読む（授業で途中まで→残りは Quest 3）
 // RefNavi への登録は授業で（URLを貼るだけ）。アプリは登録しないが、登録するもの（第2回の記事・Quest 2 の動画と本）を一覧で出す（11/5）
-// data：hanMemo・refLogin・refDouga・refHon・refHan（RefNavi の進み具合）・kensaku・tried・p1Url・p2Url・yomiMemo
+// data：hanMemo・refLogin・refDouga・refHon・refHan（RefNavi の進み具合）・kensaku・tried・p1Url・p2Url（読むのは Quest 3。授業中に始める：11/7）
 // 論文は URL だけ（題名は RefNavi に入れる：11/7）。Geminiのチャットは AIの文の下の chatUrl で預かる（共有リンク欄は 11/7 廃止）
 import { quest, listOf, booksOf } from "./common.js";
 import { copyText } from "./r02.js";
-import { readerHtml, handleReader } from "./reader.js";
 // Quest 2 で見たもの・読んだもの（動画・本の2欄）
 const pickText = R => [...listOf(R, "douga"), ...listOf(R, "honTitle")].join(" ／ ");
 
@@ -143,8 +142,7 @@ export const L03 = {
     { title: "班で紹介", mins: 8 },
     { title: "RefNaviに登録する", mins: 8 },
     { title: "研究を探して、論文を2本決める", mins: 17 },
-    { title: "読みはじめる", mins: 10 },
-    { title: "提出", mins: 2 }
+    { title: "提出して、Quest 3 へ", mins: 2 }
   ],
   geminiKey: "gcis_gemini_L03", // 第3回の新しいチャット
 
@@ -184,22 +182,7 @@ export const L03 = {
         <a class="btn small ghost openurl" data-open-url="p${n}Url" target="_blank" rel="noopener" hidden>この論文を開く ↗</a>
       </div>`).join("")}
       <p class="hint">決めたら、RefNaviにもURLを貼って登録しよう。</p>`;
-    if (i === 3) {
-      const ps = papers(c);
-      return `
-        <p><b>論文①から読みはじめよう。</b>今日は途中まででOK。残りは${quest(3)}で読み切ります。</p>
-        ${ps.length ? "" : `<p class="note">論文がまだありません。「もどる」で論文のURLを入れよう。</p>`}
-        <div class="share">
-          <b>読み方のコツ</b>
-          <ul>
-            <li>知らない言葉は、すぐ調べなくてOK。印をつけて先へ</li>
-            <li>「何を・誰に・どうやって調べたか」と「何が分かったか」を探しながら読む</li>
-            <li>最後の「まとめ・今後の課題」に、<b>まだ分かっていないこと</b>が書いてあることが多い</li>
-          </ul>
-        </div>
-        ${readerHtml(c, ps, field("yomiMemo", "読みながらのメモ（なくてもOK）", { rows: 14, placeholder: "例：大学生30人で調べていた。高校生ではどうなんだろう" }))}`;
-    }
-    // i === 4：提出
+    // i === 3：提出（提出すると Quest 3 が出る。授業の残りの時間で Quest 3 を読みはじめる：11/7）
     const ps = papers(c);
     return `
       <div class="themecard">
@@ -207,7 +190,7 @@ export const L03 = {
         <div class="tc-row big"><span>論文</span><b>${ps.length ? ps.map(p => `論文${p.no}　${paperLink(p, esc)}`).join("<br>") : "—"}</b></div>
       </div>
       ${ps.length < 2 ? `<p class="note">論文が1本だけのときは、${quest(3)}の前にもう1本探してみよう（ホームから「見なおす」で書き足せます）。</p>` : ""}
-      <div class="share"><b>次は ${quest(3)}（第4回 12/7 まで）</b><p>2本の論文を読み切ろう。読んだら、<b>ホームに戻って「${quest(3)}」を開き</b>、分かったこと・まだ分かっていないことを書こう。</p>
+      <div class="share"><b>次は ${quest(3)}：論文を読む（第4回 12/7 まで）</b><p>提出すると、ホームに「${quest(3)}」が出ます。<b>授業の残りの時間で、${quest(3)}を開いて論文①から読みはじめよう</b>。今日は途中まででOK。続きは授業の外で読み切ります。</p>
         <p>第4回は、ここまでのことから自分の問いを立てて、確かめる計画を作ります。</p></div>
       ${c.submitted ? `<p class="okmsg">提出済み ✓　あとから直しても自動で保存されます。</p>` : ""}`;
   },
@@ -218,7 +201,6 @@ export const L03 = {
   },
 
   onClick(t, c) {
-    if (handleReader(t, c)) return true;
     const k = t.closest("[data-refchk]");
     if (k) { c.set(k.dataset.refchk, c.d[k.dataset.refchk] ? "" : 1); c.rerender(); return true; }
     const cp = t.closest("[data-copytext]");
