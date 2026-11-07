@@ -328,3 +328,5 @@ main:has(.reader) { max-width: 1240px; }
 .refrow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--line); }
 .refrow .reftext { flex: 1; min-width: 12em; word-break: break-all; }
 .refrow .openurl { margin: 0; }
+.paperbox { border-left: 4px solid var(--line); padding: 0 0 0 12px; margin: 8px 0 14px; }
+.paperbox .field { margin: 8px 0; }

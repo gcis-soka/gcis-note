@@ -28,8 +28,8 @@ const nCols = (label, unit) => PICK_N.map((n, i) => `${label}${i + 1}`);
 const nVals = (d, base) => PICK_N.map(n => d?.[base + n] || "");
 // 第3回：決めた論文（題名・URL）
 // 論文は URL だけ（題名は RefNavi：11/7）
-const papersOf = d => ["p1Url", "p2Url"].map(k => ({ url: String(d[k] || "").trim() })).filter(p => p.url);
-const paperCell = p => p ? linkCell(p.url) : "";
+const papersOf = d => [["p1Url", "p1Doi"], ["p2Url", "p2Doi"]].map(([k, o]) => ({ url: String(d[k] || "").trim(), doi: String(d[o] || "").trim() })).filter(p => p.url);
+const paperCell = p => p ? linkCell(p.url) + (p.doi ? ` <span class="hint">DOI ${esc(p.doi)}</span>` : "") : "";
 // 第3回：RefNavi の進み具合（生徒が自分で押す：l03.js の REF_CHECKS と同じ）
 const REF_LABELS = [["refLogin", "ログイン"], ["refDouga", "動画"], ["refHon", "本"], ["refHan", "班の全員"]];
 const refDone = d => !!(d.refDouga || d.refHon);
@@ -194,10 +194,10 @@ const VIEWS = {
         ${ps.map((p, j) => `<div class="tc-row"><span>論文${j ? "②" : "①"}</span><b>${paperCell(p)}</b></div>`).join("") || `<div class="tc-row"><span>論文</span><b>—</b></div>`}
         `;
     },
-    csvHead: ["試した検索語", "論文1のURL", "論文2のURL", "班で出たこと", ...REF_LABELS.map(([, l]) => "RefNavi：" + l)],
+    csvHead: ["試した検索語", "論文1のURL", "論文1のDOI", "論文2のURL", "論文2のDOI", "班で出たこと", ...REF_LABELS.map(([, l]) => "RefNavi：" + l)],
     csvRow: r => {
       const d = r.note?.data || {};
-      return [d.tried, d.p1Url, d.p2Url, d.hanMemo, ...REF_LABELS.map(([k]) => d[k] ? "○" : "")];
+      return [d.tried, d.p1Url, d.p1Doi, d.p2Url, d.p2Doi, d.hanMemo, ...REF_LABELS.map(([k]) => d[k] ? "○" : "")];
     }
   },
   R03: {

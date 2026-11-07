@@ -1,9 +1,9 @@
 // ステージ5／第3回（11/16）先行研究に出会う（A案：ニュース→本・動画→論文）
 // 仕様：ナレッジの L03.md。論文は2本決める。長すぎないものを選んで全文を読む（授業で途中まで→残りは Quest 3）
 // RefNavi への登録は授業で（URLを貼るだけ）。アプリは登録しないが、登録するもの（第2回の記事・Quest 2 の動画と本）を一覧で出す（11/5）
-// data：hanMemo・refLogin・refDouga・refHon・refHan（RefNavi の進み具合）・kensaku・tried・p1Url・p2Url（読むのは Quest 3。授業中に始める：11/7）
+// data：hanMemo・refLogin・refDouga・refHon・refHan（RefNavi の進み具合）・kensaku・tried・p1Url・p2Url・p1Doi・p2Doi（読むのは Quest 3。授業中に始める：11/7）
 // 論文は URL だけ（題名は RefNavi に入れる：11/7）。Geminiのチャットは AIの文の下の chatUrl で預かる（共有リンク欄は 11/7 廃止）
-import { quest, listOf, booksOf } from "./common.js";
+import { quest, listOf, booksOf, refnaviGroupOf } from "./common.js";
 import { copyText } from "./r02.js";
 // Quest 2 で見たもの・読んだもの（動画・本の2欄）
 const pickText = R => [...listOf(R, "douga"), ...listOf(R, "honTitle")].join(" ／ ");
@@ -33,12 +33,15 @@ export function searchTools(c) {
         <li>見つからないときは、日本語だけ／英語で／言葉を変えて。それでもなければ「研究が少ない」のも発見です</li>
       </ul>`;
 }
-// 論文①②のURL欄（右に「この論文を開く」）
+// 論文①②のURL欄（右に「この論文を開く」）と DOI 欄（RefNavi は論文を DOI で登録する：RefNavi_manual_52。11/7）
 export function paperFields(c) {
   return ["1", "2"].map(n => `
-      <div class="urlrow">
-        ${c.field(`p${n}Url`, `論文${n === "1" ? "①" : "②"}のURL`, { type: "url", placeholder: "https://…", hint: n === "1" ? "論文のページのURLをコピーして貼ろう" : "" })}
-        <a class="btn small ghost openurl" data-open-url="p${n}Url" target="_blank" rel="noopener" hidden>この論文を開く ↗</a>
+      <div class="paperbox">
+        <div class="urlrow">
+          ${c.field(`p${n}Url`, `論文${n === "1" ? "①" : "②"}のURL`, { type: "url", placeholder: "https://…", hint: n === "1" ? "論文のページのURLをコピーして貼ろう" : "" })}
+          <a class="btn small ghost openurl" data-open-url="p${n}Url" target="_blank" rel="noopener" hidden>この論文を開く ↗</a>
+        </div>
+        ${c.field(`p${n}Doi`, `論文${n === "1" ? "①" : "②"}のDOI`, { type: "text", placeholder: "例：10.xxxxx/xxxxx", hint: n === "1" ? "論文のページにある「10.」から始まる番号（「https://doi.org/」のあとの部分）。ない論文は空でOK" : "" })}
       </div>`).join("");
 }
 // 検索ボタン（試した言葉を残す：新しい順・10個まで）
@@ -111,6 +114,26 @@ const REF_LOGIN_HOWTO = `
     </svg>
     <figcaption>① 「<b>Googleでログイン</b>」を押す → ② <b>学校のアカウント</b>（…@tokyo.soka.ed.jp）を選ぶ</figcaption>
   </figure>`;
+// 初めて RefNavi に入るとき（RefNavi_manual_52：「児童・生徒」を選び、グループコードを入力して登録）。59期は今回が初めて（11/7）
+const REF_FIRST_HOWTO = `
+  <figure class="urlhowto libhowto" aria-label="初めてのとき：児童・生徒を選び、グループコードを入れて登録">
+    <svg viewBox="0 0 540 150" role="img" xmlns="http://www.w3.org/2000/svg">
+      <rect x="1" y="1" width="250" height="148" rx="10" fill="#fff" stroke="#c9ced8"/>
+      <text x="126" y="30" font-size="13" font-weight="700" fill="#222" text-anchor="middle">あなたは？</text>
+      <rect x="26" y="50" width="90" height="40" rx="6" fill="#f4f6f8" stroke="#ddd"/><text x="71" y="75" font-size="12" fill="#999" text-anchor="middle">先生</text>
+      <rect x="136" y="50" width="90" height="40" rx="6" fill="#f4f6f8" stroke="#bbb"/><text x="181" y="75" font-size="12" fill="#333" text-anchor="middle">児童・生徒</text>
+      <rect x="132" y="46" width="98" height="48" rx="8" fill="none" stroke="#d93025" stroke-width="3"/>
+      <circle cx="181" cy="116" r="12" fill="#d93025"/><text x="176" y="121" font-size="14" font-weight="700" fill="#fff">3</text>
+      <path d="M258 75 L278 75" stroke="#d93025" stroke-width="3"/><path d="M276 67 L288 75 L276 83 Z" fill="#d93025"/>
+      <rect x="289" y="1" width="250" height="148" rx="10" fill="#fff" stroke="#c9ced8"/>
+      <text x="304" y="30" font-size="12" font-weight="700" fill="#333">グループコード</text>
+      <rect x="304" y="40" width="150" height="28" rx="3" fill="#fff" stroke="#aaa"/><text x="312" y="59" font-size="11" fill="#999">ここに入れる</text>
+      <rect x="300" y="36" width="158" height="36" rx="6" fill="none" stroke="#d93025" stroke-width="3"/>
+      <circle cx="476" cy="54" r="12" fill="#d93025"/><text x="471" y="59" font-size="14" font-weight="700" fill="#fff">4</text>
+      <rect x="304" y="90" width="80" height="30" rx="4" fill="#388e3c"/><text x="344" y="110" font-size="12" fill="#fff" text-anchor="middle">登録</text>
+    </svg>
+    <figcaption>初めてのときだけ：③ 「<b>児童・生徒</b>」を選ぶ → ④ <b>グループコード</b>を入れて登録（2回目からは、ログインするとすぐホームが出ます）</figcaption>
+  </figure>`;
 // 登録の図（ホームの「メディアの選択」→「ISBN コード／DOI コード／URL」欄→照合・解析）。
 // RefNavi 操作マニュアル（RefNavi_manual_52, 2026/10）の名前どおり。並びは図式（実際の画面写真があれば描き直す）
 const REF_ADD_HOWTO = `
@@ -167,7 +190,7 @@ function refList(c) {
     ${arts.length ? `<p class="hint">時間があれば、第2回に読んだ記事も</p><ul class="reflist">${arts.join("")}</ul>` : ""}`;
 }
 function refStep(c) {
-  const { d } = c;
+  const { d, esc } = c;
   return `
       <p class="lead">班で協力して、<b>${quest(2)} で見た動画・読んだ本を RefNavi に登録</b>しよう。</p>
       <div class="share">
@@ -180,6 +203,8 @@ function refStep(c) {
       <h3>① RefNavi を開いて、ログイン</h3>
       <div class="searchbtns"><button type="button" class="btn" data-refnavi>RefNavi を右半分に開く ↗</button></div>
       ${REF_LOGIN_HOWTO}
+      ${REF_FIRST_HOWTO}
+      ${(g => g ? `<p class="refrow"><span>あなたのグループコード：<b>${esc(g)}</b></span> <button type="button" class="btn small ghost" data-copytext="${esc(g)}">コピー</button></p>` : `<p class="hint">グループコードは、先生が伝えます。</p>`)(refnaviGroupOf(c.ki, c.cls))}
       <h3>② 登録するもの</h3>
       <p class="hint">「コピー」を押して、RefNavi に貼ろう。動画はURL、本はISBNで登録します。</p>
       ${refList(c)}
@@ -188,7 +213,6 @@ function refStep(c) {
       <ul class="todo">
         <li>ISBNがない本は、カメラのボタンで<b>持ってきた本のバーコード</b>を読み取れます（裏表紙の「978」から始まる方）</li>
         <li>動画は YouTube のURLだけ登録できます</li>
-        <li>初めて RefNavi に入る人は、「児童・生徒」を選び、先生が伝える<b>グループコード</b>を入れます</li>
       </ul>
       <h3>④ できたら押そう</h3>
       <div class="choice small">${REF_CHECKS.map(([k, label]) => `<button type="button" class="choice-btn ${d[k] ? "on" : ""}" data-refchk="${k}">${d[k] ? "✓ " : ""}${label}</button>`).join("")}</div>`;
@@ -238,7 +262,7 @@ export const L03 = {
       ${searchTools(c)}
       <h3>③ 論文を2本決める</h3>
       ${paperFields(c)}
-      <p class="hint">決めたら、RefNaviにもURLを貼って登録しよう。</p>`;
+      <p class="hint">決めたら、RefNavi にも登録しよう。ホームの「メディアの選択」で論文を選び、「ISBN コード／DOI コード／URL」の欄に<b>DOI</b>を貼ります。DOIがない論文は、URLで登録します。</p>`;
     // i === 3：提出（提出すると Quest 3 が出る。授業の残りの時間で Quest 3 を読みはじめる：11/7）
     const ps = papers(c);
     return `

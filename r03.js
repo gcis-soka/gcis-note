@@ -6,7 +6,7 @@ import { readerHtml, handleReader } from "./reader.js";
 import { searchTools, paperFields, handleSearch } from "./l03.js";
 
 // 初めて開いたとき、第3回の論文のURLと検索語を写す（論文を変えるのは Quest 3 の中で：11/7）
-const FROM_L03 = ["p1Url", "p2Url", "kensaku", "tried"];
+const FROM_L03 = ["p1Url", "p2Url", "p1Doi", "p2Doi", "kensaku", "tried"];
 function copyFromL03(c) {
   if (c.d.fromL03) return;
   const L3 = c.prev("L03");
