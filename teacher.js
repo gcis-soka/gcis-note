@@ -20,13 +20,10 @@ function resultRows(d) {
     : `<div class="tc-row"><span>${MISSION}</span><b>${esc(d.did || "—")}</b></div>${item(d, "yatta", "やったこと")}${item(d, "mita", "見たこと・数字")}${item(d, "kanji", "感じたこと")}${item(d, "iikire", "これだけでは言い切れないこと")}`;
 }
 const qsOf = d => ["q1", "q2", "q3"].map(k => String(d[k] || "").trim()).filter(Boolean);
-// Quest 2：リンクが動画サイトなら「動画」、それ以外（題名・ほかのリンク）は「本・その他」
-const kindOf = m => !String(m || "").trim() ? "" : /youtu\.?be|youtube\.com|nicovideo|tiktok\.com|vimeo\.com/i.test(m) ? "動画" : "本・その他";
-const kindChip = m => kindOf(m) ? `<span class="mchip">${kindOf(m)}</span>` : "";
-// Quest 2：本か動画（11/5 から動画・本を5件まで。前の1欄 mono も読む）
-const pickKind = d => [listOf(d, "douga").length && "動画", listOf(d, "honTitle").length && "本"].filter(Boolean).join("・") || (kindOf(d.mono) === "本・その他" ? "本" : kindOf(d.mono));
+// Quest 2：本か動画（動画・本を5件まで。古い1欄 mono は使った生徒がいなかったので読まない：11/7）
+const pickKind = d => [listOf(d, "douga").length && "動画", listOf(d, "honTitle").length && "本"].filter(Boolean).join("・");
 const linksCell = us => us.map(u => linkCell(u)).join("<br>");
-const pickCell = d => [linksCell(listOf(d, "douga")), listOf(d, "honTitle").map(esc).join("<br>"), !listOf(d, "douga").length && !listOf(d, "honTitle").length && d.mono ? linkCell(d.mono) : ""].filter(Boolean).join("<br>");
+const pickCell = d => [linksCell(listOf(d, "douga")), listOf(d, "honTitle").map(esc).join("<br>")].filter(Boolean).join("<br>");
 const nCols = (label, unit) => PICK_N.map((n, i) => `${label}${i + 1}`);
 const nVals = (d, base) => PICK_N.map(n => d?.[base + n] || "");
 // 第3回：決めた論文（題名・URL）
@@ -141,10 +138,10 @@ const VIEWS = {
   R02: {
     tab: quest(2), date: "2026-11-10", noStall: true, // 家でやるので「止まってる？」は出さない
     stepNames: ["記録"],
-    head: ["気になったこと（第2回）", "本か動画", "見たもの・読んだもの", "心に残った所・ひとこと"],
+    head: ["気になったこと（第2回）", "見た動画", "読んだ本", "心に残った所・ひとこと"],
     cells: r => {
       const d = r.note?.data || {};
-      return [qsOf(r.l02?.data || {}).map(esc).join("<br>"), pickKind(d) ? `<span class="mchip">${pickKind(d)}</span>` : "", pickCell(d), esc(d.kokoro || "")];
+      return [qsOf(r.l02?.data || {}).map(esc).join("<br>"), linksCell(listOf(d, "douga")), listOf(d, "honTitle").map(esc).join("<br>"), esc(d.kokoro || "")];
     },
     nowrap: [1],
     chips(rs) {
@@ -159,13 +156,12 @@ const VIEWS = {
         <div class="recap"><div class="tc-row"><span>第2回で気になったこと</span><b>${qs.length ? `<ul class="qs">${qs.map(q => `<li>${esc(q)}</li>`).join("")}</ul>` : "—"}</b></div></div>
         <div class="tc-row"><span>見た動画</span><b>${listOf(d, "douga").map(u => `${linkCell(u)} <span class="hint">${esc(u)}</span>`).join("<br>") || "—"}</b></div>
         <div class="tc-row"><span>読んだ本（ISBN）</span><b>${booksOf(d).map(b => `${esc(b.title)}${b.isbn ? `（${esc(b.isbn)}）` : ""}`).join("<br>") || "—"}</b></div>
-        ${d.mono ? `<div class="tc-row"><span>見たもの・読んだもの（前の欄）</span><b>${linkCell(d.mono)}</b></div>` : ""}
         ${item(d, "kokoro", "いちばん心に残った所と、ひとこと")}`;
     },
-    csvHead: ["気になったこと1（第2回）", "気になったこと2（第2回）", "気になったこと3（第2回）", "本か動画", ...nCols("見た動画"), ...nCols("読んだ本"), ...nCols("ISBN"), "見たもの・読んだもの（前の欄）", "心に残った所・ひとこと"],
+    csvHead: ["気になったこと1（第2回）", "気になったこと2（第2回）", "気になったこと3（第2回）", "本か動画", ...nCols("見た動画"), ...nCols("読んだ本"), ...nCols("ISBN"), "心に残った所・ひとこと"],
     csvRow: r => {
       const d = r.note?.data || {}, q = r.l02?.data || {};
-      return [q.q1, q.q2, q.q3, pickKind(d), ...nVals(d, "douga"), ...nVals(d, "honTitle"), ...nVals(d, "isbn"), d.mono, d.kokoro];
+      return [q.q1, q.q2, q.q3, pickKind(d), ...nVals(d, "douga"), ...nVals(d, "honTitle"), ...nVals(d, "isbn"), d.kokoro];
     }
   },
   L03: {

@@ -1,7 +1,6 @@
 // ステージ4：Quest 2（第2回→第3回）「？」の手がかりになりそうな本か動画
 // 仕様：ナレッジの L03.md「Quest 2」。授業中に始められる子は始める
 // data：findq（動画を探す言葉）・findb（本を探す言葉）・douga〜douga5（動画のリンク）・honTitle〜honTitle5（本の題名）・isbn〜isbn5・kokoro（いちばん心に残った所と、ひとこと）・fromL02（第2回の値を写した印）
-// mono（見たもの・読んだもの：11/4 までの1欄）は、開いたときに新しい欄へ移して空にする（11/7。欄は出さない）
 import { quest, LIBRARY_URL, YOUTUBE_SEARCH, PICK_N, listOf } from "./common.js";
 const Q = quest(2);
 
@@ -123,19 +122,9 @@ function copyFromL02(c) {
   FROM_L02.forEach(k => { if (!c.v(k) && String(L2[k] || "").trim()) c.d[k] = L2[k]; });
   c.set("fromL02", 1);
 }
-// 古い1欄（mono）の中身を、空いている新しい欄へ移す。URLなら動画、それ以外は本の題名（11/7）
-function moveMono(c) {
-  const old = c.v("mono");
-  if (!old) return;
-  const key = /^https?:\/\//.test(old) ? "douga" : "honTitle";
-  const free = PICK_N.map(n => key + n).find(k => !c.v(k));
-  if (!free) return;
-  c.d[free] = old;
-  c.set("mono", "");
-}
 
 export const PICK_TIPS = `
-  <p class="hint">図書館に行って、同じ棚に他にどんな本が並んでいるかも見てみよう。</p>`;
+  <p class="hint"><b>ぴったりの本でなくても大丈夫。</b>図書館に行って、同じ棚に他にどんな本が並んでいるかも見てみよう。</p>`;
 
 export const R02 = {
   id: "R02",
@@ -151,7 +140,6 @@ export const R02 = {
   render(i, c) {
     const { field, esc } = c;
     copyFromL02(c);
-    moveMono(c);
     const qs = qsOf(c.prev("L02"));
     return `
       <div class="recap">
@@ -181,12 +169,12 @@ export const R02 = {
   },
 
   canNext(i, c) {
-    return !!((listOf(c.d, "douga").length || listOf(c.d, "honTitle").length || c.v("mono")) && c.v("kokoro"));
+    return !!((listOf(c.d, "douga").length || listOf(c.d, "honTitle").length) && c.v("kokoro"));
   },
   // 次へが押せないときに出す名前（「〜が書けたら、次へ進もう」）
   need(i, c) {
     const m = [];
-    if (!(listOf(c.d, "douga").length || listOf(c.d, "honTitle").length || c.v("mono"))) m.push("「見た動画のリンク」か「読んだ本の題名」");
+    if (!(listOf(c.d, "douga").length || listOf(c.d, "honTitle").length)) m.push("「見た動画のリンク」か「読んだ本の題名」");
     if (!c.v("kokoro")) m.push("「ひとこと」");
     return m;
   },

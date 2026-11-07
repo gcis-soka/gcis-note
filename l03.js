@@ -3,8 +3,8 @@
 // RefNavi への登録は授業で（URLを貼るだけ）。アプリは登録しないが、登録するもの（第2回の記事・Quest 2 の動画と本）を一覧で出す（11/5）
 // data：hanMemo・kensaku・tried・p1Title・p1Url・p2Title・p2Url・yomiMemo・geminiLink
 import { quest, listOf, booksOf } from "./common.js";
-// Quest 2 で見たもの・読んだもの（11/4 から動画・本の2欄。前の1欄 mono も読む）
-const pickText = R => [...listOf(R, "douga"), ...listOf(R, "honTitle")].join(" ／ ") || R.mono || "";
+// Quest 2 で見たもの・読んだもの（動画・本の2欄）
+const pickText = R => [...listOf(R, "douga"), ...listOf(R, "honTitle")].join(" ／ ");
 
 const qsOf = d => ["q1", "q2", "q3"].map(k => String(d[k] || "").trim()).filter(Boolean);
 const tail = s => String(s || "").trim().replace(/[。．.、,，！!\s　]+$/u, "");
