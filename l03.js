@@ -1,7 +1,8 @@
 // ステージ5／第3回（11/16）先行研究に出会う（A案：ニュース→本・動画→論文）
 // 仕様：ナレッジの L03.md。論文は2本決める。長すぎないものを選んで全文を読む（授業で途中まで→残りは Quest 3）
 // RefNavi への登録は授業で（URLを貼るだけ）。アプリは登録しないが、登録するもの（第2回の記事・Quest 2 の動画と本）を一覧で出す（11/5）
-// data：hanMemo・kensaku・tried・p1Title・p1Url・p2Title・p2Url・yomiMemo・geminiLink
+// data：hanMemo・kensaku・tried・p1Url・p2Url・yomiMemo
+// 論文は URL だけ（題名は RefNavi に入れる：11/7）。Geminiのチャットは AIの文の下の chatUrl で預かる（共有リンク欄は 11/7 廃止）
 import { quest, listOf, booksOf } from "./common.js";
 // Quest 2 で見たもの・読んだもの（動画・本の2欄）
 const pickText = R => [...listOf(R, "douga"), ...listOf(R, "honTitle")].join(" ／ ");
@@ -52,7 +53,10 @@ function refList(c) {
       <div class="recap"><div class="tc-row"><span>RefNaviに登録するもの（これまでに書いたもの）</span><b><ul class="qs">${rows.map(([k, v]) => `<li><span class="hint">${esc(k)}</span> ${esc(v)}</li>`).join("")}</ul></b></div></div>`;
 }
 
-const papers = c => [["p1Title", "p1Url"], ["p2Title", "p2Url"]].map(([t, u]) => ({ title: c.v(t), url: c.v(u) })).filter(p => p.title);
+const hostOf = u => { try { return new URL(u).hostname.replace(/^www\./, ""); } catch { return ""; } };
+const papers = c => ["p1Url", "p2Url"].map((k, j) => ({ no: j ? "②" : "①", url: c.v(k) })).filter(p => p.url);
+// 論文①（開く ↗ と サイト名）
+const paperLink = (p, esc) => safeUrl(p.url) ? `<a href="${esc(safeUrl(p.url))}" target="_blank" rel="noopener">開く ↗</a> <span class="hint">${esc(hostOf(p.url))}</span>` : esc(p.url);
 
 export const L03 = {
   id: "L03",
@@ -75,11 +79,12 @@ export const L03 = {
       <p class="lead"><b>先生の合図で、班の時間です。</b>${quest(2)}で見たもの・読んだものを紹介しよう。</p>
       ${myRecap(c)}
       <div class="share">
-        <b>話す人（1人1分半）</b>
+        <b>話す人（1分くらい）</b>
         <ol class="todo">
-          <li>何の動画（本）で、どこが心に残ったか</li>
+          <li>何の動画（本）で、どこが心に残ったか。本を持ってきた人は見せながら</li>
           <li>うまく言えなくてもOK。「なんか気になった」もそのまま話そう</li>
         </ol>
+        <p class="hint">話し終わったら、話した人が「ありがとう！じゃあ次、〇〇さん」と次の人を指名します。</p>
       </div>
       ${field("hanMemo", "班で出たこと・友だちの紹介で気になったこと（なくてもOK）", { rows: 2 })}`;
     if (i === 1) return `
@@ -97,18 +102,18 @@ export const L03 = {
         <li>見つからないときは、日本語だけ／英語で／言葉を変えて。それでもなければ「研究が少ない」のも発見です</li>
       </ul>
       <h3>③ 論文を2本決める</h3>
-      ${field("p1Title", "論文①の題名", { type: "text" })}
-      ${field("p1Url", "論文①のURL", { type: "url", placeholder: "https://…" })}
-      ${field("p2Title", "論文②の題名", { type: "text" })}
-      ${field("p2Url", "論文②のURL", { type: "url", placeholder: "https://…" })}
+      ${["1", "2"].map(n => `
+      <div class="urlrow">
+        ${field(`p${n}Url`, `論文${n === "1" ? "①" : "②"}のURL`, { type: "url", placeholder: "https://…", hint: n === "1" ? "論文のページのURLをコピーして貼ろう" : "" })}
+        <a class="btn small ghost openurl" data-open-url="p${n}Url" target="_blank" rel="noopener" hidden>この論文を開く ↗</a>
+      </div>`).join("")}
       <p class="hint">決めたら、RefNaviにもURLを貼って登録しよう。</p>
-      ${refList(c)}
-      ${field("geminiLink", "Geminiのチャットのリンク（なくてもOK）", { type: "url", placeholder: "https://…" })}`;
+      ${refList(c)}`;
     if (i === 2) {
       const ps = papers(c);
       return `
         <p><b>論文①から読みはじめよう。</b>今日は途中まででOK。残りは${quest(3)}で読み切ります。</p>
-        <div class="recap">${ps.length ? ps.map((p, j) => `<div class="tc-row"><span>論文${j ? "②" : "①"}</span><b>${safeUrl(p.url) ? `<a href="${esc(safeUrl(p.url))}" target="_blank" rel="noopener">${esc(p.title)} ↗</a>` : esc(p.title)}</b></div>`).join("") : `<div class="tc-row"><span>論文</span><b>—</b></div>`}</div>
+        <div class="recap">${ps.length ? ps.map(p => `<div class="tc-row"><span>論文${p.no}</span><b>${paperLink(p, esc)}</b></div>`).join("") : `<div class="tc-row"><span>論文</span><b>—</b></div>`}</div>
         <div class="share">
           <b>読み方のコツ</b>
           <ul>
@@ -124,7 +129,7 @@ export const L03 = {
     return `
       <div class="themecard">
         <div class="tc-row"><span>本か動画</span><b>${esc(pickText(c.prev("R02")) || "—")}</b></div>
-        <div class="tc-row big"><span>論文</span><b>${ps.length ? `<ul class="qs">${ps.map(p => `<li>${esc(p.title)}</li>`).join("")}</ul>` : "—"}</b></div>
+        <div class="tc-row big"><span>論文</span><b>${ps.length ? ps.map(p => `論文${p.no}　${paperLink(p, esc)}`).join("<br>") : "—"}</b></div>
       </div>
       ${ps.length < 2 ? `<p class="note">論文が1本だけのときは、${quest(3)}の前にもう1本探してみよう（ホームから「見なおす」で書き足せます）。</p>` : ""}
       <div class="share"><b>次は ${quest(3)}（第4回 12/7 まで）</b><p>2本の論文を読み切ろう。読んだら、<b>ホームに戻って「${quest(3)}」を開き</b>、分かったこと・まだ分かっていないことを書こう。</p>
@@ -133,7 +138,7 @@ export const L03 = {
   },
 
   canNext(i, c) {
-    if (i === 1) return !!c.v("p1Title"); // 2本が目標。見つからない生徒も先へ進める
+    if (i === 1) return !!c.v("p1Url"); // 2本が目標。見つからない生徒も先へ進める
     return true;
   },
 

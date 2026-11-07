@@ -304,5 +304,9 @@ hr.divider { border: none; border-top: 2px solid var(--line); margin: 24px 0 18p
 .urlrow .field { flex: 1; min-width: 0; }
 .openurl { margin: 0 0 21px; white-space: nowrap; text-decoration: none; display: inline-block; }
 .openurl[hidden] { display: none; }
+/* 折りたたみ（Quest 2 の「探す」：11/7） */
+.fold { border: 2px solid var(--line); border-radius: 12px; padding: 4px 14px; margin: 12px 0; }
+.fold > summary { cursor: pointer; font-weight: 700; padding: 8px 0; }
+.fold[open] > summary { border-bottom: 1px solid var(--line); margin-bottom: 6px; }
 /* 次へが押せないときの一言（何が書けたら進めるか） */
 .need-msg { text-align: right; font-size: 14px; color: var(--accent); font-weight: 700; margin: 6px 2px 0; }

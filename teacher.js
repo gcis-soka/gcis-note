@@ -27,8 +27,9 @@ const pickCell = d => [linksCell(listOf(d, "douga")), listOf(d, "honTitle").map(
 const nCols = (label, unit) => PICK_N.map((n, i) => `${label}${i + 1}`);
 const nVals = (d, base) => PICK_N.map(n => d?.[base + n] || "");
 // 第3回：決めた論文（題名・URL）
-const papersOf = d => [["p1Title", "p1Url"], ["p2Title", "p2Url"]].map(([t, u]) => ({ title: String(d[t] || "").trim(), url: d[u] })).filter(p => p.title);
-const paperCell = p => p ? (safeUrl(p.url) ? `<a href="${esc(safeUrl(p.url))}" target="_blank" rel="noopener">${esc(p.title)}</a>` : esc(p.title)) : "";
+// 論文は URL だけ（題名は RefNavi：11/7）
+const papersOf = d => ["p1Url", "p2Url"].map(k => ({ url: String(d[k] || "").trim() })).filter(p => p.url);
+const paperCell = p => p ? linkCell(p.url) : "";
 const yomiChip = x => x ? `<span class="mchip ${x === "全部読んだ" ? "" : "zero"}">${esc(x)}</span>` : "";
 const qsList = d => Array.isArray(d.qs) ? d.qs : []; // 第4回の問い [{t, k, a}]
 
@@ -186,13 +187,12 @@ const VIEWS = {
         ${item(d, "hanMemo", "班で出たこと")}
         ${item(d, "tried", "試した検索語")}
         ${ps.map((p, j) => `<div class="tc-row"><span>論文${j ? "②" : "①"}</span><b>${paperCell(p)}</b></div>`).join("") || `<div class="tc-row"><span>論文</span><b>—</b></div>`}
-        ${item(d, "yomiMemo", "読みながらのメモ")}
-        <div class="tc-row"><span>Geminiのチャット</span><b>${linkCell(d.geminiLink)}</b></div>`;
+        ${item(d, "yomiMemo", "読みながらのメモ")}`;
     },
-    csvHead: ["試した検索語", "論文1", "論文1のURL", "論文2", "論文2のURL", "読みながらのメモ", "班で出たこと", "Geminiのリンク"],
+    csvHead: ["試した検索語", "論文1のURL", "論文2のURL", "読みながらのメモ", "班で出たこと"],
     csvRow: r => {
       const d = r.note?.data || {};
-      return [d.tried, d.p1Title, d.p1Url, d.p2Title, d.p2Url, d.yomiMemo, d.hanMemo, d.geminiLink];
+      return [d.tried, d.p1Url, d.p2Url, d.yomiMemo, d.hanMemo];
     }
   },
   R03: {
@@ -218,10 +218,10 @@ const VIEWS = {
         ${item(d, "wakatta", "分かったこと")}${item(d, "mada", "まだ分かっていないこと")}
         <div class="tc-row"><span>気になったこと</span><b>${qs.length ? `<ul class="qs">${qs.map(q => `<li>${esc(q)}</li>`).join("")}</ul>` : "—"}</b></div>`;
     },
-    csvHead: ["論文1", "論文1を読んだか", "論文2", "論文2を読んだか", "分かったこと", "まだ分かっていないこと", "気になったこと1", "気になったこと2", "気になったこと3"],
+    csvHead: ["論文1のURL", "論文1を読んだか", "論文2のURL", "論文2を読んだか", "分かったこと", "まだ分かっていないこと", "気になったこと1", "気になったこと2", "気になったこと3"],
     csvRow: r => {
       const d = r.note?.data || {}, l = r.l03?.data || {};
-      return [l.p1Title, d.yomi1, l.p2Title, d.yomi2, d.wakatta, d.mada, d.q1, d.q2, d.q3];
+      return [l.p1Url, d.yomi1, l.p2Url, d.yomi2, d.wakatta, d.mada, d.q1, d.q2, d.q3];
     }
   },
   L04: {
@@ -645,8 +645,8 @@ export function mountTeacher({ be, app, dlg }) {
       if (i % 4 === 1) continue;
       const s3 = i % 6 === 0 ? 1 : 3, two = i % 5 !== 0;
       nt.push({ uid, lesson: "L03", step: s3, submitted: s3 === 3, updatedAt: new Date(Date.now() - (i % 8) * 60000),
-        data: { tried: "雑音 集中 / noise concentration", p1Title: s3 >= 1 ? "（論文の題名の例）環境音が作業効率に与える影響" : "", p1Url: "https://example.com/a",
-          p2Title: s3 >= 1 && two ? "（論文の題名の例）大学生の学習環境と集中" : "", p2Url: "" } });
+        data: { tried: "雑音 集中 / noise concentration", p1Url: "https://www.jstage.jst.go.jp/article/example/a",
+          p2Url: two ? "https://example.com/b" : "" } });
       if (s3 !== 3) continue;
       nt.push({ uid, lesson: "R03", step: 0, submitted: i % 3 !== 0, updatedAt: new Date(Date.now() - (i % 8) * 60000),
         data: { yomi1: i % 2 ? "全部読んだ" : "途中まで", yomi2: two ? (i % 3 ? "途中まで" : "全部読んだ") : "",

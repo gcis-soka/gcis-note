@@ -161,9 +161,11 @@ export const R02 = {
           <li>題名・ISBN・心に残ったページを書く。<b>第3回に本を持ってこよう</b></li>
         </ul>
       </div>
-      <h3>探す</h3>
-      ${findTools(c)}
-      ${PICK_TIPS}
+      <details class="fold">
+        <summary>探す（動画を探す言葉・本を探す言葉）</summary>
+        ${findTools(c)}
+        ${PICK_TIPS}
+      </details>
       <h3>見たら・読んだら書く</h3>
       ${pickFields(c, { done: true })}
       ${field("kokoro", "いちばん心に残った所と、ひとこと", { rows: 3, hint: "動画は時間（例：2分05秒）、本はページも書こう", placeholder: "例：2分05秒あたり。雑音の大きさによって、集中しやすさが逆になるという話。自分のは小さい音だったのかも" })}

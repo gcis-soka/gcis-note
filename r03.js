@@ -5,6 +5,7 @@ import { quest } from "./common.js";
 const Q = quest(3);
 
 const safeUrl = u => /^https?:\/\//i.test(String(u || "").trim()) ? String(u).trim() : "";
+const hostOf = u => { try { return new URL(u).hostname.replace(/^www\./, ""); } catch { return ""; } };
 const YOMI = ["全部読んだ", "途中まで", "まだ"];
 
 const Q_CHIPS = [
@@ -38,11 +39,12 @@ export const R03 = {
   render(i, c) {
     const { field, chips, esc, d } = c;
     const L3 = c.prev("L03");
-    const ps = [["p1Title", "p1Url", "yomi1"], ["p2Title", "p2Url", "yomi2"]]
-      .map(([t, u, k], j) => ({ no: j ? "②" : "①", title: String(L3[t] || "").trim(), url: safeUrl(L3[u]), key: k }))
-      .filter(p => p.title);
+    // 論文は第3回の URL だけ（題名は RefNavi：11/7）
+    const ps = [["p1Url", "yomi1"], ["p2Url", "yomi2"]]
+      .map(([u, k], j) => ({ no: j ? "②" : "①", raw: String(L3[u] || "").trim(), url: safeUrl(L3[u]), key: k }))
+      .filter(p => p.raw);
     const rows = ps.map(p => `
-      <div class="tc-row"><span>論文${p.no}</span><b>${p.url ? `<a href="${esc(p.url)}" target="_blank" rel="noopener">${esc(p.title)} ↗</a>` : esc(p.title)}</b></div>
+      <div class="tc-row"><span>論文${p.no}</span><b>${p.url ? `<a href="${esc(p.url)}" target="_blank" rel="noopener">開く ↗</a> <span class="hint">${esc(hostOf(p.url))}</span>` : esc(p.raw)}</b></div>
       <div class="choice small">${YOMI.map(y => `<button type="button" class="choice-btn ${d[p.key] === y ? "on" : ""}" data-yomi="${p.key}" data-val="${y}">${y}</button>`).join("")}</div>`).join("");
     return `
       <div class="recap">${rows || `<div class="tc-row"><span>論文</span><b>第3回で決めた論文がありません。ホームの「第3回」から書き足そう</b></div>`}</div>
