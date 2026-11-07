@@ -1,12 +1,12 @@
 // ステージ6：Quest 3（第3回→第4回 12/7・期末をはさむ）論文を読み切った結果。第3回の授業の残りの時間で始める（11/7）
 // 仕様：ナレッジの L03.md「Quest 3」（先生 10/31：分かったこと／まだ分かっていないこと＋気になったこと）
-// data：yomi1・yomi2（全部読んだ／途中まで／まだ）・wakatta・mada・q1〜q3・p1Url・p2Url・kensaku・tried（第3回から写し、ここで変えられる）・fromL03
+// data：yomi1・yomi2（全部読んだ／途中まで／まだ）・wakatta・mada・q1〜q3・p1Url・p2Url・p1Doi・p2Doi・kensaku・tried・sanko（第3回から写し、ここで変えられる）・fromL03
 import { quest } from "./common.js";
 import { readerHtml, handleReader } from "./reader.js";
-import { searchTools, paperFields, handleSearch } from "./l03.js";
+import { searchTools, paperFields, handleSearch, REF_FORMAT } from "./l03.js";
 
 // 初めて開いたとき、第3回の論文のURLと検索語を写す（論文を変えるのは Quest 3 の中で：11/7）
-const FROM_L03 = ["p1Url", "p2Url", "p1Doi", "p2Doi", "kensaku", "tried"];
+const FROM_L03 = ["p1Url", "p2Url", "p1Doi", "p2Doi", "kensaku", "tried", "sanko"];
 function copyFromL03(c) {
   if (c.d.fromL03) return;
   const L3 = c.prev("L03");
@@ -80,6 +80,14 @@ export const R03 = {
       ${field("q1", "①", { type: "text", qmark: true })}
       ${field("q2", "②", { type: "text", qmark: true })}
       ${field("q3", "③", { type: "text", qmark: true })}
+      <h3>論文も RefNavi に登録して、参考文献リストを新しくしよう</h3>
+      <ol class="todo">
+        <li>RefNavi のホームの「メディアの選択」で論文を選び、「ISBN コード／DOI コード／URL」の欄に<b>論文のDOI</b>を貼って登録（DOIがない論文はURLで）</li>
+        <li>「整理する」の「リスト」で全部にチェック →「出力」→ ${REF_FORMAT ? `「${REF_FORMAT}」` : "先生が指定した書式"} → コピー</li>
+        <li>下の欄を消して、貼り直す</li>
+      </ol>
+      <div class="searchbtns"><button type="button" class="btn ghost" data-refnavi-open>RefNavi を右半分に開く ↗</button></div>
+      ${field("sanko", "参考文献リスト（RefNavi から貼る）", { rows: 6, hint: "第3回に貼ったものが入っています。論文を足したら貼り直そう" })}
       <p class="hint">がんばって、読めるところまで読んでみよう！ 途中で別の論文にしたくなったら、もう一度探して変えてもOK（上の「論文を探す」を開いて、URLを入れ直そう）。</p>
       ${c.submitted ? `<p class="okmsg">提出済み ✓　あとから直しても自動で保存されます。</p>` : ""}`;
   },
@@ -91,6 +99,12 @@ export const R03 = {
   onClick(t, c) {
     if (handleReader(t, c)) return true;
     if (handleSearch(t, c)) return true;
+    if (t.closest("[data-refnavi-open]")) {
+      const W = screen.availWidth || 1366, H = screen.availHeight || 768, u = "https://www.refnavi.net/index.php";
+      const w = window.open(u, "gcis_refnavi", `popup=yes,left=${Math.round(W / 2)},top=0,width=${Math.round(W / 2)},height=${H}`) || window.open(u, "_blank");
+      try { w?.focus(); } catch { /* なし */ }
+      return true;
+    }
     const b = t.closest("[data-yomi]");
     if (b) { c.set(b.dataset.yomi, b.dataset.val); c.rerender(); return true; }
     return false;

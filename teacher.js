@@ -190,14 +190,15 @@ const VIEWS = {
         <div class="recap">${item(r.l01?.data || {}, "setsu", "第1回の説")}<div class="tc-row"><span>${quest(2)}：見たもの・読んだもの</span><b>${pickCell(q) || "—"}</b></div>${item(q, "kokoro", "心に残った所")}</div>
         ${item(d, "hanMemo", "班で出たこと")}
         <div class="tc-row"><span>RefNavi</span><b>${REF_LABELS.filter(([k]) => d[k]).map(([, l]) => esc(l)).join("・") || "—"}</b></div>
+        <div class="tc-row"><span>参考文献リスト</span><b>${esc(d.sanko || "—").replace(/\n/g, "<br>")}</b></div>
         ${item(d, "tried", "試した検索語")}
         ${ps.map((p, j) => `<div class="tc-row"><span>論文${j ? "②" : "①"}</span><b>${paperCell(p)}</b></div>`).join("") || `<div class="tc-row"><span>論文</span><b>—</b></div>`}
         `;
     },
-    csvHead: ["試した検索語", "論文1のURL", "論文1のDOI", "論文2のURL", "論文2のDOI", "班で出たこと", ...REF_LABELS.map(([, l]) => "RefNavi：" + l)],
+    csvHead: ["試した検索語", "論文1のURL", "論文1のDOI", "論文2のURL", "論文2のDOI", "参考文献リスト", "班で出たこと", ...REF_LABELS.map(([, l]) => "RefNavi：" + l)],
     csvRow: r => {
       const d = r.note?.data || {};
-      return [d.tried, d.p1Url, d.p1Doi, d.p2Url, d.p2Doi, d.hanMemo, ...REF_LABELS.map(([k]) => d[k] ? "○" : "")];
+      return [d.tried, d.p1Url, d.p1Doi, d.p2Url, d.p2Doi, d.sanko, d.hanMemo, ...REF_LABELS.map(([k]) => d[k] ? "○" : "")];
     }
   },
   R03: {
@@ -221,12 +222,13 @@ const VIEWS = {
       return `
         <div class="recap">${ps.map((p, j) => `<div class="tc-row"><span>論文${j ? "②" : "①"}（${esc(d[j ? "yomi2" : "yomi1"] || "—")}）</span><b>${paperCell(p)}</b></div>`).join("") || `<div class="tc-row"><span>論文</span><b>—</b></div>`}</div>
         ${item(d, "wakatta", "分かったこと")}${item(d, "mada", "まだ分かっていないこと")}
-        <div class="tc-row"><span>気になったこと</span><b>${qs.length ? `<ul class="qs">${qs.map(q => `<li>${esc(q)}</li>`).join("")}</ul>` : "—"}</b></div>`;
+        <div class="tc-row"><span>気になったこと</span><b>${qs.length ? `<ul class="qs">${qs.map(q => `<li>${esc(q)}</li>`).join("")}</ul>` : "—"}</b></div>
+        <div class="tc-row"><span>参考文献リスト</span><b>${esc(d.sanko || r.l03?.data?.sanko || "—").replace(/\n/g, "<br>")}</b></div>`;
     },
-    csvHead: ["論文1のURL", "論文1を読んだか", "論文2のURL", "論文2を読んだか", "分かったこと", "まだ分かっていないこと", "気になったこと1", "気になったこと2", "気になったこと3"],
+    csvHead: ["論文1のURL", "論文1を読んだか", "論文2のURL", "論文2を読んだか", "分かったこと", "まだ分かっていないこと", "気になったこと1", "気になったこと2", "気になったこと3", "参考文献リスト"],
     csvRow: r => {
       const d = r.note?.data || {}, l = d.fromL03 ? d : r.l03?.data || {}; // 論文は Quest 3 で変えられる（11/7）
-      return [l.p1Url, d.yomi1, l.p2Url, d.yomi2, d.wakatta, d.mada, d.q1, d.q2, d.q3];
+      return [l.p1Url, d.yomi1, l.p2Url, d.yomi2, d.wakatta, d.mada, d.q1, d.q2, d.q3, d.sanko || r.l03?.data?.sanko];
     }
   },
   L04: {
