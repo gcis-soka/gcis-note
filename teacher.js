@@ -1,7 +1,7 @@
 // 教員画面：期・クラス・回ごとの進み具合（リアルタイム）＋学年まとめ（読み込みは1回・読み直しボタン）
 import {
   escapeHtml, classLabel as baseClassLabel, kiLabel, firstYearKi, methodOf, lsGet, lsSet, quest, classSize,
-  CLASSES, TEST_CLASS, METHODS, PICK_N, listOf, booksOf
+  CLASSES, TEST_CLASS, METHODS, PICK_N, listOf, booksOf, doiOf
 } from "./common.js";
 
 const GRADE = -1; // 「学年」タブ（全クラスのまとめ）
@@ -28,7 +28,7 @@ const nCols = (label, unit) => PICK_N.map((n, i) => `${label}${i + 1}`);
 const nVals = (d, base) => PICK_N.map(n => d?.[base + n] || "");
 // 第3回：決めた論文（題名・URL）
 // 論文は URL だけ（題名は RefNavi：11/7）
-const papersOf = d => [["p1Url", "p1Doi"], ["p2Url", "p2Doi"]].map(([k, o]) => ({ url: String(d[k] || "").trim(), doi: String(d[o] || "").trim() })).filter(p => p.url);
+const papersOf = d => [["p1Url", "p1Doi"], ["p2Url", "p2Doi"]].map(([k, o]) => ({ url: String(d[k] || "").trim(), doi: doiOf(d[o]) || String(d[o] || "").trim() })).filter(p => p.url);
 const paperCell = p => p ? linkCell(p.url) + (p.doi ? ` <span class="hint">DOI ${esc(p.doi)}</span>` : "") : "";
 // 第3回：RefNavi の進み具合（生徒が自分で押す：l03.js の REF_CHECKS と同じ）
 const REF_LABELS = [["refLogin", "ログイン"], ["refDouga", "動画"], ["refHon", "本"], ["refHan", "班の全員"]];

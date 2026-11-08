@@ -3,7 +3,7 @@
 // RefNavi への登録は授業で（URLを貼るだけ）。アプリは登録しないが、登録するもの（第2回の記事・Quest 2 の動画と本）を一覧で出す（11/5）
 // data：hanMemo・refLogin・refDouga・refHon・refHan（RefNavi の進み具合）・kensaku・tried・p1Url・p2Url・p1Doi・p2Doi・sanko（RefNavi から貼った参考文献リスト）（読むのは Quest 3。授業中に始める：11/7）
 // 論文は URL だけ（題名は RefNavi に入れる：11/7）。Geminiのチャットは AIの文の下の chatUrl で預かる（共有リンク欄は 11/7 廃止）
-import { quest, listOf, booksOf, refnaviGroupOf } from "./common.js";
+import { quest, listOf, booksOf, refnaviGroupOf, doiOf } from "./common.js";
 import { copyText } from "./r02.js";
 // Quest 2 で見たもの・読んだもの（動画・本の2欄）
 const pickText = R => [...listOf(R, "douga"), ...listOf(R, "honTitle")].join(" ／ ");
@@ -33,16 +33,86 @@ export function searchTools(c) {
         <li>見つからないときは、日本語だけ／英語で／言葉を変えて。それでもなければ「研究が少ない」のも発見です</li>
       </ul>`;
 }
+// 論文のページの見方の図（Scholar の結果→題名を押す→J-STAGE の論文のページ：URL・DOI・PDF）。
+// 先生の画面写真（11/8：Scholar の結果・J-STAGE の論文のページ）をもとに図式で描いた。題名・著者・DOI は架空の見本
+const PAPER_HOWTO = `
+  <figure class="urlhowto libhowto" aria-label="論文のページの見方：Scholarで題名を押し、論文のページでURL・DOI・PDFを見つける">
+    <svg viewBox="0 0 540 412" role="img" xmlns="http://www.w3.org/2000/svg">
+      <rect x="1" y="1" width="538" height="162" rx="10" fill="#fff" stroke="#c9ced8"/>
+      <rect x="10" y="10" width="520" height="22" rx="11" fill="#eef1f6"/>
+      <text x="22" y="25" font-size="11" fill="#5f6673">scholar.google.co.jp/scholar?q=…</text>
+      <text x="16" y="58" font-size="16" fill="#666">Google Scholar</text>
+      <rect x="140" y="42" width="250" height="24" rx="2" fill="#fff" stroke="#4285f4"/>
+      <text x="150" y="59" font-size="11" fill="#333">検索語</text>
+      <rect x="390" y="42" width="30" height="24" fill="#4285f4"/>
+      <circle cx="403" cy="52" r="5" fill="none" stroke="#fff" stroke-width="2"/><path d="M407 56 L412 61" stroke="#fff" stroke-width="2"/>
+      <path d="M10 76 H530" stroke="#e3e3e3"/>
+      <text x="22" y="100" font-size="14" fill="#660099" text-decoration="underline">論文の題名</text>
+      <rect x="14" y="84" width="104" height="24" rx="5" fill="none" stroke="#d93025" stroke-width="3"/>
+      <circle cx="136" cy="96" r="12" fill="#d93025"/><text x="131" y="101" font-size="14" font-weight="700" fill="#fff">1</text>
+      <text x="156" y="100" font-size="11" fill="#d93025" font-weight="700">題名を押す</text>
+      <text x="22" y="120" font-size="11" fill="#006621">著者名，著者名</text>
+      <text x="22" y="136" font-size="11" fill="#006621">雑誌名, 2023 · jstage.jst.go.jp</text>
+      <text x="22" y="153" font-size="10" fill="#888">抄録（研究の短いまとめ）…</text>
+      <text x="398" y="100" font-size="13" fill="#1a0dab"><tspan font-weight="700">[PDF]</tspan> jst.go.jp</text>
+      <rect x="392" y="84" width="104" height="24" rx="5" fill="none" stroke="#d93025" stroke-width="2" stroke-dasharray="4 3"/>
+      <text x="398" y="124" font-size="10" fill="#d93025">[PDF] があれば</text>
+      <text x="398" y="138" font-size="10" fill="#d93025">本文を無料で読める</text>
+      <path d="M270 166 L270 182" stroke="#d93025" stroke-width="3"/><path d="M262 180 L270 192 L278 180 Z" fill="#d93025"/>
+      <rect x="1" y="194" width="538" height="216" rx="10" fill="#fff" stroke="#c9ced8"/>
+      <rect x="10" y="203" width="300" height="22" rx="11" fill="#eef1f6"/>
+      <text x="22" y="218" font-size="11" fill="#5f6673">jstage.jst.go.jp/article/…</text>
+      <rect x="6" y="199" width="308" height="30" rx="8" fill="none" stroke="#d93025" stroke-width="3"/>
+      <circle cx="330" cy="214" r="12" fill="#d93025"/><text x="325" y="219" font-size="14" font-weight="700" fill="#fff">2</text>
+      <text x="350" y="218" font-size="11" fill="#d93025" font-weight="700">このページのURL → 論文のURL欄へ</text>
+      <rect x="2" y="234" width="536" height="28" fill="#2e3a87"/>
+      <text x="16" y="253" font-size="12" font-weight="700" fill="#fff">J-STAGE　　雑誌名</text>
+      <text x="16" y="286" font-size="14" fill="#222">論文の題名</text>
+      <text x="16" y="303" font-size="11" fill="#333">著者名，著者名</text>
+      <rect x="16" y="311" width="40" height="16" rx="8" fill="#eef5e0"/><text x="36" y="323" font-size="10" fill="#7a9a2a" text-anchor="middle">フリー</text>
+      <rect x="16" y="340" width="32" height="18" rx="2" fill="#eaf4f7" stroke="#7fb3c8"/><text x="32" y="353" font-size="10" fill="#2a6f86" text-anchor="middle">DOI</text>
+      <text x="56" y="353" font-size="12" fill="#1a73e8" text-decoration="underline">https://doi.org/10.xxxxx/xxxx</text>
+      <rect x="10" y="334" width="252" height="30" rx="6" fill="none" stroke="#d93025" stroke-width="3"/>
+      <circle cx="278" cy="349" r="12" fill="#d93025"/><text x="273" y="354" font-size="14" font-weight="700" fill="#fff">3</text>
+      <text x="298" y="346" font-size="11" fill="#d93025" font-weight="700">右クリック →「リンクのアドレスを</text>
+      <text x="298" y="361" font-size="11" fill="#d93025" font-weight="700">コピー」→ DOI欄へ</text>
+      <rect x="388" y="274" width="140" height="28" rx="4" fill="#d50000"/>
+      <text x="458" y="293" font-size="12" font-weight="700" fill="#fff" text-anchor="middle">PDFをダウンロード</text>
+      <rect x="384" y="270" width="148" height="36" rx="7" fill="none" stroke="#d93025" stroke-width="3"/>
+      <circle cx="366" cy="288" r="12" fill="#d93025"/><text x="361" y="293" font-size="14" font-weight="700" fill="#fff">4</text>
+      <text x="390" y="322" font-size="10" fill="#d93025">本文（PDF）が開く</text>
+      <text x="16" y="386" font-size="11" fill="#555">抄録</text>
+      <path d="M16 396 H360 M16 404 H300" stroke="#ddd" stroke-width="4"/>
+    </svg>
+    <figcaption>J-STAGE の例：① Scholar で<b>題名</b>を押す（右に <b>[PDF]</b> があれば、本文を無料で読めます）→ ② 開いたページの<b>アドレスバーのURL</b>をコピーして「論文のURL」へ → ③ <b>DOI</b> のリンクを右クリック（Chromebook は2本指でタップ）→「<b>リンクのアドレスをコピー</b>」→「DOI」の欄に貼る（番号だけに自動で直ります）→ ④「<b>PDFをダウンロード</b>」で本文を開いて読む。ほかのサイトでも「DOI」「doi.org」を探そう</figcaption>
+  </figure>`;
 // 論文①②のURL欄（右に「この論文を開く」）と DOI 欄（RefNavi は論文を DOI で登録する：RefNavi_manual_52。11/7）
+// DOI 欄は「https://doi.org/…」を貼っても番号だけに直す。URL 欄に doi.org のリンクを貼ったときは、空の DOI 欄に番号を入れる（11/8）
 export function paperFields(c) {
-  return ["1", "2"].map(n => `
+  return PAPER_HOWTO + ["1", "2"].map(n => `
       <div class="paperbox">
         <div class="urlrow">
-          ${c.field(`p${n}Url`, `論文${n === "1" ? "①" : "②"}のURL`, { type: "url", placeholder: "https://…", hint: n === "1" ? "論文のページのURLをコピーして貼ろう" : "" })}
+          ${c.field(`p${n}Url`, `論文${n === "1" ? "①" : "②"}のURL`, { type: "url", placeholder: "https://…", hint: n === "1" ? "論文のページのURL（アドレスバー）をコピーして貼ろう" : "" })}
           <a class="btn small ghost openurl" data-open-url="p${n}Url" target="_blank" rel="noopener" hidden>この論文を開く ↗</a>
         </div>
-        ${c.field(`p${n}Doi`, `論文${n === "1" ? "①" : "②"}のDOI`, { type: "text", placeholder: "例：10.xxxxx/xxxxx", hint: n === "1" ? "論文のページにある「10.」から始まる番号（「https://doi.org/」のあとの部分）。ない論文は空でOK" : "" })}
+        ${c.field(`p${n}Doi`, `論文${n === "1" ? "①" : "②"}のDOI`, { type: "text", placeholder: "例：https://doi.org/10.xxxxx/xxxxx", hint: n === "1" ? "DOI のリンク（https://doi.org/…）をそのまま貼ればOK。番号だけに直します。DOI がない論文は空でOK" : "" })}
+        <p class="hint okmsg" data-doi-note="${n}" hidden>DOI の番号だけにしました ✓</p>
       </div>`).join("");
+}
+// 入力のたびに：DOI 欄を番号だけに／URL 欄が doi.org のリンクなら空の DOI 欄に入れる（第3回・Quest 3 の onInput から呼ぶ）
+export function handlePaperInput(el, c) {
+  const m = /^p([12])(Url|Doi)$/.exec(el.dataset.key || "");
+  if (!m) return;
+  const n = m[1], box = el.closest(".paperbox");
+  const note = () => { const p = box?.querySelector(`[data-doi-note="${n}"]`); if (p) p.hidden = false; };
+  if (m[2] === "Doi") {
+    const doi = doiOf(el.value);
+    if (doi && doi !== el.value.trim()) { el.value = doi; c.set(el.dataset.key, doi); note(); }
+    return;
+  }
+  const doi = /doi\.org\//i.test(el.value) ? doiOf(el.value) : "";
+  const t = box?.querySelector(`[data-key="p${n}Doi"]`);
+  if (doi && t && !c.v(`p${n}Doi`)) { t.value = doi; c.set(`p${n}Doi`, doi); note(); }
 }
 // 検索ボタン（試した言葉を残す：新しい順・10個まで）
 export function handleSearch(t, c) {
@@ -314,6 +384,8 @@ export const L03 = {
         <p>第4回は、ここまでのことから自分の問いを立てて、確かめる計画を作ります。</p></div>
       ${c.submitted ? `<p class="okmsg">提出済み ✓　あとから直しても自動で保存されます。</p>` : ""}`;
   },
+
+  onInput(el, c) { handlePaperInput(el, c); },
 
   canNext(i, c) {
     if (i === 2) return !!c.v("p1Url"); // 2本が目標。見つからない生徒も先へ進める

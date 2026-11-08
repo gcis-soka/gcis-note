@@ -412,6 +412,7 @@ export function mountStudent({ be, user, app, asTeacher }) {
     const el = e.target.closest("[data-key]");
     if (!el || !cur) return;
     note().data[el.dataset.key] = el.value;
+    cur.onInput?.(el, ctx()); // 画面ごとの直し（第3回・Quest 3：DOI を番号だけに。11/8）
     if (el.dataset.key === "chatUrl") refreshChatUrl(); // 次へ の可否は下の refreshNext で
     scheduleSave(); refreshNext(); updateHints();
   }, { signal: ac.signal });

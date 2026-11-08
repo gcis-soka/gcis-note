@@ -3,7 +3,7 @@
 // data：yomi1・yomi2（全部読んだ／途中まで／まだ）・wakatta・mada・q1〜q3・p1Url・p2Url・p1Doi・p2Doi・kensaku・tried・sanko（第3回から写し、ここで変えられる）・fromL03
 import { quest } from "./common.js";
 import { readerHtml, handleReader } from "./reader.js";
-import { searchTools, paperFields, handleSearch, REF_FORMAT } from "./l03.js";
+import { searchTools, paperFields, handleSearch, handlePaperInput, REF_FORMAT } from "./l03.js";
 
 // 初めて開いたとき、第3回の論文のURLと検索語を写す（論文を変えるのは Quest 3 の中で：11/7）
 const FROM_L03 = ["p1Url", "p2Url", "p1Doi", "p2Doi", "kensaku", "tried", "sanko"];
@@ -91,6 +91,8 @@ export const R03 = {
       <p class="hint">がんばって、読めるところまで読んでみよう！ 途中で別の論文にしたくなったら、もう一度探して変えてもOK（上の「論文を探す」を開いて、URLを入れ直そう）。</p>
       ${c.submitted ? `<p class="okmsg">提出済み ✓　あとから直しても自動で保存されます。</p>` : ""}`;
   },
+
+  onInput(el, c) { handlePaperInput(el, c); },
 
   canNext(i, c) {
     return !!(c.v("wakatta") && c.v("mada"));

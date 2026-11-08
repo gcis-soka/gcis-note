@@ -22,6 +22,15 @@ export const LIBRARY_URL = "https://lib-finder.net/tokyo_soka_lib/"; // 学校�
 // 空なら「先生が伝えるグループコード」と出す。学校コードは書かない（生徒に教えないもの）
 export const REFNAVI_GROUPS = { "59": {} };
 export const refnaviGroupOf = (ki, cls) => { const g = REFNAVI_GROUPS[ki] || {}; return String(g[cls] ?? g.all ?? "").trim(); };
+// DOI の番号だけを取り出す（「https://doi.org/10.…」「DOI: 10.…」などから「10.…」に。見つからなければ空）（11/8）
+export function doiOf(s) {
+  let t = String(s || "").trim();
+  try { t = decodeURIComponent(t); } catch (e) { /* そのまま */ }
+  const m = /10\.\d{4,9}\/[^\s"'<>]+/.exec(t);
+  if (!m) return "";
+  const d = m[0].replace(/[。．.、,，\]」]+$/u, "");
+  return d.includes("(") ? d : d.replace(/[)）]+$/u, ""); // 「(」がなければ、閉じかっこは文の一部
+}
 export const YOUTUBE_SEARCH = q => `https://www.youtube.com/results?search_query=${encodeURIComponent(q)}`;
 // 授業の外でやってくること（L01で決めた一歩）の呼び名。Quest 1, Quest 2 …（quest・question・inquiry は同じ語源）
 export const quest = n => `Quest ${n}`;
