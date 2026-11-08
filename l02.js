@@ -1,7 +1,7 @@
 // ステージ3／第2回（11/9）同じことに関心を持つ人を探す
 // 仕様：ナレッジの L02.md「アプリ画面」／プロンプト：L02_PROMPTS（確定）
 // 結果の記録は R01（Quest 1 の結果）。ここでは R01 を読んでプロンプトに入れる
-// data：tomo・kiji〜kiji3（読んだ記事のリンク）・q1〜q3・findq・findb（動画・本を探す言葉：r02.js の findTools）・douga〜douga5・honTitle〜honTitle5（見る動画・読む本：pickFields。Quest 2 に写す）。チャットは chatUrl（最初のAIの文の下で預かる）
+// data：tomo・kiji〜kiji3（読んだ記事のリンク・1つは必須 11/8）・q1〜q3・findq・findb（動画・本を探す言葉：r02.js の findTools）・douga〜douga5・honTitle〜honTitle5（見る動画・読む本：pickFields。Quest 2 に写す）。チャットは chatUrl（最初のAIの文の下で預かる）
 import { quest, listOf } from "./common.js";
 import { findTools, handleFind, PICK_TIPS, pickFields } from "./r02.js";
 const MISSION = quest(1);
@@ -159,14 +159,17 @@ export const L02 = {
   },
 
   canNext(i, c) {
-    if (i === 2) return ["q1", "q2", "q3"].some(k => c.v(k));
+    if (i === 2) return KIJI.some(k => c.v(k)) && ["q1", "q2", "q3"].some(k => c.v(k)); // 読んだ記事のリンク1つ＋気になったこと1つ（11/8 先生）
     if (i === 3) return !!(listOf(c.d, "douga").length || listOf(c.d, "honTitle").length); // 見る動画か読む本のどちらか（授業内で決める 11/5）
     return true;
   },
   // 次へが押せないときに出す名前（「〜が書けたら、次へ進もう」）
   need(i, c) {
     if (this.canNext(i, c)) return [];
-    if (i === 2) return ["「気になったこと」"];
+    if (i === 2) return [
+      ...(KIJI.some(k => c.v(k)) ? [] : ["「読んだ記事のリンク」"]),
+      ...(["q1", "q2", "q3"].some(k => c.v(k)) ? [] : ["「気になったこと」"]),
+    ];
     if (i === 3) return ["「見る動画のリンク」か「読む本の題名」"];
     return [];
   },
