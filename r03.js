@@ -75,7 +75,8 @@ export const R03 = {
       </div>
       ${readerHtml(c, ps.map(p => ({ no: p.no, url: p.url })), `
         ${field("wakatta", "分かったこと（何を・誰に・どうやって調べて、何が分かった？）", { rows: 6, hint: "書き出しを押すと入ります", chips: WAKATTA_CHIPS })}
-        ${field("mada", "まだ分かっていないこと", { rows: 5, hint: "論文の最後の「今後の課題」や、自分の場面との違いを見てみよう", chips: MADA_CHIPS })}`)}
+        ${field("mada", "まだ分かっていないこと", { rows: 5, hint: "論文の最後の「今後の課題」や、自分の場面との違いを見てみよう", chips: MADA_CHIPS })}`,
+        [{ key: "wakatta", label: "分かったこと（何を・誰に・どうやって調べて、何が分かった？）", rows: 9 }, { key: "mada", label: "まだ分かっていないこと", rows: 6 }])}
       <div class="field"><span class="label">気になったこと（「？」で終わる形・なくてもOK）</span><span class="hint">書き出しを押すと、空いている欄に入ります</span>${chips(Q_CHIPS, "q1,q2,q3")}</div>
       ${field("q1", "①", { type: "text", qmark: true })}
       ${field("q2", "②", { type: "text", qmark: true })}
