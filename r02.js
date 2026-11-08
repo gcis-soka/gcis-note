@@ -1,8 +1,7 @@
 // ステージ4：Quest 2（第2回→第3回）「？」の手がかりになりそうな本か動画
 // 仕様：ナレッジの L03.md「Quest 2」。授業中に始められる子は始める
 // data：findq（動画を探す言葉）・findb（本を探す言葉）・douga〜douga5（動画のリンク）・honTitle〜honTitle5（本の題名）・isbn〜isbn5・kokoro（いちばん心に残った所と、ひとこと）・fromL02（第2回の値を写した印）
-// mono（見たもの・読んだもの：11/4 までの1欄）は古いデータの表示用に残す
-import { quest, LIBRARY_URL, YOUTUBE_SEARCH, PICK_N, listOf } from "./common.js";
+import { quest, LIBRARY_URL, JKS_URL, YOUTUBE_SEARCH, PICK_N, listOf } from "./common.js";
 const Q = quest(2);
 
 const qsOf = d => ["q1", "q2", "q3"].map(k => String(d[k] || "").trim()).filter(Boolean);
@@ -54,13 +53,17 @@ export function findTools(c) {
       <div class="searchbtns"><button type="button" class="btn" data-find="youtube" data-findkey="findq">YouTubeで探す ↗</button></div>
     </div>
     <div class="findrow">
-      <div class="field"><label><span class="label">本を探す言葉</span><span class="hint">蛍雪図書館（学校の図書館）で探します。AIの表の「学校図書館」の言葉でも、自分の言葉でもOK</span>
+      <div class="field"><label><span class="label">本を探す言葉</span><span class="hint">蛍雪図書館（学校の図書館）やジャパンナレッジSchoolで探します。AIの表の「学校図書館」の言葉でも、自分の言葉でもOK</span>
         <input data-key="findb" type="text" value="${esc(d.findb || "")}" placeholder="例：睡眠不足"></label></div>
       <div class="searchbtns"><button type="button" class="btn" data-find="library" data-findkey="findb">蛍雪図書館の蔵書検索 ↗</button></div>
       <p class="hint">ボタンを押すと、この言葉がコピーされます。開いたページで、下の図のとおりに探そう。</p>
       <p class="hint warn-text" data-find-msg hidden></p>
       ${LIB_HOWTO}
       <p class="hint">ヒットしないときは、もっと広い言葉にしてみよう（例：「睡眠不足」→「睡眠」）。</p>
+    </div>
+    <div class="findrow">
+      <p class="hint">ジャパンナレッジSchoolでは、新書（岩波ジュニア新書・ちくまプリマー新書・ブルーバックスなど）がPCですぐ読めます。学校のGoogleでログイン。ぴったりの本でなくても大丈夫。</p>
+      <div class="searchbtns"><button type="button" class="btn" data-find="jks" data-findkey="findb">ジャパンナレッジSchool ↗</button></div>
     </div>
     <p class="hint">本か動画のどちらか一方でOK。</p>`;
 }
@@ -71,6 +74,10 @@ export function handleFind(t, c) {
   if (b.dataset.find === "youtube") {
     if (!q) { alert("先に探す言葉を入れてね"); return true; }
     window.open(YOUTUBE_SEARCH(q), "_blank", "noopener");
+  } else if (b.dataset.find === "jks") {
+    // ジャパンナレッジSchool：本を探す言葉があればコピーしてから開く（11/8）
+    if (q) copyText(q);
+    window.open(JKS_URL, "_blank", "noopener");
   } else if (LIBRARY_URL.includes("{q}")) {
     window.open(LIBRARY_URL.replace("{q}", encodeURIComponent(q)), "_blank", "noopener");
   } else {
@@ -87,7 +94,7 @@ export function handleFind(t, c) {
   return true;
 }
 // 押した瞬間に同期でコピー（新しいタブに移る前に済ませる）
-function copyText(t) {
+export function copyText(t) {
   try {
     const ta = document.createElement("textarea");
     ta.value = t; ta.style.position = "fixed"; ta.style.opacity = "0";
@@ -106,7 +113,10 @@ export function pickFields(c, { done = false } = {}) {
   const reveal = (i, prevKey) => i ? ` data-reveal-after="${prevKey}" hidden` : "";
   const videos = PICK_N.map((n, i) => `
       <div class="pickone"${reveal(i, "douga" + PICK_N[i - 1])}>
-        ${field("douga" + n, `${done ? "見た" : "見る"}動画のリンク${nth(i, "本")}`, { type: "text", placeholder: "https://youtu.be/…", hint: i ? "" : "YouTubeの「共有」→「コピー」。入力すると次の欄が出ます" })}
+        <div class="urlrow">
+          ${field("douga" + n, `${done ? "見た" : "見る"}動画のリンク${nth(i, "本")}`, { type: "text", placeholder: "https://youtu.be/…", hint: i ? "" : "YouTubeの「共有」→「コピー」。入力すると次の欄が出ます" })}
+          <a class="btn small ghost openurl" data-open-url="douga${n}" target="_blank" rel="noopener" hidden>この動画を開く ↗</a>
+        </div>
       </div>`).join("");
   const books = PICK_N.map((n, i) => `
       <div class="pickone"${reveal(i, "honTitle" + PICK_N[i - 1])}>
@@ -125,7 +135,7 @@ function copyFromL02(c) {
 }
 
 export const PICK_TIPS = `
-  <p class="hint"><b>ぴったりの本でなくても大丈夫。</b>図書館に行くと、その本の近くに似た本が並んでいます。</p>`;
+  <p class="hint"><b>ぴったりの本でなくても大丈夫。</b>図書館に行って、同じ棚に他にどんな本が並んでいるかも見てみよう。</p>`;
 
 export const R02 = {
   id: "R02",
@@ -159,24 +169,25 @@ export const R02 = {
           <li>題名・ISBN・心に残ったページを書く。<b>第3回に本を持ってこよう</b></li>
         </ul>
       </div>
-      <h3>探す</h3>
-      ${findTools(c)}
-      ${PICK_TIPS}
+      <details class="fold">
+        <summary>探す（動画を探す言葉・本を探す言葉）</summary>
+        ${findTools(c)}
+        ${PICK_TIPS}
+      </details>
       <h3>見たら・読んだら書く</h3>
       ${pickFields(c, { done: true })}
-      ${c.v("mono") ? field("mono", "見たもの・読んだもの（前の欄）", { type: "text" }) : ""}
       ${field("kokoro", "いちばん心に残った所と、ひとこと", { rows: 3, hint: "動画は時間（例：2分05秒）、本はページも書こう", placeholder: "例：2分05秒あたり。雑音の大きさによって、集中しやすさが逆になるという話。自分のは小さい音だったのかも" })}
       <p class="hint">手がかりにならなくても大丈夫。第3回で研究を探します。</p>
       ${c.submitted ? `<p class="okmsg">提出済み ✓　あとから直しても自動で保存されます。</p>` : ""}`;
   },
 
   canNext(i, c) {
-    return !!((listOf(c.d, "douga").length || listOf(c.d, "honTitle").length || c.v("mono")) && c.v("kokoro"));
+    return !!((listOf(c.d, "douga").length || listOf(c.d, "honTitle").length) && c.v("kokoro"));
   },
   // 次へが押せないときに出す名前（「〜が書けたら、次へ進もう」）
   need(i, c) {
     const m = [];
-    if (!(listOf(c.d, "douga").length || listOf(c.d, "honTitle").length || c.v("mono"))) m.push("「見た動画のリンク」か「読んだ本の題名」");
+    if (!(listOf(c.d, "douga").length || listOf(c.d, "honTitle").length)) m.push("「見た動画のリンク」か「読んだ本の題名」");
     if (!c.v("kokoro")) m.push("「ひとこと」");
     return m;
   },

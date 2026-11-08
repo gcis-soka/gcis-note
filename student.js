@@ -47,6 +47,7 @@ export function mountStudent({ be, user, app, asTeacher }) {
       set: (k, val) => { n.data[k] = val; scheduleSave(); },
       rerender: () => renderStep(n.step),
       field, promptBox, chips, esc: escapeHtml, app,
+      ki: profile?.ki ?? "", cls: profile?.class ?? "", // 期・クラス（RefNavi のグループコードを出すため：11/7）
       // 問いの数の順位（第4回）。学年＝期ごと。期なしは "x"、先生のテストは "t" で別に数える
       scoreRank: n => be.scoreRank({ ki: asTeacher ? "t" : (profile?.ki || "x"), lesson: cur.id, uid: user.uid, n })
     };
@@ -317,6 +318,12 @@ export function mountStudent({ be, user, app, asTeacher }) {
     app.querySelectorAll("[data-reveal-after]").forEach(el => {
       const own = [...el.querySelectorAll("[data-key]")].some(i => String(i.value || "").trim());
       el.hidden = !(v(el.dataset.revealAfter) || own);
+    });
+    // リンクを開くボタン（data-open-url＝欄の key）。http(s) のURLが入っているときだけ出す（11/7）
+    app.querySelectorAll("[data-open-url]").forEach(a => {
+      const u = v(a.dataset.openUrl), ok = /^https?:\/\/\S+$/i.test(u);
+      a.hidden = !ok;
+      if (ok) a.href = u; else a.removeAttribute("href");
     });
     app.querySelectorAll("[data-short]").forEach(p => {
       const len = v(p.dataset.short).length;

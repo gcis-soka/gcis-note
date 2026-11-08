@@ -20,18 +20,20 @@ function resultRows(d) {
     : `<div class="tc-row"><span>${MISSION}</span><b>${esc(d.did || "—")}</b></div>${item(d, "yatta", "やったこと")}${item(d, "mita", "見たこと・数字")}${item(d, "kanji", "感じたこと")}${item(d, "iikire", "これだけでは言い切れないこと")}`;
 }
 const qsOf = d => ["q1", "q2", "q3"].map(k => String(d[k] || "").trim()).filter(Boolean);
-// Quest 2：リンクが動画サイトなら「動画」、それ以外（題名・ほかのリンク）は「本・その他」
-const kindOf = m => !String(m || "").trim() ? "" : /youtu\.?be|youtube\.com|nicovideo|tiktok\.com|vimeo\.com/i.test(m) ? "動画" : "本・その他";
-const kindChip = m => kindOf(m) ? `<span class="mchip">${kindOf(m)}</span>` : "";
-// Quest 2：本か動画（11/5 から動画・本を5件まで。前の1欄 mono も読む）
-const pickKind = d => [listOf(d, "douga").length && "動画", listOf(d, "honTitle").length && "本"].filter(Boolean).join("・") || (kindOf(d.mono) === "本・その他" ? "本" : kindOf(d.mono));
+// Quest 2：本か動画（動画・本を5件まで。古い1欄 mono は使った生徒がいなかったので読まない：11/7）
+const pickKind = d => [listOf(d, "douga").length && "動画", listOf(d, "honTitle").length && "本"].filter(Boolean).join("・");
 const linksCell = us => us.map(u => linkCell(u)).join("<br>");
-const pickCell = d => [linksCell(listOf(d, "douga")), listOf(d, "honTitle").map(esc).join("<br>"), !listOf(d, "douga").length && !listOf(d, "honTitle").length && d.mono ? linkCell(d.mono) : ""].filter(Boolean).join("<br>");
+const pickCell = d => [linksCell(listOf(d, "douga")), listOf(d, "honTitle").map(esc).join("<br>")].filter(Boolean).join("<br>");
 const nCols = (label, unit) => PICK_N.map((n, i) => `${label}${i + 1}`);
 const nVals = (d, base) => PICK_N.map(n => d?.[base + n] || "");
 // 第3回：決めた論文（題名・URL）
-const papersOf = d => [["p1Title", "p1Url"], ["p2Title", "p2Url"]].map(([t, u]) => ({ title: String(d[t] || "").trim(), url: d[u] })).filter(p => p.title);
-const paperCell = p => p ? (safeUrl(p.url) ? `<a href="${esc(safeUrl(p.url))}" target="_blank" rel="noopener">${esc(p.title)}</a>` : esc(p.title)) : "";
+// 論文は URL だけ（題名は RefNavi：11/7）
+const papersOf = d => [["p1Url", "p1Doi"], ["p2Url", "p2Doi"]].map(([k, o]) => ({ url: String(d[k] || "").trim(), doi: String(d[o] || "").trim() })).filter(p => p.url);
+const paperCell = p => p ? linkCell(p.url) + (p.doi ? ` <span class="hint">DOI ${esc(p.doi)}</span>` : "") : "";
+// 第3回：RefNavi の進み具合（生徒が自分で押す：l03.js の REF_CHECKS と同じ）
+const REF_LABELS = [["refLogin", "ログイン"], ["refDouga", "動画"], ["refHon", "本"], ["refHan", "班の全員"]];
+const refDone = d => !!(d.refDouga || d.refHon);
+const refCell = d => d.refLogin || refDone(d) ? `<span class="mchip ${refDone(d) ? "" : "zero"}">${refDone(d) ? "登録" : "ログイン"}</span>` : "";
 const yomiChip = x => x ? `<span class="mchip ${x === "全部読んだ" ? "" : "zero"}">${esc(x)}</span>` : "";
 const qsList = d => Array.isArray(d.qs) ? d.qs : []; // 第4回の問い [{t, k, a}]
 
@@ -128,22 +130,23 @@ const VIEWS = {
         <div class="recap">${item(s, "setsu", "第1回の説")}${item(s, "ippo", MISSION)}${item(s, "yosou", "予想")}</div>
         ${resultRows(r.r01?.data || {})}${item(d, "tomo", "友だちに言われたこと")}
         <div class="tc-row"><span>気になったこと</span><b>${qs.length ? `<ul class="qs">${qs.map(q => `<li>${esc(q)}</li>`).join("")}</ul>` : "—"}</b></div>
+        <div class="tc-row"><span>読んだ記事</span><b>${linksCell(listOf(d, "kiji")) || "—"}</b></div>
         <div class="tc-row"><span>見る動画</span><b>${linksCell(listOf(d, "douga")) || "—"}</b></div>
         <div class="tc-row"><span>読む本</span><b>${listOf(d, "honTitle").map(esc).join("<br>") || "—"}</b></div>`;
     },
-    csvHead: ["説（第1回）", "やった／まだ", "友だちに言われたこと", "気になったこと1", "気になったこと2", "気になったこと3", ...nCols("見る動画"), ...nCols("読む本")],
+    csvHead: ["説（第1回）", "やった／まだ", "友だちに言われたこと", "気になったこと1", "気になったこと2", "気になったこと3", "読んだ記事1", "読んだ記事2", "読んだ記事3", ...nCols("見る動画"), ...nCols("読む本")],
     csvRow: r => {
       const d = r.note?.data || {}, s = r.l01?.data || {};
-      return [s.setsu, r.r01?.data?.did, d.tomo, d.q1, d.q2, d.q3, ...nVals(d, "douga"), ...nVals(d, "honTitle")];
+      return [s.setsu, r.r01?.data?.did, d.tomo, d.q1, d.q2, d.q3, d.kiji || "", d.kiji2 || "", d.kiji3 || "", ...nVals(d, "douga"), ...nVals(d, "honTitle")];
     }
   },
   R02: {
     tab: quest(2), date: "2026-11-10", noStall: true, // 家でやるので「止まってる？」は出さない
     stepNames: ["記録"],
-    head: ["気になったこと（第2回）", "本か動画", "見たもの・読んだもの", "心に残った所・ひとこと"],
+    head: ["気になったこと（第2回）", "見た動画", "読んだ本", "心に残った所・ひとこと"],
     cells: r => {
       const d = r.note?.data || {};
-      return [qsOf(r.l02?.data || {}).map(esc).join("<br>"), pickKind(d) ? `<span class="mchip">${pickKind(d)}</span>` : "", pickCell(d), esc(d.kokoro || "")];
+      return [qsOf(r.l02?.data || {}).map(esc).join("<br>"), linksCell(listOf(d, "douga")), listOf(d, "honTitle").map(esc).join("<br>"), esc(d.kokoro || "")];
     },
     nowrap: [1],
     chips(rs) {
@@ -158,28 +161,27 @@ const VIEWS = {
         <div class="recap"><div class="tc-row"><span>第2回で気になったこと</span><b>${qs.length ? `<ul class="qs">${qs.map(q => `<li>${esc(q)}</li>`).join("")}</ul>` : "—"}</b></div></div>
         <div class="tc-row"><span>見た動画</span><b>${listOf(d, "douga").map(u => `${linkCell(u)} <span class="hint">${esc(u)}</span>`).join("<br>") || "—"}</b></div>
         <div class="tc-row"><span>読んだ本（ISBN）</span><b>${booksOf(d).map(b => `${esc(b.title)}${b.isbn ? `（${esc(b.isbn)}）` : ""}`).join("<br>") || "—"}</b></div>
-        ${d.mono ? `<div class="tc-row"><span>見たもの・読んだもの（前の欄）</span><b>${linkCell(d.mono)}</b></div>` : ""}
         ${item(d, "kokoro", "いちばん心に残った所と、ひとこと")}`;
     },
-    csvHead: ["気になったこと1（第2回）", "気になったこと2（第2回）", "気になったこと3（第2回）", "本か動画", ...nCols("見た動画"), ...nCols("読んだ本"), ...nCols("ISBN"), "見たもの・読んだもの（前の欄）", "心に残った所・ひとこと"],
+    csvHead: ["気になったこと1（第2回）", "気になったこと2（第2回）", "気になったこと3（第2回）", "本か動画", ...nCols("見た動画"), ...nCols("読んだ本"), ...nCols("ISBN"), "心に残った所・ひとこと"],
     csvRow: r => {
       const d = r.note?.data || {}, q = r.l02?.data || {};
-      return [q.q1, q.q2, q.q3, pickKind(d), ...nVals(d, "douga"), ...nVals(d, "honTitle"), ...nVals(d, "isbn"), d.mono, d.kokoro];
+      return [q.q1, q.q2, q.q3, pickKind(d), ...nVals(d, "douga"), ...nVals(d, "honTitle"), ...nVals(d, "isbn"), d.kokoro];
     }
   },
   L03: {
     tab: "第3回", date: "2026-11-16",
-    stepNames: ["班", "研究を探す", "読む", "提出"],
-    head: ["本か動画（Quest 2）", "論文①", "論文②", "試した検索語"],
+    stepNames: ["班", "RefNavi", "研究を探す", "提出"],
+    head: ["本か動画（Quest 2）", "RefNavi", "論文①", "論文②", "試した検索語"],
     cells: r => {
       const d = r.note?.data || {}, ps = papersOf(d);
-      return [pickKind(r.r02?.data || {}) ? `<span class="mchip">${pickKind(r.r02?.data || {})}</span>` : "", paperCell(ps[0]), paperCell(ps[1]), esc(d.tried || "")];
+      return [pickKind(r.r02?.data || {}) ? `<span class="mchip">${pickKind(r.r02?.data || {})}</span>` : "", refCell(d), paperCell(ps[0]), paperCell(ps[1]), esc(d.tried || "")];
     },
-    nowrap: [0],
+    nowrap: [0, 1],
     chips(rs) {
       const n = k => rs.filter(r => r.note && papersOf(r.note.data || {}).length === k).length;
       return rs.some(r => r.note)
-        ? `<span class="hint">決めた論文：</span><span class="mchip">2本 <b>${n(2)}</b></span><span class="mchip">1本 <b>${n(1)}</b></span><span class="mchip zero">0本 <b>${n(0)}</b></span>`
+        ? `<span class="hint">RefNavi：</span><span class="mchip">登録できた <b>${rs.filter(r => refDone(r.note?.data || {})).length}</b></span><span class="hint">決めた論文：</span><span class="mchip">2本 <b>${n(2)}</b></span><span class="mchip">1本 <b>${n(1)}</b></span><span class="mchip zero">0本 <b>${n(0)}</b></span>`
         : "";
     },
     detail(r) {
@@ -187,15 +189,16 @@ const VIEWS = {
       return `
         <div class="recap">${item(r.l01?.data || {}, "setsu", "第1回の説")}<div class="tc-row"><span>${quest(2)}：見たもの・読んだもの</span><b>${pickCell(q) || "—"}</b></div>${item(q, "kokoro", "心に残った所")}</div>
         ${item(d, "hanMemo", "班で出たこと")}
+        <div class="tc-row"><span>RefNavi</span><b>${REF_LABELS.filter(([k]) => d[k]).map(([, l]) => esc(l)).join("・") || "—"}</b></div>
+        <div class="tc-row"><span>参考文献リスト</span><b>${esc(d.sanko || "—").replace(/\n/g, "<br>")}</b></div>
         ${item(d, "tried", "試した検索語")}
         ${ps.map((p, j) => `<div class="tc-row"><span>論文${j ? "②" : "①"}</span><b>${paperCell(p)}</b></div>`).join("") || `<div class="tc-row"><span>論文</span><b>—</b></div>`}
-        ${item(d, "yomiMemo", "読みながらのメモ")}
-        <div class="tc-row"><span>Geminiのチャット</span><b>${linkCell(d.geminiLink)}</b></div>`;
+        `;
     },
-    csvHead: ["試した検索語", "論文1", "論文1のURL", "論文2", "論文2のURL", "読みながらのメモ", "班で出たこと", "Geminiのリンク"],
+    csvHead: ["試した検索語", "論文1のURL", "論文1のDOI", "論文2のURL", "論文2のDOI", "参考文献リスト", "班で出たこと", ...REF_LABELS.map(([, l]) => "RefNavi：" + l)],
     csvRow: r => {
       const d = r.note?.data || {};
-      return [d.tried, d.p1Title, d.p1Url, d.p2Title, d.p2Url, d.yomiMemo, d.hanMemo, d.geminiLink];
+      return [d.tried, d.p1Url, d.p1Doi, d.p2Url, d.p2Doi, d.sanko, d.hanMemo, ...REF_LABELS.map(([k]) => d[k] ? "○" : "")];
     }
   },
   R03: {
@@ -203,7 +206,7 @@ const VIEWS = {
     stepNames: ["記録"],
     head: ["論文①", "論文②", "分かったこと", "まだ分かっていないこと"],
     cells: r => {
-      const d = r.note?.data || {}, ps = papersOf(r.l03?.data || {});
+      const d = r.note?.data || {}, ps = papersOf(d.fromL03 ? d : r.l03?.data || {});
       return [`${yomiChip(d.yomi1)} ${paperCell(ps[0])}`, `${yomiChip(d.yomi2)} ${paperCell(ps[1])}`, esc(d.wakatta || ""), esc(d.mada || "")];
     },
     nowrap: [],
@@ -215,16 +218,17 @@ const VIEWS = {
         : "";
     },
     detail(r) {
-      const d = r.note?.data || {}, ps = papersOf(r.l03?.data || {}), qs = qsOf(d);
+      const d = r.note?.data || {}, ps = papersOf(d.fromL03 ? d : r.l03?.data || {}), qs = qsOf(d);
       return `
         <div class="recap">${ps.map((p, j) => `<div class="tc-row"><span>論文${j ? "②" : "①"}（${esc(d[j ? "yomi2" : "yomi1"] || "—")}）</span><b>${paperCell(p)}</b></div>`).join("") || `<div class="tc-row"><span>論文</span><b>—</b></div>`}</div>
         ${item(d, "wakatta", "分かったこと")}${item(d, "mada", "まだ分かっていないこと")}
-        <div class="tc-row"><span>気になったこと</span><b>${qs.length ? `<ul class="qs">${qs.map(q => `<li>${esc(q)}</li>`).join("")}</ul>` : "—"}</b></div>`;
+        <div class="tc-row"><span>気になったこと</span><b>${qs.length ? `<ul class="qs">${qs.map(q => `<li>${esc(q)}</li>`).join("")}</ul>` : "—"}</b></div>
+        <div class="tc-row"><span>参考文献リスト</span><b>${esc(d.sanko || r.l03?.data?.sanko || "—").replace(/\n/g, "<br>")}</b></div>`;
     },
-    csvHead: ["論文1", "論文1を読んだか", "論文2", "論文2を読んだか", "分かったこと", "まだ分かっていないこと", "気になったこと1", "気になったこと2", "気になったこと3"],
+    csvHead: ["論文1のURL", "論文1を読んだか", "論文2のURL", "論文2を読んだか", "分かったこと", "まだ分かっていないこと", "気になったこと1", "気になったこと2", "気になったこと3", "参考文献リスト"],
     csvRow: r => {
-      const d = r.note?.data || {}, l = r.l03?.data || {};
-      return [l.p1Title, d.yomi1, l.p2Title, d.yomi2, d.wakatta, d.mada, d.q1, d.q2, d.q3];
+      const d = r.note?.data || {}, l = d.fromL03 ? d : r.l03?.data || {}; // 論文は Quest 3 で変えられる（11/7）
+      return [l.p1Url, d.yomi1, l.p2Url, d.yomi2, d.wakatta, d.mada, d.q1, d.q2, d.q3, d.sanko || r.l03?.data?.sanko];
     }
   },
   L04: {
@@ -435,8 +439,10 @@ export function mountTeacher({ be, app, dlg }) {
     box.innerHTML = "";
     const at = grade?.at ? grade.at.toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" }) : "";
     mth.innerHTML = `<span class="hint">${grade?.loading ? "読み込み中…" : at ? `${at} に読み込み` : ""}</span>
-      <button class="btn ghost small" id="reload" ${grade?.loading ? "disabled" : ""}>読み直す</button>`;
+      <button class="btn ghost small" id="reload" ${grade?.loading ? "disabled" : ""}>読み直す</button>
+      ${grade?.at && !grade?.error && gradeList().length ? `<button class="btn ghost small" id="slips">出せていない人の個票を印刷</button>` : ""}`;
     document.getElementById("reload").onclick = loadGrade;
+    const sb = document.getElementById("slips"); if (sb) sb.onclick = printSlips;
     if (grade?.error) { sum.innerHTML = ""; tbl.innerHTML = `<p class="error">${esc(grade.error)}</p>`; return; }
     if (!grade?.at) { sum.innerHTML = ""; tbl.innerHTML = ""; return; }
 
@@ -453,13 +459,7 @@ export function mountTeacher({ be, app, dlg }) {
 
     // 出せていない人を1人1行で：クラス・番号・いまの状況（まだログインしていない人も含める）
     const fmtWhen = d => d ? d.toLocaleString("ja-JP", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "—";
-    const order = { miss: 0, prev: 1, none: 2, work: 3 };
-    const list = gs.flatMap(g => [
-      ...g.miss.map(n => ({ c: g.c, number: n, kind: "miss", label: "まだログインしていない", stc: "st-miss" })),
-      ...g.people.filter(p => p.st.kind !== "done").map(p => ({ c: g.c, number: p.number, uid: p.uid, kind: p.st.kind,
-        label: p.st.kind === "work" ? `途中：${p.st.label}` : p.st.label, stc: p.st.cls,
-        when: p.st.kind === "work" ? (grade.notes.find(n => n.uid === p.uid && n.lesson === lesson)?.updatedAt || null) : null }))
-    ]).sort((a, b) => a.c - b.c || a.number - b.number || order[a.kind] - order[b.kind]);
+    const list = gradeList(gs);
     const warns = gs.flatMap(g => [
       g.dup.length ? `${classLabel(g.c)}：番号が重なっています（${g.dup.join("、")}番）` : "",
       g.extra.length ? `${classLabel(g.c)}：${g.size}番より大きい番号（${g.extra.join("、")}番）` : ""
@@ -478,6 +478,73 @@ export function mountTeacher({ be, app, dlg }) {
     tbl.querySelectorAll("[data-goto]").forEach(b => b.onclick = () => {
       cls = Number(b.dataset.goto); lsSet("gcis_t_cls", String(cls)); renderShell(); watch();
     });
+  }
+
+  // 出せていない人の一覧（画面の表と個票で共通）
+  function gradeList(gs = gradeRows()) {
+    const order = { miss: 0, prev: 1, none: 2, work: 3 };
+    return gs.flatMap(g => [
+      ...g.miss.map(n => ({ c: g.c, number: n, kind: "miss", label: "まだログインしていない", stc: "st-miss" })),
+      ...g.people.filter(p => p.st.kind !== "done").map(p => ({ c: g.c, number: p.number, uid: p.uid, kind: p.st.kind,
+        label: p.st.kind === "work" ? `途中：${p.st.label}` : p.st.label, stc: p.st.cls,
+        when: p.st.kind === "work" ? (grade.notes.find(n => n.uid === p.uid && n.lesson === lesson)?.updatedAt || null) : null }))
+    ]).sort((a, b) => a.c - b.c || a.number - b.number || order[a.kind] - order[b.kind]);
+  }
+
+  // 個票：出せていない人に「提出してね」の紙を配る（A4に10枚・切り取り線つき）。名前・アドレスは載せない
+  function printSlips() {
+    const list = gradeList(); if (!list.length) return;
+    const tab = view().tab, prevTab = prevOf(lesson) ? VIEWS[prevOf(lesson)].tab : "";
+    const at = grade.at.toLocaleString("ja-JP", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit" });
+    const url = "gcis-note.web.app"; // 開発版で印刷しても、生徒には本番の入口を案内する
+    const now = x => x.kind === "miss" ? "まだ探究ノートにログインしていないようです。"
+      : x.kind === "prev" ? `先に「${prevTab}」を提出すると、ホームに「${tab}」が出ます。`
+      : x.kind === "work" ? (view().stepNames.length > 1 ? `「${x.label.replace(/^途中：/, "")}」まで進んでいます。続きからでOK！` : "書きかけになっています。続きからでOK！")
+      : `「${tab}」をまだ始めていないようです。`;
+    const slip = x => `<div class="slip" data-c="${x.c}">
+        <div class="who"><b>${esc(classLabel(x.c))} ${esc(x.number)}番</b> さんへ</div>
+        <h2>探究ノート「${esc(tab)}」を提出してね</h2>
+        <p class="now">${esc(now(x))}</p>
+        <ol><li>Classroom のリンクから開く（<b>${url}</b>）</li>
+          <li>学校のアカウントでログイン${x.kind === "miss" ? "して、クラスと番号を入れる" : ""}</li>
+          <li>${x.kind === "prev" ? `「${esc(prevTab)}」を提出 → 「${esc(tab)}」も書いて提出` : `ホームの「${esc(tab)}」を書いて「提出する」`}</li></ol>
+        <div class="foot"><span class="due">締め切り：<span class="due-v"></span></span><span class="at">${esc(at)} 時点<br>行き違いならごめんね</span></div>
+      </div>`;
+    const w = window.open("", "_blank");
+    if (!w) { alert("新しいタブを開けませんでした。ポップアップを許可してから、もう一度押してください。"); return; }
+    w.document.write(`<!doctype html><html lang="ja"><head><meta charset="utf-8"><title>${esc(tab)} 個票（${list.length}枚）</title><style>
+      @page { size: A4; margin: 8mm; }
+      * { box-sizing: border-box; }
+      body { margin: 0; font-family: "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic", sans-serif; color: #111; }
+      .bar { position: sticky; top: 0; background: #f4f4f0; border-bottom: 1px solid #ccc; padding: 10px 14px; display: flex; gap: 16px; align-items: center; flex-wrap: wrap; font-size: 14px; }
+      .bar input[type=text] { font-size: 14px; padding: 4px 8px; width: 12em; }
+      .bar button { font-size: 15px; padding: 6px 16px; font-weight: bold; cursor: pointer; }
+      .sheet { width: 194mm; margin: 12px auto; display: grid; grid-template-columns: 1fr 1fr; }
+      .slip { height: 55mm; padding: 4mm 5mm; border: 1px dashed #999; margin: -0.5px 0 0 -0.5px; display: flex; flex-direction: column; break-inside: avoid; }
+      .who { font-size: 13pt; } .who b { font-size: 15pt; }
+      h2 { font-size: 13pt; margin: 1.5mm 0; }
+      .now { font-size: 9.5pt; margin: 0 0 1mm; line-height: 1.4; }
+      ol { font-size: 9.5pt; margin: 0; padding-left: 5mm; line-height: 1.45; }
+      .foot { margin-top: auto; display: flex; justify-content: space-between; align-items: flex-end; gap: 3mm; font-size: 7.5pt; color: #555; }
+      .due { font-size: 10pt; color: #111; white-space: nowrap; } .due-v { display: inline-block; min-width: 26mm; border-bottom: 1px solid #111; }
+      .at { text-align: right; }
+      .by-class .sheet + .sheet { break-before: page; }
+      body.nobrk .by-class, body:not(.nobrk) .all { display: none; }
+      @media print { .bar { display: none; } .sheet { margin: 0 auto; } }
+    </style></head><body>
+      <div class="bar"><span><b>${list.length}枚</b>（${esc(tab)}・${esc(at)} 時点）</span>
+        <label>締め切り <input type="text" id="due" placeholder="例：11/9（月）の朝"></label>
+        <label><input type="checkbox" id="brk"> クラスごとに改ページ</label>
+        <button id="go">印刷する</button></div>
+      <div class="all"><div class="sheet">${list.map(slip).join("")}</div></div>
+      <div class="by-class">${[...new Set(list.map(x => x.c))].map(c => `<div class="sheet">${list.filter(x => x.c === c).map(slip).join("")}</div>`).join("")}</div>
+    </body></html>`);
+    w.document.close();
+    const d = w.document;
+    d.body.classList.add("nobrk");
+    d.getElementById("due").oninput = e => d.querySelectorAll(".due-v").forEach(s => s.textContent = e.target.value);
+    d.getElementById("brk").onchange = e => d.body.classList.toggle("nobrk", !e.target.checked);
+    d.getElementById("go").onclick = () => w.print();
   }
 
   // 学年まとめのCSV：画面と同じく、出せていない人を1人1行（まだログインしていない人も含む）
@@ -583,10 +650,10 @@ export function mountTeacher({ be, app, dlg }) {
           ? { douga: "https://youtu.be/xxxxxxxxxxx?t=125", kokoro: "（動画の例）2分05秒あたり。雑音の大きさで、集中しやすさが逆になるという話" }
           : { honTitle: "『（本の題名の例）』", isbn: "9784000000000", kokoro: "（本の例）p.48 音楽のテンポで作業の速さが変わるという実験" } });
       if (i % 4 === 1) continue;
-      const s3 = i % 6 === 0 ? 1 : 3, two = i % 5 !== 0;
+      const s3 = i % 6 === 0 ? 2 : 3, two = i % 5 !== 0;
       nt.push({ uid, lesson: "L03", step: s3, submitted: s3 === 3, updatedAt: new Date(Date.now() - (i % 8) * 60000),
-        data: { tried: "雑音 集中 / noise concentration", p1Title: s3 >= 1 ? "（論文の題名の例）環境音が作業効率に与える影響" : "", p1Url: "https://example.com/a",
-          p2Title: s3 >= 1 && two ? "（論文の題名の例）大学生の学習環境と集中" : "", p2Url: "" } });
+        data: { refLogin: 1, refDouga: i % 3 ? 1 : "", refHon: i % 2 ? 1 : "", tried: "雑音 集中 / noise concentration", p1Url: "https://www.jstage.jst.go.jp/article/example/a",
+          p2Url: two ? "https://example.com/b" : "" } });
       if (s3 !== 3) continue;
       nt.push({ uid, lesson: "R03", step: 0, submitted: i % 3 !== 0, updatedAt: new Date(Date.now() - (i % 8) * 60000),
         data: { yomi1: i % 2 ? "全部読んだ" : "途中まで", yomi2: two ? (i % 3 ? "途中まで" : "全部読んだ") : "",
