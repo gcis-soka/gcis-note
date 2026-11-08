@@ -70,7 +70,7 @@ const KIJI = ["kiji", "kiji2", "kiji3"];
 function kijiFields(c) {
   return KIJI.map((k, i) => `
       <div class="pickone"${i ? ` data-reveal-after="${KIJI[i - 1]}" hidden` : ""}>
-        ${c.field(k, `読んだ記事のリンク${i ? `（${i + 1}つ目）` : ""}`, { type: "text", placeholder: "https://…", hint: i ? "" : "記事のページのURL。入力すると次の欄が出ます。第3回に RefNavi に登録するときに使います" })}
+        ${c.field(k, `読んだ記事のリンク${i ? `（${i + 1}つ目）` : ""}`, { type: "text", placeholder: "https://…", hint: i ? "" : "記事のページのURL。入力すると次の欄が出ます" })}
       </div>`).join("");
 }
 
