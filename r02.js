@@ -1,7 +1,7 @@
 // ステージ4：Quest 2（第2回→第3回）「？」の手がかりになりそうな本か動画
 // 仕様：ナレッジの L03.md「Quest 2」。授業中に始められる子は始める
 // data：findq（動画を探す言葉）・findb（本を探す言葉）・douga〜douga5（動画のリンク）・honTitle〜honTitle5（本の題名）・isbn〜isbn5・kokoro（いちばん心に残った所と、ひとこと）・fromL02（第2回の値を写した印）
-import { quest, LIBRARY_URL, YOUTUBE_SEARCH, PICK_N, listOf } from "./common.js";
+import { quest, LIBRARY_URL, JKS_URL, YOUTUBE_SEARCH, PICK_N, listOf } from "./common.js";
 const Q = quest(2);
 
 const qsOf = d => ["q1", "q2", "q3"].map(k => String(d[k] || "").trim()).filter(Boolean);
@@ -53,13 +53,17 @@ export function findTools(c) {
       <div class="searchbtns"><button type="button" class="btn" data-find="youtube" data-findkey="findq">YouTubeで探す ↗</button></div>
     </div>
     <div class="findrow">
-      <div class="field"><label><span class="label">本を探す言葉</span><span class="hint">蛍雪図書館（学校の図書館）で探します。AIの表の「学校図書館」の言葉でも、自分の言葉でもOK</span>
+      <div class="field"><label><span class="label">本を探す言葉</span><span class="hint">蛍雪図書館（学校の図書館）やジャパンナレッジSchoolで探します。AIの表の「学校図書館」の言葉でも、自分の言葉でもOK</span>
         <input data-key="findb" type="text" value="${esc(d.findb || "")}" placeholder="例：睡眠不足"></label></div>
       <div class="searchbtns"><button type="button" class="btn" data-find="library" data-findkey="findb">蛍雪図書館の蔵書検索 ↗</button></div>
       <p class="hint">ボタンを押すと、この言葉がコピーされます。開いたページで、下の図のとおりに探そう。</p>
       <p class="hint warn-text" data-find-msg hidden></p>
       ${LIB_HOWTO}
       <p class="hint">ヒットしないときは、もっと広い言葉にしてみよう（例：「睡眠不足」→「睡眠」）。</p>
+    </div>
+    <div class="findrow">
+      <p class="hint">ジャパンナレッジSchoolでは、新書（岩波ジュニア新書・ちくまプリマー新書・ブルーバックスなど）がPCですぐ読めます。学校のGoogleでログイン。ぴったりの本でなくても大丈夫。</p>
+      <div class="searchbtns"><button type="button" class="btn" data-find="jks" data-findkey="findb">ジャパンナレッジSchool ↗</button></div>
     </div>
     <p class="hint">本か動画のどちらか一方でOK。</p>`;
 }
@@ -70,6 +74,10 @@ export function handleFind(t, c) {
   if (b.dataset.find === "youtube") {
     if (!q) { alert("先に探す言葉を入れてね"); return true; }
     window.open(YOUTUBE_SEARCH(q), "_blank", "noopener");
+  } else if (b.dataset.find === "jks") {
+    // ジャパンナレッジSchool：本を探す言葉があればコピーしてから開く（11/8）
+    if (q) copyText(q);
+    window.open(JKS_URL, "_blank", "noopener");
   } else if (LIBRARY_URL.includes("{q}")) {
     window.open(LIBRARY_URL.replace("{q}", encodeURIComponent(q)), "_blank", "noopener");
   } else {
