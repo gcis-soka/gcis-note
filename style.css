@@ -326,18 +326,31 @@ hr.divider { border: none; border-top: 2px solid var(--line); margin: 24px 0 18p
 .pcard-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
 .pcard-head .btn { margin-left: auto; }
 .pfloat { display: flex; width: 100%; justify-content: center; margin: 10px 0 2px; }
+.memo2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; }
+.memo2 .field { margin: 8px 0; }
+@media (max-width: 640px) { .memo2 { grid-template-columns: 1fr; } }
+.memo-fold { margin: 10px 0 4px; }
+.memo-fold > summary .hint { font-weight: 400; margin-left: 4px; }
+.floathowto svg { max-width: 540px; }
 .pfloat-on { margin: 10px 0 4px; padding: 10px 14px; border-radius: 12px; background: var(--accent-soft); color: var(--accent); font-weight: 700; }
 /* メモの小さな窓（Document Picture-in-Picture・11/8 → 11/9 論文ごと） */
 body.pip { margin: 0; font-size: 15px; background: var(--card); }
 .pip-wrap { padding: 10px 14px 14px; }
-.pip-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+.pip-head { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+.pip-head .pip-x { margin-left: auto; }
 .pip-tabs { display: inline-flex; gap: 4px; background: var(--bg); padding: 3px; border-radius: 12px; }
 .pip-tab { font: inherit; font-weight: 700; font-size: 14px; border: none; background: none; color: var(--sub); padding: 5px 14px; border-radius: 9px; cursor: pointer; }
 .pip-tab.on { background: var(--card); color: var(--accent); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
 .pip-x { font: inherit; font-size: 13px; border: 1px solid var(--line); background: var(--card); color: var(--sub); border-radius: 999px; padding: 3px 12px; cursor: pointer; }
-.pip-open { display: flex; width: 100%; justify-content: center; }
-.pip-host { margin: 4px 0 6px; font-size: 12px; }
-.pip-field { margin: 10px 0; }
+.pip-open { padding: 6px 22px; font-size: 15px; }
+.pip-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0 14px; }
+@media (max-width: 600px) { .pip-cols { grid-template-columns: 1fr; } .pip-head { flex-wrap: wrap; } }
+.pip-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
+.pip-foot .label { font-size: 14px; margin: 0; }
+.pip-foot .choice.small { margin: 0; flex-wrap: nowrap; }
+.pip-foot .choice-btn { min-width: 0; flex: none; white-space: nowrap; padding: 3px 12px; font-size: 13px; }
+.pip-foot .hint { margin: 0 0 0 auto; font-size: 12px; }
+.pip-field { margin: 4px 0 8px; }
 .pip-field .label { font-size: 14px; margin-bottom: 2px; }
 .pip-field .chips { margin: 2px 0 4px; }
 .pip-field .chip { font-size: 12px; padding: 2px 10px; }

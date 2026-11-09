@@ -9,6 +9,17 @@
 
 export const safeUrl = u => /^https?:\/\//i.test(String(u || "").trim()) ? String(u).trim() : "";
 export const hostOf = u => { try { return new URL(u).hostname.replace(/^www\./, ""); } catch { return ""; } };
+// 論文を開くときのURL（11/9）。J-STAGE の論文のページ（…/_article/…）なら、本文の PDF（…/_pdf）を直接開く。
+// URL がなく DOI だけなら doi.org（論文のページに飛ぶ。PDF かどうかはサイトしだい）
+export function paperOpenUrl(p) {
+  const u = safeUrl(p?.url);
+  if (u) {
+    const m = /^(https?:\/\/(?:www\.)?jstage\.jst\.go\.jp\/article\/.+?)\/_article(?:\/.*)?$/i.exec(u);
+    return m ? `${m[1]}/_pdf` : u;
+  }
+  const d = String(p?.doi || "").trim();
+  return /^10\.\d{4,9}\/\S+$/.test(d) ? `https://doi.org/${d}` : "";
+}
 export const canFloat = () => typeof window !== "undefined" && "documentPictureInPicture" in window;
 
 // 画面1の状態（保存しない）
@@ -44,25 +55,27 @@ function renderPip() {
   if (!pip || !cfg) return;
   const doc = pip.document, d = pipCtx.d, ps = cfg.papers, p = ps[pick] || ps[0];
   if (!p) { doc.body.innerHTML = `<div class="pip-wrap"><p>論文がありません。アプリで論文を決めよう。</p></div>`; return; }
-  const yk = cfg.yomi(pick), url = safeUrl(p.url);
+  const yk = cfg.yomi(pick), url = paperOpenUrl(p);
   doc.body.innerHTML = `
     <div class="pip-wrap">
       <div class="pip-head">
         ${ps.length > 1 ? `<span class="pip-tabs">${ps.map((x, j) => `<button type="button" class="pip-tab ${j === pick ? "on" : ""}" data-pip-pick="${j}">論文${x.no}</button>`).join("")}</span>` : `<b>論文${p.no}</b>`}
+        ${url ? `<button type="button" class="btn primary small pip-open" data-pip-open>論文${p.no}を開く ↗</button>` : ""}
         <button type="button" class="pip-x" data-pip-close title="閉じる">閉じる</button>
       </div>
-      ${url ? `<button type="button" class="btn primary pip-open" data-pip-open>論文${p.no}を開く ↗</button><p class="hint pip-host">${esc(hostOf(url))}　開いた論文の上に、この窓が浮かびます</p>` : ""}
-      <p class="pip-off note" data-pip-off hidden>アプリで「論文を読む」の画面を開くと、また書けます。</p>
+      <p class="pip-off note" data-pip-off hidden>アプリで「論文を読もう」の画面を開くと、また書けます。</p>
+      <div class="pip-cols">
       ${cfg.fields(pick).map(f => `
         <div class="pip-field">
           <span class="label">${esc(f.label)}</span>
           ${f.chips ? `<span class="chips">${f.chips.map(ch => `<button type="button" class="chip" data-pip-chip="${esc(ch.text)}" data-pip-target="${f.key}">${esc(ch.label)}</button>`).join("")}</span>` : ""}
           <textarea data-pip-key="${f.key}" rows="${f.rows || 6}" placeholder="${esc(f.placeholder || "")}">${esc(d[f.key] || "")}</textarea>
         </div>`).join("")}
-      <div class="pip-field"><span class="label">どこまで読んだ？</span>
-        <div class="choice small">${cfg.YOMI.map(y => `<button type="button" class="choice-btn ${d[yk] === y ? "on" : ""}" data-pip-yomi="${y}">${y}</button>`).join("")}</div>
       </div>
-      <p class="hint">書いた分は、アプリに自動で入ります。</p>
+      <div class="pip-foot"><span class="label">どこまで読んだ？</span>
+        <span class="choice small">${cfg.YOMI.map(y => `<button type="button" class="choice-btn ${d[yk] === y ? "on" : ""}" data-pip-yomi="${y}">${y}</button>`).join("")}</span>
+        <span class="hint">書いた分は、アプリに自動で入ります</span>
+      </div>
     </div>`;
   syncOff();
 }
@@ -85,7 +98,7 @@ const rerenderApp = () => { if (onScreen()) keepScroll(() => pipCtx.rerender());
 async function openFloat(c) {
   if (pip) { try { pip.focus(); } catch { /* なし */ } return; }
   let w;
-  try { w = await window.documentPictureInPicture.requestWindow({ width: 420, height: 700 }); }
+  try { w = await window.documentPictureInPicture.requestWindow({ width: 860, height: 380 }); }
   catch (e) { console.error(e); alert("小さな窓を開けませんでした。「右半分に開く」で読もう"); return; }
   pip = w; pipCtx = c;
   const doc = w.document;
@@ -100,7 +113,7 @@ async function openFloat(c) {
   doc.addEventListener("click", e => {
     const t = e.target;
     if (t.closest?.("[data-pip-close]")) { w.close(); return; }
-    if (t.closest?.("[data-pip-open]")) { openPaper(safeUrl(cfg.papers[pick]?.url), { full: true, from: w }); return; }
+    if (t.closest?.("[data-pip-open]")) { openPaper(paperOpenUrl(cfg.papers[pick]), { full: true, from: w }); return; }
     const pk = t.closest?.("[data-pip-pick]");
     if (pk) { pick = Number(pk.dataset.pipPick) || 0; renderPip(); rerenderApp(); return; }
     if (!onScreen()) return;

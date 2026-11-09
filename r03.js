@@ -5,7 +5,7 @@
 //       p1Url・p2Url・p1Doi・p2Doi・kensaku・tried・sanko（第3回から写し、ここで変えられる）・fromL03
 import { quest, memoText } from "./common.js";
 export { memoText };
-import { setupReader, handleReader, canFloat, isFloating, safeUrl, hostOf } from "./reader.js";
+import { setupReader, handleReader, canFloat, isFloating, safeUrl, hostOf, paperOpenUrl } from "./reader.js";
 import { searchTools, paperFields, handleSearch, handlePaperInput, REF_FORMAT } from "./l03.js";
 import { copyText } from "./r02.js";
 
@@ -22,7 +22,7 @@ const YOMI = ["全部読んだ", "途中まで", "まだ"];
 
 // 論文ごとの欄の名前（①は前からの名前のまま）
 const KEYS = [{ w: "wakatta", m: "mada", y: "yomi1", u: "p1Url" }, { w: "wakatta2", m: "mada2", y: "yomi2", u: "p2Url" }];
-const papersOf = c => KEYS.map((k, j) => ({ j, no: j ? "②" : "①", raw: c.v(k.u), url: safeUrl(c.v(k.u)) })).filter(p => p.raw);
+const papersOf = c => KEYS.map((k, j) => ({ j, no: j ? "②" : "①", raw: c.v(k.u), url: safeUrl(c.v(k.u)), doi: c.v(`p${j + 1}Doi`) })).filter(p => p.raw);
 const doneOf = (c, j) => !!(c.v(KEYS[j].w) && c.v(KEYS[j].m));
 
 const Q_CHIPS = [
@@ -43,9 +43,44 @@ const MADA_CHIPS = [
 ];
 
 const fieldsOf = j => [
-  { key: KEYS[j].w, label: "分かったこと", placeholder: "何を・誰に・どうやって調べて、何が分かった？", rows: 6, chips: WAKATTA_CHIPS },
-  { key: KEYS[j].m, label: "まだ分かっていないこと", placeholder: "論文の最後の「今後の課題」や、自分の場面との違いを見てみよう", rows: 4, chips: MADA_CHIPS }
+  { key: KEYS[j].w, label: "分かったこと", placeholder: "何を・誰に・どうやって調べて、何が分かった？", rows: 5, chips: WAKATTA_CHIPS },
+  { key: KEYS[j].m, label: "まだ分かっていないこと", placeholder: "論文の最後の「今後の課題」や、自分の場面との違いを見てみよう", rows: 5, chips: MADA_CHIPS }
 ];
+
+// 浮かせて読むようすの図（11/9 先生の画面写真：論文の PDF が画面いっぱい、その下にメモの小さな窓）。題名・本文は線だけの見本
+const FLOAT_HOWTO = `
+  <figure class="urlhowto floathowto" aria-label="論文のPDFを画面いっぱいに開き、その上にメモの小さな窓を浮かせて書く">
+    <svg viewBox="0 0 540 262" role="img" xmlns="http://www.w3.org/2000/svg">
+      <rect x="1" y="1" width="538" height="260" rx="10" fill="#525659" stroke="#c9ced8"/>
+      <path d="M1 11a10 10 0 0 1 10-10h518a10 10 0 0 1 10 10v19H1z" fill="#e3e8f2"/>
+      <text x="14" y="21" font-size="11" fill="#5f6673">jstage.jst.go.jp/article/…/_pdf</text>
+      <rect x="1" y="30" width="538" height="20" fill="#3c3f43"/>
+      <text x="270" y="44" font-size="10" fill="#ddd" text-anchor="middle">1 / 4　　－ 100% ＋</text>
+      <rect x="150" y="58" width="240" height="200" fill="#fff"/>
+      <rect x="196" y="72" width="148" height="9" rx="2" fill="#444"/>
+      <rect x="226" y="88" width="88" height="5" rx="2" fill="#999"/>
+      <path d="M172 106 H368 M172 116 H368 M172 126 H368 M172 136 H330" stroke="#bbb" stroke-width="4"/>
+      <text x="400" y="80" font-size="11" fill="#fff">論文が画面いっぱいに</text>
+      <rect x="44" y="148" width="452" height="108" rx="8" fill="#fff" stroke="#1f6f5c" stroke-width="2"/>
+      <rect x="45" y="149" width="450" height="16" rx="7" fill="#f1f3f4"/>
+      <text x="54" y="161" font-size="9" fill="#5f6673">メモ（探究ノート）</text>
+      <rect x="54" y="172" width="96" height="20" rx="7" fill="#f6f3ec"/>
+      <rect x="56" y="174" width="46" height="16" rx="6" fill="#fff"/><text x="79" y="186" font-size="10" font-weight="700" fill="#1f6f5c" text-anchor="middle">論文①</text>
+      <text x="126" y="186" font-size="10" fill="#646a75" text-anchor="middle">論文②</text>
+      <rect x="160" y="172" width="150" height="20" rx="10" fill="#1f6f5c"/><text x="235" y="186" font-size="10" font-weight="700" fill="#fff" text-anchor="middle">論文①を開く ↗</text>
+      <rect x="156" y="168" width="158" height="28" rx="13" fill="none" stroke="#d93025" stroke-width="3"/>
+      <circle cx="330" cy="182" r="11" fill="#d93025"/><text x="325" y="187" font-size="13" font-weight="700" fill="#fff">2</text>
+      <text x="56" y="210" font-size="10" font-weight="700" fill="#23272f">分かったこと</text>
+      <rect x="54" y="214" width="214" height="34" rx="5" fill="#fffdf8" stroke="#e4ded2"/>
+      <path d="M62 226 H220 M62 238 H180" stroke="#7a8696" stroke-width="2"/>
+      <text x="276" y="210" font-size="10" font-weight="700" fill="#23272f">まだ分かっていないこと</text>
+      <rect x="274" y="214" width="212" height="34" rx="5" fill="#fffdf8" stroke="#e4ded2"/>
+      <path d="M282 226 H430" stroke="#7a8696" stroke-width="2"/>
+      <rect x="50" y="200" width="440" height="52" rx="7" fill="none" stroke="#d93025" stroke-width="3"/>
+      <circle cx="500" cy="226" r="11" fill="#d93025"/><text x="495" y="231" font-size="13" font-weight="700" fill="#fff">3</text>
+    </svg>
+    <figcaption>① 下の「<b>メモを浮かせて読む</b>」を押す → ② 出てきた小さな窓の「<b>論文を開く</b>」→ ③ 論文を読みながら、小さな窓に書く（書いた分は、このアプリに自動で入ります）</figcaption>
+  </figure>`;
 
 // 画面1：論文を読む
 function readStep(c) {
@@ -59,16 +94,24 @@ function readStep(c) {
         ${paperFields(c)}
       </details>`;
   if (!ps.length) return `<p class="note">まだ論文がありません。下で探して、URLを入れよう。</p>${findFold(true)}`;
-  const p = ps[pick], k = KEYS[p.j], fl = canFloat() && p.url, floating = isFloating();
+  const p = ps[pick], k = KEYS[p.j], open = paperOpenUrl(p), fl = canFloat() && !!open, floating = isFloating();
   const tabs = ps.length > 1 ? `
       <div class="ptabs" role="tablist">${ps.map((x, j) => `
         <button type="button" role="tab" class="ptab ${j === pick ? "on" : ""}" data-reader-pick="${j}" aria-selected="${j === pick}">
           <b>論文${x.no}</b><span>${esc(d[KEYS[x.j].y] || (doneOf(c, x.j) ? "メモあり" : "これから"))}</span>
         </button>`).join("")}
       </div>` : "";
+  // メモ欄：小さな窓が使えるときは折りたたむ（小さな窓で書いた分がここに入る。こちらに打ちこまないように：11/9 先生）
+  const memo = `
+        <div class="memo2">
+          ${field(k.w, "分かったこと", { rows: 5, placeholder: "何を・誰に・どうやって調べて、何が分かった？", chips: WAKATTA_CHIPS })}
+          ${field(k.m, "まだ分かっていないこと", { rows: 5, placeholder: "論文の最後の「今後の課題」や、自分の場面との違いを見てみよう", chips: MADA_CHIPS })}
+        </div>`;
+  const memoN = [k.w, k.m].filter(x => c.v(x)).length;
   return `
     <div data-reader-root>
-      <p class="lead">論文を読みながら、<b>分かったこと</b>と<b>まだ分かっていないこと</b>をメモしよう。今日は途中まででOK。続きは授業の外で読み切ります。</p>
+      <p class="lead">いよいよ<b>論文</b>を読みます。研究者が何を調べて、何が分かったのか。読みながら、<b>分かったこと</b>と<b>まだ分かっていないこと</b>をメモしていこう。</p>
+      ${fl && !floating ? FLOAT_HOWTO : ""}
       <details class="fold tips">
         <summary>読み方のコツ</summary>
         <ul>
@@ -82,14 +125,16 @@ function readStep(c) {
         <div class="pcard-head">
           <b>論文${p.no}</b>
           <span class="hint">${esc(p.url ? hostOf(p.url) : p.raw)}</span>
-          ${p.url ? `<button type="button" class="btn small ghost" data-reader-split="${esc(p.url)}">右半分に開く ↗</button>` : ""}
+          ${open ? `<button type="button" class="btn small ghost" data-reader-split="${esc(open)}">右半分に開く ↗</button>` : ""}
         </div>
         ${fl ? (floating
-          ? `<p class="pfloat-on">📝 いま小さな窓でメモしています。書いた分は、この下の欄に入ります。</p>`
-          : `<button type="button" class="btn primary big pfloat" data-reader-float>📝 メモを浮かせて、論文${p.no}を読む</button>
-             <p class="hint">メモだけの小さな窓が出ます。その窓の「論文を開く」で論文が開き、メモは論文の上に浮かんだままになります。</p>`) : ""}
-        ${field(k.w, "分かったこと", { rows: 5, placeholder: "何を・誰に・どうやって調べて、何が分かった？", hint: "書き出しを押すと入ります", chips: WAKATTA_CHIPS })}
-        ${field(k.m, "まだ分かっていないこと", { rows: 4, placeholder: "論文の最後の「今後の課題」や、自分の場面との違いを見てみよう", chips: MADA_CHIPS })}
+          ? `<p class="pfloat-on">📝 いま小さな窓でメモしています。書いた分は、下の「書いたメモ」に入ります。</p>`
+          : `<button type="button" class="btn primary big pfloat" data-reader-float>📝 メモを浮かせて、論文${p.no}を読む</button>`) : ""}
+        ${fl ? `
+        <details class="fold memo-fold">
+          <summary>書いたメモを見る・直す <span class="hint">${memoN ? `（${memoN}/2 書けています）` : "（小さな窓で書いた分が、ここに入ります）"}</span></summary>
+          ${memo}
+        </details>` : memo}
         <div class="field"><span class="label">どこまで読んだ？</span>
           <div class="choice small">${YOMI.map(y => `<button type="button" class="choice-btn ${d[k.y] === y ? "on" : ""}" data-yomi="${k.y}" data-val="${y}">${y}</button>`).join("")}</div>
         </div>
@@ -132,12 +177,12 @@ function doiList(c) {
 export const R03 = {
   id: "R03",
   quest: 3,
-  title: "論文を読んだ結果",
+  title: "論文を読もう",
   sub: "第4回（12/7）までに",
   mapAt: 2, // 文献（提出すると「問い」へ）
   after: "L03",
   uses: ["L03"],
-  steps: [{ title: "論文を読む", mins: 0 }, { title: "読み終えたら", mins: 0 }],
+  steps: [{ title: "論文を読もう", mins: 0 }, { title: "読み終えたら", mins: 0 }],
   geminiKey: "",
 
   render(i, c) {
