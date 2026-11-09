@@ -391,7 +391,7 @@ export const L03 = {
       ${searchTools(c)}
       <h3>③ 論文を2本決める</h3>
       ${paperFields(c)}
-      <p class="hint">決めたら、RefNavi にも登録しよう。ホームの「メディアの選択」で論文を選び、「ISBN コード／DOI コード／URL」の欄に<b>DOI の番号</b>を貼ります。DOIがない論文は、URLで登録します。</p>
+      <p class="hint">決めたら、RefNavi にも登録しよう。「メディアの選択」で「<b>論文</b>」→「<b>DOI</b>」の欄に<b>DOI の番号</b>を貼って「<b>照合</b>」。DOIがない論文は、URLで登録します。</p>
       ${doiCopyButtons(2)}`;
     // i === 3：提出（提出すると Quest 3 が出る。授業の残りの時間で Quest 3 を読みはじめる：11/7）
     const ps = papers(c);

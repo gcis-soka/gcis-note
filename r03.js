@@ -6,16 +6,21 @@
 import { quest, memoText, doiOf } from "./common.js";
 export { memoText };
 import { setupReader, handleReader, canFloat, isFloating, safeUrl, hostOf, paperOpenUrl } from "./reader.js";
-import { searchTools, paperFields, handleSearch, handlePaperInput, REF_FORMAT } from "./l03.js";
+import { searchTools, paperFields, handleSearch, handlePaperInput, doiLink, REF_FORMAT } from "./l03.js";
 import { copyText } from "./r02.js";
 
-// 初めて開いたとき、第3回の論文のURLと検索語を写す（論文を変えるのは Quest 3 の中で：11/7）
+// 第3回の論文のURL・DOI・検索語を写す（論文を変えるのは Quest 3 の中で：11/7）。
+// 11/9：開くたびに、Quest 3 でまだ一度も触っていない欄（値がない＝undefined）にだけ写す。
+// 先に Quest 3 を開いてから第3回に DOI を入れても写るように。Quest 3 で消した欄（""）は写し直さない
 const FROM_L03 = ["p1Url", "p2Url", "p1Doi", "p2Doi", "kensaku", "tried", "sanko"];
 function copyFromL03(c) {
-  if (c.d.fromL03) return;
   const L3 = c.prev("L03");
-  FROM_L03.forEach(k => { if (!c.v(k) && String(L3[k] || "").trim()) c.d[k] = L3[k]; });
-  c.set("fromL03", 1);
+  let n = 0;
+  FROM_L03.forEach(k => {
+    const v = String(L3[k] || "").trim();
+    if (c.d[k] === undefined && v) { c.d[k] = /Doi$/.test(k) ? (doiLink(v) || v) : v; n++; }
+  });
+  if (n || !c.d.fromL03) c.set("fromL03", 1);
 }
 const Q = quest(3);
 const YOMI = ["全部読んだ", "途中まで", "まだ"];
@@ -166,7 +171,7 @@ function afterStep(c) {
       ${field("q3", "③", { type: "text", qmark: true })}
       <h3>論文も RefNavi に登録して、参考文献リストを新しくしよう</h3>
       <ol class="todo">
-        <li>RefNavi のホームの「メディアの選択」で論文を選び、「ISBN コード／DOI コード／URL」の欄に<b>論文のDOI</b>を貼って登録（DOIがない論文はURLで）</li>
+        <li>RefNavi の「メディアの選択」で「<b>論文</b>」→「<b>DOI</b>」の欄に、下の<b>DOI の番号</b>を貼って「<b>照合</b>」→ 登録</li>
         <li>「整理する」の「リスト」で全部にチェック →「出力」→ ${REF_FORMAT ? `「${REF_FORMAT}」` : "先生が指定した書式"} → コピー</li>
         <li>下の欄を消して、貼り直す</li>
       </ol>
