@@ -20,7 +20,9 @@ export const JKS_URL = "https://school.japanknowledge.com/"; // ジャパンナ�
 export const LIBRARY_URL = "https://lib-finder.net/tokyo_soka_lib/"; // 学校図書館の蔵書検索（11/4）。検索語をURLに載せられないので、言葉はコピーして貼ってもらう
 // RefNavi のグループコード（第3回で生徒に見せる）。期ごとに { all: "コード" }（学年で1つ）か { 1: "…", 2: "…" }（クラスごと）。
 // 空なら「先生が伝えるグループコード」と出す。学校コードは書かない（生徒に教えないもの）
-export const REFNAVI_GROUPS = { "59": {} };
+export const REFNAVI_GROUPS = {
+  "59": { 1: "9da62", 2: "99ada", 3: "776a4", 4: "90102", 5: "cb119", 6: "6aa3b", 7: "fabb3", 8: "1b818" }, // 1-1H59〜1-8H59（11/9）
+};
 export const refnaviGroupOf = (ki, cls) => { const g = REFNAVI_GROUPS[ki] || {}; return String(g[cls] ?? g.all ?? "").trim(); };
 // DOI の番号だけを取り出す（「https://doi.org/10.…」「DOI: 10.…」などから「10.…」に。見つからなければ空）（11/8）
 export function doiOf(s) {
