@@ -205,29 +205,28 @@ const REF_LOGIN_HOWTO = `
     </svg>
     <figcaption>① 「<b>Googleでログイン</b>」を押す → ② <b>学校のアカウント</b>（…@tokyo.soka.ed.jp）を選ぶ</figcaption>
   </figure>`;
-// 初めて RefNavi に入るとき：「児童・生徒」を丸で選び、グループコードを入れて「RefNaviに入る」（11/9 実際の画面に合わせた）
+// 初めて RefNavi に入るとき：1つの画面に「児童・生徒」（はじめから選ばれている）・グループコード・「RefNaviに入る」が縦に並ぶ（11/9 先生の画面写真に合わせた）
 const REF_FIRST_HOWTO = `
-  <figure class="urlhowto libhowto" aria-label="初めてのとき：児童・生徒を選び、グループコードを入れてRefNaviに入る">
-    <svg viewBox="0 0 540 150" role="img" xmlns="http://www.w3.org/2000/svg">
-      <rect x="1" y="1" width="250" height="148" rx="10" fill="#fff" stroke="#c9ced8"/>
-      <text x="16" y="30" font-size="11" fill="#333">先生か児童生徒のどちらか選んでください。</text>
-      <circle cx="36" cy="62" r="7" fill="#fff" stroke="#1a73e8" stroke-width="2"/><circle cx="36" cy="62" r="3.5" fill="#1a73e8"/>
-      <text x="50" y="67" font-size="12" fill="#222">児童・生徒</text>
-      <circle cx="36" cy="88" r="7" fill="#fff" stroke="#999" stroke-width="1.5"/>
-      <text x="50" y="93" font-size="12" fill="#999">先生</text>
-      <rect x="22" y="48" width="104" height="28" rx="6" fill="none" stroke="#d93025" stroke-width="3"/>
-      <circle cx="146" cy="62" r="12" fill="#d93025"/><text x="141" y="67" font-size="14" font-weight="700" fill="#fff">3</text>
-      <path d="M258 75 L278 75" stroke="#d93025" stroke-width="3"/><path d="M276 67 L288 75 L276 83 Z" fill="#d93025"/>
-      <rect x="289" y="1" width="250" height="148" rx="10" fill="#fff" stroke="#c9ced8"/>
-      <text x="304" y="44" font-size="11" fill="#333">グループコード：</text>
-      <rect x="402" y="28" width="104" height="26" rx="3" fill="#fff" stroke="#1a73e8"/><text x="410" y="46" font-size="11" fill="#999">ここに入れる</text>
-      <rect x="398" y="24" width="112" height="34" rx="6" fill="none" stroke="#d93025" stroke-width="3"/>
-      <circle cx="524" cy="41" r="11" fill="#d93025"/><text x="519" y="46" font-size="14" font-weight="700" fill="#fff">4</text>
-      <rect x="330" y="84" width="150" height="30" rx="4" fill="#1a73e8"/><text x="405" y="104" font-size="12" fill="#fff" text-anchor="middle">RefNaviに入る</text>
-      <rect x="326" y="80" width="158" height="38" rx="6" fill="none" stroke="#d93025" stroke-width="3"/>
-      <circle cx="500" cy="99" r="12" fill="#d93025"/><text x="495" y="104" font-size="14" font-weight="700" fill="#fff">5</text>
+  <figure class="urlhowto libhowto" aria-label="初めてのとき：児童・生徒になっているか確かめ、グループコードを入れてRefNaviに入る">
+    <svg viewBox="0 0 540 200" role="img" xmlns="http://www.w3.org/2000/svg">
+      <rect x="95" y="1" width="350" height="198" rx="10" fill="#fff" stroke="#c9ced8"/>
+      <text x="270" y="32" font-size="13" font-weight="700" fill="#222" text-anchor="middle">先生か児童生徒のどちらか選んでください。</text>
+      <circle cx="236" cy="58" r="7" fill="#fff" stroke="#1a73e8" stroke-width="2"/><circle cx="236" cy="58" r="3.5" fill="#1a73e8"/>
+      <text x="250" y="63" font-size="12" fill="#222">児童・生徒</text>
+      <circle cx="236" cy="82" r="7" fill="#fff" stroke="#bbb" stroke-width="1.5"/>
+      <text x="250" y="87" font-size="12" fill="#999">先生</text>
+      <rect x="222" y="45" width="96" height="26" rx="6" fill="none" stroke="#d93025" stroke-width="3"/>
+      <circle cx="336" cy="58" r="12" fill="#d93025"/><text x="331" y="63" font-size="14" font-weight="700" fill="#fff">3</text>
+      <text x="354" y="62" font-size="10" fill="#5f6673">はじめから</text><text x="354" y="75" font-size="10" fill="#5f6673">選ばれている</text>
+      <text x="172" y="124" font-size="11" fill="#333">グループコード：</text>
+      <rect x="262" y="106" width="96" height="28" rx="4" fill="#fff" stroke="#aaa"/><text x="270" y="125" font-size="11" fill="#999">ここに貼る</text>
+      <rect x="258" y="102" width="104" height="36" rx="6" fill="none" stroke="#d93025" stroke-width="3"/>
+      <circle cx="380" cy="120" r="12" fill="#d93025"/><text x="375" y="125" font-size="14" font-weight="700" fill="#fff">4</text>
+      <rect x="195" y="152" width="150" height="32" rx="5" fill="#1a73e8"/><text x="270" y="173" font-size="12" fill="#fff" text-anchor="middle">RefNaviに入る</text>
+      <rect x="191" y="148" width="158" height="40" rx="7" fill="none" stroke="#d93025" stroke-width="3"/>
+      <circle cx="367" cy="168" r="12" fill="#d93025"/><text x="362" y="173" font-size="14" font-weight="700" fill="#fff">5</text>
     </svg>
-    <figcaption>初めてのときだけ：③ 「<b>児童・生徒</b>」を選ぶ → ④ <b>グループコード</b>を入れる → ⑤ 「<b>RefNaviに入る</b>」（2回目からは、ログインするだけで使えます）</figcaption>
+    <figcaption>初めてのときだけ：③ 「<b>児童・生徒</b>」になっているか確かめる（はじめから選ばれています）→ ④ <b>グループコード</b>を貼る → ⑤ 「<b>RefNaviに入る</b>」（2回目からは、ログインするだけで使えます）</figcaption>
   </figure>`;
 // 個人タグ（11/9 先生）：全員が同じ名前の個人タグを作り、登録のたびに選ぶ。グループタグは選ばない
 export const REF_TAG = "1年個人探究";
