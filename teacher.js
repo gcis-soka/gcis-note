@@ -37,8 +37,8 @@ const papersOf = d => [["p1Url", "p1Doi"], ["p2Url", "p2Doi"]].map(([k, o]) => (
 // DOI はリンクの形で開けるように（番号だけは RefNavi に写すときだけ：11/9）
 const paperCell = p => p ? linkCell(p.url) + (p.doi ? ` <a class="hint" href="https://doi.org/${esc(p.doi)}" target="_blank" rel="noopener">DOI ↗</a>` : "") : "";
 // 第3回：RefNavi の進み具合（生徒が自分で押す：l03.js の REF_CHECKS と同じ）
-const REF_LABELS = [["refLogin", "ログイン"], ["refDouga", "動画"], ["refHon", "本"], ["refHan", "班の全員"]];
-const refDone = d => !!(d.refDouga || d.refHon);
+const REF_LABELS = [["refLogin", "ログイン"], ["refDouga", "動画"], ["refHon", "本"], ["refKiji", "記事"], ["refHan", "班の全員"]];
+const refDone = d => !!(d.refDouga || d.refHon || d.refKiji);
 const refCell = d => d.refLogin || refDone(d) ? `<span class="mchip ${refDone(d) ? "" : "zero"}">${refDone(d) ? "登録" : "ログイン"}</span>` : "";
 const yomiChip = x => x ? `<span class="mchip ${x === "全部読んだ" ? "" : "zero"}">${esc(x)}</span>` : "";
 const qsList = d => Array.isArray(d.qs) ? d.qs : []; // 第4回の問い [{t, k, a}]
@@ -177,7 +177,7 @@ const VIEWS = {
   },
   L03: {
     tab: "第3回", date: "2026-11-16",
-    stepNames: ["班", "RefNavi", "研究を探す", "提出"],
+    stepNames: ["班", "RefNavi", "リスト", "研究を探す", "提出"],
     head: ["本か動画（Quest 2）", "RefNavi", "論文①", "論文②", "試した検索語"],
     cells: r => {
       const d = r.note?.data || {}, ps = papersOf(d);
@@ -658,11 +658,11 @@ export function mountTeacher({ be, app, dlg }) {
           ? { douga: "https://youtu.be/xxxxxxxxxxx?t=125", kokoro: "（動画の例）2分05秒あたり。雑音の大きさで、集中しやすさが逆になるという話" }
           : { honTitle: "『（本の題名の例）』", isbn: "9784000000000", kokoro: "（本の例）p.48 音楽のテンポで作業の速さが変わるという実験" } });
       if (i % 4 === 1) continue;
-      const s3 = i % 6 === 0 ? 2 : 3, two = i % 5 !== 0;
-      nt.push({ uid, lesson: "L03", step: s3, submitted: s3 === 3, updatedAt: new Date(Date.now() - (i % 8) * 60000),
+      const s3 = i % 6 === 0 ? 3 : 4, two = i % 5 !== 0;
+      nt.push({ uid, lesson: "L03", step: s3, submitted: s3 === 4, updatedAt: new Date(Date.now() - (i % 8) * 60000),
         data: { refLogin: 1, refDouga: i % 3 ? 1 : "", refHon: i % 2 ? 1 : "", tried: "雑音 集中 / noise concentration", p1Url: "https://www.jstage.jst.go.jp/article/example/a",
           p2Url: two ? "https://example.com/b" : "" } });
-      if (s3 !== 3) continue;
+      if (s3 !== 4) continue;
       nt.push({ uid, lesson: "R03", step: 0, submitted: i % 3 !== 0, updatedAt: new Date(Date.now() - (i % 8) * 60000),
         data: { yomi1: i % 2 ? "全部読んだ" : "途中まで", yomi2: two ? (i % 3 ? "途中まで" : "全部読んだ") : "",
           wakatta: "（分かったことの例）大学生40人で、カフェ程度の音のときに作業が速かった", mada: "（まだ分かっていないことの例）高校生や、歌詞のある音楽の場合は調べていない", q1: "部活のあとでも同じ？", ...(two && i % 2 ? { wakatta2: "（論文②の例）小学生では差がなかった", mada2: "（論文②の例）中学生・高校生は調べていない" } : {}) } });

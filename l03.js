@@ -1,7 +1,7 @@
 // ステージ5／第3回（11/16）先行研究に出会う（A案：ニュース→本・動画→論文）
 // 仕様：ナレッジの L03.md。論文は2本決める。長すぎないものを選んで全文を読む（授業で途中まで→残りは Quest 3）
 // RefNavi への登録は授業で（URLを貼るだけ）。アプリは登録しないが、登録するもの（第2回の記事・Quest 2 の動画と本）を一覧で出す（11/5）
-// data：hanMemo・refLogin・refDouga・refHon・refHan（RefNavi の進み具合）・kensaku・tried・p1Url・p2Url・p1Doi・p2Doi・sanko（RefNavi から貼った参考文献リスト）（読むのは Quest 3。授業中に始める：11/7）
+// data：hanMemo・refLogin・refDouga・refHon・refKiji・refHan（RefNavi の進み具合）・kensaku・tried・p1Url・p2Url・p1Doi・p2Doi・sanko（RefNavi から貼った参考文献リスト）（読むのは Quest 3。授業中に始める：11/7）
 // 論文は URL だけ（題名は RefNavi に入れる：11/7）。Geminiのチャットは AIの文の下の chatUrl で預かる（共有リンク欄は 11/7 廃止）
 import { quest, listOf, booksOf, refnaviGroupOf, REFNAVI_GROUPS, doiOf } from "./common.js";
 import { copyText } from "./r02.js";
@@ -338,41 +338,51 @@ const REF_ADD_HOWTO = `
 // RefNavi の形式：MLA 第9版・APA・ハーバード式・Bibtex・SIST02・学びの技（初期設定）・Refnavi。仮に APA（11/7。先生が RefNavi で出力を確かめたら確定）
 export const REF_FORMAT = "APA";
 const fmtName = () => REF_FORMAT ? `「${REF_FORMAT}」` : "先生が指定した書式";
-// 出力の図（「整理する」→「リスト」→チェック→「出力」→書式→クリップボードにコピー）。RefNavi_manual_52 の名前どおり、並びは図式
+// 出力の図（「整理する」→「リスト」→「表示中を全て選択」→「出力」→書式→コピー）。11/9 先生の画面写真に合わせた（出力のあとは RefNavi_manual_52 の名前どおり・図式）
 const refOutHowto = () => `
-  <figure class="urlhowto libhowto" aria-label="RefNaviの出力：整理するのリストでチェックし、出力で書式を選んでコピー">
-    <svg viewBox="0 0 540 190" role="img" xmlns="http://www.w3.org/2000/svg">
-      <rect x="1" y="1" width="250" height="188" rx="10" fill="#fff" stroke="#c9ced8"/>
-      <text x="16" y="28" font-size="13" font-weight="700" fill="#222">整理する ＞ リスト</text>
-      <path d="M12 40 H240" stroke="#e3e3e3"/>
-      <rect x="20" y="54" width="14" height="14" rx="2" fill="#388e3c"/><text x="23" y="66" font-size="11" fill="#fff">✓</text><text x="42" y="66" font-size="11" fill="#333">『絵本の力』</text>
-      <rect x="20" y="80" width="14" height="14" rx="2" fill="#388e3c"/><text x="23" y="92" font-size="11" fill="#fff">✓</text><text x="42" y="92" font-size="11" fill="#333">（動画）youtu.be/…</text>
-      <rect x="20" y="106" width="14" height="14" rx="2" fill="#388e3c"/><text x="23" y="118" font-size="11" fill="#fff">✓</text><text x="42" y="118" font-size="11" fill="#333">（論文）…</text>
-      <rect x="16" y="48" width="160" height="78" rx="6" fill="none" stroke="#d93025" stroke-width="3"/>
-      <circle cx="196" cy="86" r="12" fill="#d93025"/><text x="191" y="91" font-size="14" font-weight="700" fill="#fff">1</text>
-      <rect x="20" y="142" width="64" height="28" rx="4" fill="#388e3c"/><text x="52" y="161" font-size="12" fill="#fff" text-anchor="middle">出力</text>
-      <rect x="16" y="138" width="72" height="36" rx="6" fill="none" stroke="#d93025" stroke-width="3"/>
-      <circle cx="106" cy="156" r="12" fill="#d93025"/><text x="101" y="161" font-size="14" font-weight="700" fill="#fff">2</text>
-      <path d="M258 95 L278 95" stroke="#d93025" stroke-width="3"/><path d="M276 87 L288 95 L276 103 Z" fill="#d93025"/>
-      <rect x="289" y="1" width="250" height="188" rx="10" fill="#fff" stroke="#c9ced8"/>
+  <figure class="urlhowto libhowto" aria-label="RefNaviの出力：整理するのリストで、表示中を全て選択し、出力で書式を選んでコピー">
+    <svg viewBox="0 0 540 230" role="img" xmlns="http://www.w3.org/2000/svg">
+      <rect x="1" y="1" width="250" height="228" rx="10" fill="#fff" stroke="#c9ced8"/>
+      <text x="20" y="28" font-size="12" font-weight="700" fill="#222">整理する ▾</text>
+      <rect x="14" y="13" width="80" height="22" rx="5" fill="none" stroke="#d93025" stroke-width="3"/>
+      <rect x="104" y="12" width="70" height="44" rx="4" fill="#fff" stroke="#bbb"/>
+      <text x="114" y="30" font-size="11" font-weight="700" fill="#222">リスト</text><text x="114" y="48" font-size="11" fill="#999">タグ管理</text>
+      <rect x="108" y="16" width="62" height="20" rx="4" fill="none" stroke="#d93025" stroke-width="3"/>
+      <circle cx="190" cy="27" r="11" fill="#d93025"/><text x="186" y="31" font-size="12" font-weight="700" fill="#fff">1</text>
+      <text x="16" y="78" font-size="11" font-weight="700" fill="#333">あなたの情報の一覧</text>
+      <rect x="16" y="86" width="220" height="16" fill="#f4f6f8"/><text x="22" y="98" font-size="10" fill="#555">『絵本の力』</text><rect x="214" y="89" width="10" height="10" rx="2" fill="#1a73e8"/>
+      <rect x="16" y="104" width="220" height="16" fill="#f4f6f8"/><text x="22" y="116" font-size="10" fill="#555">（動画）…</text><rect x="214" y="107" width="10" height="10" rx="2" fill="#1a73e8"/>
+      <rect x="16" y="122" width="220" height="16" fill="#f4f6f8"/><text x="22" y="134" font-size="10" fill="#555">（記事）…</text><rect x="214" y="125" width="10" height="10" rx="2" fill="#1a73e8"/>
+      <rect x="16" y="146" width="30" height="16" rx="2" fill="#fff" stroke="#999"/><text x="20" y="158" font-size="10" fill="#333">10 ▾</text>
+      <text x="52" y="158" font-size="9" fill="#5f6673">← 10件より多ければ大きく</text>
+      <rect x="20" y="172" width="104" height="22" rx="4" fill="#6c757d"/><text x="72" y="187" font-size="10" fill="#fff" text-anchor="middle">表示中を全て選択</text>
+      <rect x="16" y="168" width="112" height="30" rx="6" fill="none" stroke="#d93025" stroke-width="3"/>
+      <circle cx="142" cy="183" r="11" fill="#d93025"/><text x="138" y="187" font-size="12" font-weight="700" fill="#fff">2</text>
+      <rect x="20" y="202" width="44" height="22" rx="4" fill="#198754"/><text x="42" y="217" font-size="11" fill="#fff" text-anchor="middle">出力</text>
+      <rect x="16" y="198" width="52" height="30" rx="6" fill="none" stroke="#d93025" stroke-width="3"/>
+      <circle cx="82" cy="213" r="11" fill="#d93025"/><text x="78" y="217" font-size="12" font-weight="700" fill="#fff">3</text>
+      <rect x="164" y="202" width="40" height="22" rx="4" fill="#0d6efd"/><text x="184" y="217" font-size="10" fill="#fff" text-anchor="middle">タグ</text>
+      <path d="M258 115 L278 115" stroke="#d93025" stroke-width="3"/><path d="M276 107 L288 115 L276 123 Z" fill="#d93025"/>
+      <rect x="289" y="1" width="250" height="228" rx="10" fill="#fff" stroke="#c9ced8"/>
       <text x="304" y="28" font-size="13" font-weight="700" fill="#222">出力</text>
       <path d="M300 40 H528" stroke="#e3e3e3"/>
-      <text x="304" y="62" font-size="11" fill="#333">出力形式</text>
-      <rect x="304" y="70" width="150" height="26" rx="3" fill="#fff" stroke="#aaa"/><text x="312" y="88" font-size="11" fill="#333">${REF_FORMAT || "先生が指定した書式"} ▾</text>
-      <rect x="300" y="66" width="158" height="34" rx="6" fill="none" stroke="#d93025" stroke-width="3"/>
-      <circle cx="476" cy="83" r="12" fill="#d93025"/><text x="471" y="88" font-size="14" font-weight="700" fill="#fff">3</text>
-      <rect x="304" y="120" width="150" height="28" rx="4" fill="#388e3c"/><text x="379" y="139" font-size="11" fill="#fff" text-anchor="middle">クリップボードにコピー</text>
-      <rect x="300" y="116" width="158" height="36" rx="6" fill="none" stroke="#d93025" stroke-width="3"/>
-      <circle cx="476" cy="134" r="12" fill="#d93025"/><text x="471" y="139" font-size="14" font-weight="700" fill="#fff">4</text>
-      <text x="304" y="172" font-size="11" fill="#5f6673">→ アプリの「参考文献リスト」に貼る</text>
+      <text x="304" y="66" font-size="11" fill="#333">出力形式</text>
+      <rect x="304" y="74" width="150" height="26" rx="3" fill="#fff" stroke="#aaa"/><text x="312" y="92" font-size="11" fill="#333">${REF_FORMAT || "先生が指定した書式"} ▾</text>
+      <rect x="300" y="70" width="158" height="34" rx="6" fill="none" stroke="#d93025" stroke-width="3"/>
+      <circle cx="476" cy="87" r="12" fill="#d93025"/><text x="471" y="92" font-size="14" font-weight="700" fill="#fff">4</text>
+      <rect x="304" y="128" width="150" height="28" rx="4" fill="#388e3c"/><text x="379" y="147" font-size="11" fill="#fff" text-anchor="middle">クリップボードにコピー</text>
+      <rect x="300" y="124" width="158" height="36" rx="6" fill="none" stroke="#d93025" stroke-width="3"/>
+      <circle cx="476" cy="142" r="12" fill="#d93025"/><text x="471" y="147" font-size="14" font-weight="700" fill="#fff">5</text>
+      <text x="304" y="186" font-size="11" fill="#5f6673">→ 下の「参考文献リスト」に貼る</text>
     </svg>
-    <figcaption>① 「<b>整理する</b>」の「<b>リスト</b>」で、登録した資料にチェック → ② 「<b>出力</b>」→ ③ 出力形式で<b>${fmtName()}</b>を選ぶ → ④ クリップボードにコピーして、下の欄に貼る</figcaption>
+    <figcaption>① 「<b>整理する</b>」→「<b>リスト</b>」→ ② 「<b>表示中を全て選択</b>」→ ③ 「<b>出力</b>」→ ④ 出力形式で<b>${fmtName()}</b>を選ぶ → ⑤ クリップボードにコピーして、下の欄に貼る</figcaption>
   </figure>`;
 // 班の進み具合（自分で押す）。教員画面にも出る
 const REF_CHECKS = [
   ["refLogin", "ログインできた"],
   ["refDouga", "動画を登録できた（見た人）"],
   ["refHon", "本を登録できた（読んだ人）"],
+  ["refKiji", "記事を登録できた"],
   ["refHan", "班の全員が登録できた"]
 ];
 // RefNavi に登録するもの（Quest 2 の動画と本、第2回の記事）。1行ずつコピーできる
@@ -384,10 +394,11 @@ function refList(c) {
   const videos = listOf(R2, "douga").map(u => row("動画", u, u, safeUrl(u)));
   const books = booksOf(R2).map(b => b.isbn ? row("本", `${b.title}　ISBN ${b.isbn}`, b.isbn, "") : row("本", `${b.title}（ISBNなし）`, b.title, ""));
   const arts = listOf(L2, "kiji").map(u => row("記事", u, u, safeUrl(u)));
-  if (!videos.length && !books.length && !arts.length) return `<p class="note">${quest(2)} に動画も本もありません。ホームの「${quest(2)}」から書き足そう。</p>`;
+  const none = [!videos.length && !books.length ? `${quest(2)} に動画も本もありません。ホームの「${quest(2)}」から書き足そう。` : "",
+    !arts.length ? `第2回に読んだ記事のリンクがありません。ホームの「第2回」の画面3から書き足そう。` : ""].filter(Boolean);
   return `
-    ${videos.length || books.length ? `<ul class="reflist">${videos.join("")}${books.join("")}</ul>` : ""}
-    ${arts.length ? `<p class="hint">時間があれば、第2回に読んだ記事も</p><ul class="reflist">${arts.join("")}</ul>` : ""}`;
+    ${videos.length || books.length || arts.length ? `<ul class="reflist">${videos.join("")}${books.join("")}${arts.join("")}</ul>` : ""}
+    ${none.map(t => `<p class="note">${t}</p>`).join("")}`;
 }
 // グループコード：生徒には自分のクラスの分だけ。先生が生徒画面を見ているときは全クラス分（11/9）
 function groupCodeLine(c) {
@@ -397,16 +408,26 @@ function groupCodeLine(c) {
   const all = Object.entries(REFNAVI_GROUPS).flatMap(([ki, gs]) => Object.entries(gs).map(([cls, code]) => `${esc(ki)}期 ${esc(cls)}組 <b>${esc(code)}</b>`));
   return mine + `<p class="hint">（先生の画面だけに出ています）生徒には、自分のクラスのコードが「あなたのグループコード」として出ます：${all.join("／") || "まだ入っていません"}</p>`;
 }
+// 参考文献リストを出す（第3回 画面3・11/9 先生：登録とは別の画面に。「表示中を全て選択」→「出力」）
+function refOutStep(c) {
+  return `
+      <p class="lead">登録した文献から、<b>参考文献リスト</b>を作ってみよう。1学期に手で書いた参考文献の書式が、<b>ボタン1つでできます</b>。</p>
+      ${refOutHowto()}
+      <ul class="todo">
+        <li>一覧の下の「<b>10</b>」は、1ページに出す数。登録が10件より多い人は、数を大きくしてから「表示中を全て選択」</li>
+      </ul>
+      ${c.field("sanko", "参考文献リスト（RefNavi から貼る）", { rows: 6, hint: `RefNavi で出力して、そのまま貼ろう。${quest(3)}で論文を足したら貼り直します。RQ をまとめるときに、ここから自動で使います` })}`;
+}
 function refStep(c) {
   const { d, esc } = c;
   return `
-      <p class="lead">班で協力して、<b>${quest(2)} で見た動画・読んだ本を RefNavi に登録</b>しよう。</p>
+      <p class="lead">班で協力して、<b>${quest(2)} で見た動画・読んだ本と、第2回に読んだ記事を RefNavi に登録</b>しよう。</p>
       <div class="why">
         <b>なぜ登録するの？</b>
         <ul>
           <li><b>人は忘れる</b>から。「あれ、どこで読んだんだっけ？」は、だれにでもよくあること。見つけたらその場で記録しておけば、いつでも元の資料に戻れる</li>
           <li>友だちや先生に、何を読んだかを<b>正確に伝えられる</b></li>
-          <li>レポートや発表で使う<b>参考文献リストが、ボタン1つでできる</b>（⑤でやってみよう）</li>
+          <li>レポートや発表で使う<b>参考文献リストが、ボタン1つでできる</b>（次の画面でやってみよう）</li>
         </ul>
       </div>
       <div class="share">
@@ -435,11 +456,7 @@ function refStep(c) {
         <li><b>本を持ってきた人は、カメラのボタンで本のバーコードを読み取ってみよう</b>（裏表紙の「978」から始まる方）。題名や著者が一気に入ります。読み取れないときは、③の一覧の ISBN を「コピー」して貼れば大丈夫</li>
         <li>YouTube 以外の動画は自動で入らないので、配信者・動画タイトルを手で入れよう</li>
       </ul>
-      <h3>⑤ 参考文献リストを出してみよう</h3>
-      <p>1学期に手で書いた参考文献の書式が、<b>ボタン1つでできます</b>。</p>
-      ${refOutHowto()}
-      ${c.field("sanko", "参考文献リスト（RefNavi から貼る）", { rows: 5, hint: `RefNavi で出力して、そのまま貼ろう。${quest(3)}で論文を足したら貼り直します。RQ をまとめるときに、ここから自動で使います` })}
-      <h3>⑥ できたら押そう</h3>
+      <h3>⑤ できたら押そう</h3>
       <div class="choice small">${REF_CHECKS.map(([k, label]) => `<button type="button" class="choice-btn ${d[k] ? "on" : ""}" data-refchk="${k}">${d[k] ? "✓ " : ""}${label}</button>`).join("")}</div>`;
 }
 
@@ -459,6 +476,7 @@ export const L03 = {
   steps: [
     { title: "班で紹介", mins: 8 },
     { title: "RefNaviに登録する", mins: 10 },
+    { title: "参考文献リストを出す", mins: 3 },
     { title: "研究を探して、論文を2本決める", mins: 15 },
     { title: "提出して、Quest 3 へ", mins: 2 }
   ],
@@ -479,7 +497,8 @@ export const L03 = {
       </div>
       ${field("hanMemo", "班で出たこと・友だちの紹介で気になったこと（なくてもOK）", { rows: 2 })}`;
     if (i === 1) return refStep(c);
-    if (i === 2) return `
+    if (i === 2) return refOutStep(c);
+    if (i === 3) return `
       <p>記事や本・動画で、同じことに関心を持つ人がいました。その中には、<b>研究者</b>もいます。<br>研究では、どこまで分かっているんだろう？</p>
       <h3>① 検索語をAIに考えてもらう</h3>
       ${promptBox(promptWords(c), { first: true })}
@@ -491,7 +510,7 @@ export const L03 = {
       <p class="hint">決めたら、RefNavi にも登録しよう。上の種類のボタンで「<b>論文</b>」→「<b>DOI</b>」の欄に<b>DOI の番号</b>を貼って「<b>照合</b>」→ 個人タグ「<b>${REF_TAG}</b>」を選んで登録。DOIがない論文は「<b>論文</b>」で、論文のページを見ながら入れよう：執筆者名・論文タイトル・誌名・巻号・掲載頁・発行年（見つかるものは全部）。</p>
       ${doiCopyButtons(2)}
       ${REF_PAPER_HOWTO}`;
-    // i === 3：提出（提出すると Quest 3 が出る。授業の残りの時間で Quest 3 を読みはじめる：11/7）
+    // i === 4：提出（提出すると Quest 3 が出る。授業の残りの時間で Quest 3 を読みはじめる：11/7）
     const ps = papers(c);
     return `
       <div class="themecard">
@@ -507,7 +526,7 @@ export const L03 = {
   onInput(el, c) { handlePaperInput(el, c); },
 
   canNext(i, c) {
-    if (i === 2) return !!c.v("p1Url"); // 2本が目標。見つからない生徒も先へ進める
+    if (i === 3) return !!c.v("p1Url"); // 2本が目標。見つからない生徒も先へ進める
     return true;
   },
 
