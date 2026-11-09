@@ -27,6 +27,7 @@ let pick = 0;      // いま開いている論文（0＝①、1＝②）
 let cfg = null;    // { papers: [{ no, url, raw }], fields: j => [{ key, label, rows, chips, placeholder }], yomi: j => key, YOMI }
 let pip = null;    // 開いている小さな窓
 let pipCtx = null; // 小さな窓を開いたときの ctx（d・set は同じノートを指す）
+const opened = new Set(); // 小さな窓から開いた論文（0・1）。開くまでは大きな「論文を開く」だけを出す（11/9 先生 A案）。保存しない
 
 export const getPick = () => pick;
 export function setupReader(c, conf) {
@@ -55,14 +56,31 @@ function renderPip() {
   if (!pip || !cfg) return;
   const doc = pip.document, d = pipCtx.d, ps = cfg.papers, p = ps[pick] || ps[0];
   if (!p) { doc.body.innerHTML = `<div class="pip-wrap"><p>論文がありません。アプリで論文を決めよう。</p></div>`; return; }
-  const yk = cfg.yomi(pick), url = paperOpenUrl(p);
+  const yk = cfg.yomi(pick), url = paperOpenUrl(p), first = url && !opened.has(pick);
+  const tabs = ps.length > 1 ? `<span class="pip-tabs">${ps.map((x, j) => `<button type="button" class="pip-tab ${j === pick ? "on" : ""}" data-pip-pick="${j}">論文${x.no}</button>`).join("")}</span>` : `<b>論文${p.no}</b>`;
+  const head = `
+      <div class="pip-head">
+        ${tabs}
+        ${url && !first ? `<button type="button" class="pip-x" data-pip-open>論文${p.no}をもう一度開く ↗</button>` : ""}
+        <button type="button" class="pip-x pip-close" data-pip-close title="閉じる">閉じる</button>
+      </div>`;
+  // 開く前：押すものを1つにする（大きなボタン＋一言＋逃げ道）
+  if (first) {
+    doc.body.innerHTML = `
+    <div class="pip-wrap">
+      ${head}
+      <div class="pip-start">
+        <button type="button" class="btn primary" data-pip-open>📄 論文${p.no}を開く ↗</button>
+        <p class="hint">押すと論文が開き、この窓はその上に浮かびます</p>
+        <button type="button" class="linkish" data-pip-skip>もう開いている人は → メモを書く</button>
+      </div>
+    </div>`;
+    syncOff();
+    return;
+  }
   doc.body.innerHTML = `
     <div class="pip-wrap">
-      <div class="pip-head">
-        ${ps.length > 1 ? `<span class="pip-tabs">${ps.map((x, j) => `<button type="button" class="pip-tab ${j === pick ? "on" : ""}" data-pip-pick="${j}">論文${x.no}</button>`).join("")}</span>` : `<b>論文${p.no}</b>`}
-        ${url ? `<button type="button" class="btn primary small pip-open" data-pip-open>論文${p.no}を開く ↗</button>` : ""}
-        <button type="button" class="pip-x" data-pip-close title="閉じる">閉じる</button>
-      </div>
+      ${head}
       <p class="pip-off note" data-pip-off hidden>アプリで「論文を読もう」の画面を開くと、また書けます。</p>
       <div class="pip-cols">
       ${cfg.fields(pick).map(f => `
@@ -100,7 +118,7 @@ async function openFloat(c) {
   let w;
   try { w = await window.documentPictureInPicture.requestWindow({ width: 860, height: 380 }); }
   catch (e) { console.error(e); alert("小さな窓を開けませんでした。「右半分に開く」で読もう"); return; }
-  pip = w; pipCtx = c;
+  pip = w; pipCtx = c; opened.clear();
   const doc = w.document;
   document.querySelectorAll('link[rel="stylesheet"]').forEach(n => { const l = doc.createElement("link"); l.rel = "stylesheet"; l.href = n.href; doc.head.appendChild(l); });
   document.querySelectorAll("style").forEach(n => doc.head.appendChild(n.cloneNode(true)));
@@ -113,7 +131,12 @@ async function openFloat(c) {
   doc.addEventListener("click", e => {
     const t = e.target;
     if (t.closest?.("[data-pip-close]")) { w.close(); return; }
-    if (t.closest?.("[data-pip-open]")) { openPaper(paperOpenUrl(cfg.papers[pick]), { full: true, from: w }); return; }
+    if (t.closest?.("[data-pip-open]")) {
+      openPaper(paperOpenUrl(cfg.papers[pick]), { full: true, from: w });
+      if (!opened.has(pick)) { opened.add(pick); renderPip(); }
+      return;
+    }
+    if (t.closest?.("[data-pip-skip]")) { opened.add(pick); renderPip(); return; }
     const pk = t.closest?.("[data-pip-pick]");
     if (pk) { pick = Number(pk.dataset.pipPick) || 0; renderPip(); rerenderApp(); return; }
     if (!onScreen()) return;

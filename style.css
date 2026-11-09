@@ -337,7 +337,11 @@ hr.divider { border: none; border-top: 2px solid var(--line); margin: 24px 0 18p
 body.pip { margin: 0; font-size: 15px; background: var(--card); }
 .pip-wrap { padding: 10px 14px 14px; }
 .pip-head { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
-.pip-head .pip-x { margin-left: auto; }
+.pip-head .pip-close { margin-left: auto; }
+.pip-start { text-align: center; padding: 34px 0 20px; }
+.pip-start .btn { font-size: 20px; padding: 16px 44px; }
+.pip-start .hint { margin: 12px 0 6px; }
+.linkish { font: inherit; font-size: 13px; background: none; border: none; color: var(--sub); text-decoration: underline; cursor: pointer; }
 .pip-tabs { display: inline-flex; gap: 4px; background: var(--bg); padding: 3px; border-radius: 12px; }
 .pip-tab { font: inherit; font-weight: 700; font-size: 14px; border: none; background: none; color: var(--sub); padding: 5px 14px; border-radius: 9px; cursor: pointer; }
 .pip-tab.on { background: var(--card); color: var(--accent); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
