@@ -229,12 +229,40 @@ const REF_FIRST_HOWTO = `
     </svg>
     <figcaption>初めてのときだけ：③ 「<b>児童・生徒</b>」を選ぶ → ④ <b>グループコード</b>を入れる → ⑤ 「<b>RefNaviに入る</b>」（2回目からは、ログインするだけで使えます）</figcaption>
   </figure>`;
+// 個人タグ（11/9 先生）：全員が同じ名前の個人タグを作り、登録のたびに選ぶ。グループタグは選ばない
+export const REF_TAG = "1年個人探究";
+// タグを作る図：「整理する」→「タグ管理」→ タグ名 →「作る」
+const REF_TAG_HOWTO = `
+  <figure class="urlhowto libhowto" aria-label="個人タグを作る：整理するのタグ管理で、タグ名を入れて作る">
+    <svg viewBox="0 0 540 150" role="img" xmlns="http://www.w3.org/2000/svg">
+      <rect x="1" y="1" width="250" height="148" rx="10" fill="#fff" stroke="#c9ced8"/>
+      <text x="20" y="32" font-size="12" fill="#333">調べる ▾</text><text x="86" y="32" font-size="12" font-weight="700" fill="#222">整理する ▾</text><text x="168" y="32" font-size="12" fill="#333">グラフ</text>
+      <rect x="80" y="16" width="76" height="24" rx="5" fill="none" stroke="#d93025" stroke-width="3"/>
+      <circle cx="68" cy="28" r="10" fill="#d93025"/><text x="64" y="32" font-size="12" font-weight="700" fill="#fff">1</text>
+      <rect x="84" y="48" width="120" height="70" rx="4" fill="#fff" stroke="#bbb"/>
+      <text x="96" y="72" font-size="12" fill="#333">リスト</text>
+      <text x="96" y="102" font-size="12" font-weight="700" fill="#222">タグ管理</text>
+      <rect x="88" y="84" width="112" height="28" rx="5" fill="none" stroke="#d93025" stroke-width="3"/>
+      <circle cx="220" cy="98" r="12" fill="#d93025"/><text x="215" y="103" font-size="14" font-weight="700" fill="#fff">2</text>
+      <path d="M258 75 L278 75" stroke="#d93025" stroke-width="3"/><path d="M276 67 L288 75 L276 83 Z" fill="#d93025"/>
+      <rect x="289" y="1" width="250" height="148" rx="10" fill="#fff" stroke="#c9ced8"/>
+      <text x="414" y="28" font-size="13" font-weight="700" fill="#222" text-anchor="middle">タグを作る</text>
+      <text x="304" y="62" font-size="11" fill="#333">タグ名：</text>
+      <rect x="352" y="46" width="120" height="26" rx="3" fill="#fff" stroke="#aaa"/><text x="360" y="64" font-size="11" fill="#222">${REF_TAG}</text>
+      <rect x="348" y="42" width="128" height="34" rx="6" fill="none" stroke="#d93025" stroke-width="3"/>
+      <circle cx="494" cy="59" r="12" fill="#d93025"/><text x="489" y="64" font-size="14" font-weight="700" fill="#fff">3</text>
+      <rect x="370" y="92" width="88" height="28" rx="4" fill="#1a73e8"/><text x="414" y="111" font-size="12" fill="#fff" text-anchor="middle">作る</text>
+      <rect x="366" y="88" width="96" height="36" rx="6" fill="none" stroke="#d93025" stroke-width="3"/>
+      <circle cx="480" cy="106" r="12" fill="#d93025"/><text x="475" y="111" font-size="14" font-weight="700" fill="#fff">4</text>
+    </svg>
+    <figcaption>① 「<b>整理する</b>」→ ② 「<b>タグ管理</b>」→ ③ タグ名に「<b>${REF_TAG}</b>」を貼る → ④ 「<b>作る</b>」。下の「個人タグ」の表に出たらOK</figcaption>
+  </figure>`;
 // 登録の図：上の種類のボタン（本・論文・雑誌・新聞・動画／ウェブサイト…）→ 欄に貼って「照合」→ 登録（11/9 実際の画面に合わせた）
 // 本＝ISBN→照合（カメラでバーコードも）／動画＝URL→照合（YouTube だけ自動）／記事＝ウェブサイト・URL→解析／論文＝DOI→照合
 const REF_ADD_HOWTO = `
   <figure class="urlhowto libhowto" aria-label="RefNaviの登録：上の種類のボタンを押し、ISBNやURLを貼って照合し、確かめて登録">
-    <svg viewBox="0 0 540 200" role="img" xmlns="http://www.w3.org/2000/svg">
-      <rect x="1" y="1" width="250" height="198" rx="10" fill="#fff" stroke="#c9ced8"/>
+    <svg viewBox="0 0 540 250" role="img" xmlns="http://www.w3.org/2000/svg">
+      <rect x="1" y="1" width="250" height="248" rx="10" fill="#fff" stroke="#c9ced8"/>
       <text x="16" y="30" font-size="12" font-weight="700" fill="#222">上の種類のボタン</text>
       <rect x="10" y="48" width="44" height="20" rx="10" fill="#3d7a4f"/><text x="32" y="62" font-size="10" fill="#fff" text-anchor="middle">本</text><rect x="58" y="48" width="44" height="20" rx="10" fill="#8fd6a3"/><text x="80" y="62" font-size="10" fill="#1f3d2a" text-anchor="middle">論文</text><rect x="106" y="48" width="44" height="20" rx="10" fill="#8fd6a3"/><text x="128" y="62" font-size="10" fill="#1f3d2a" text-anchor="middle">雑誌</text><rect x="154" y="48" width="44" height="20" rx="10" fill="#8fd6a3"/><text x="176" y="62" font-size="10" fill="#1f3d2a" text-anchor="middle">新聞</text><rect x="202" y="48" width="44" height="20" rx="10" fill="#3d7a4f"/><text x="224" y="62" font-size="10" fill="#fff" text-anchor="middle">動画</text><rect x="10" y="74" width="76" height="20" rx="10" fill="#8fd6a3"/><text x="48" y="88" font-size="10" fill="#1f3d2a" text-anchor="middle">ウェブサイト</text><rect x="90" y="74" width="76" height="20" rx="10" fill="#8fd6a3"/><text x="128" y="88" font-size="10" fill="#1f3d2a" text-anchor="middle">パンフレット類</text><rect x="170" y="74" width="76" height="20" rx="10" fill="#8fd6a3"/><text x="208" y="88" font-size="10" fill="#1f3d2a" text-anchor="middle">インタビュー</text><rect x="10" y="100" width="116" height="20" rx="10" fill="#8fd6a3"/><text x="68" y="114" font-size="10" fill="#1f3d2a" text-anchor="middle">行政資料・白書</text><rect x="130" y="100" width="116" height="20" rx="10" fill="#8fd6a3"/><text x="188" y="114" font-size="10" fill="#1f3d2a" text-anchor="middle">統計データ</text>
       <rect x="6" y="44" width="52" height="28" rx="14" fill="none" stroke="#d93025" stroke-width="3"/>
@@ -242,8 +270,9 @@ const REF_ADD_HOWTO = `
       <circle cx="30" cy="150" r="12" fill="#d93025"/><text x="25" y="155" font-size="14" font-weight="700" fill="#fff">1</text>
       <text x="50" y="148" font-size="11" fill="#333">本は「本」、動画は「動画」</text>
       <text x="50" y="164" font-size="11" fill="#333">（押すと、下の欄が変わる）</text>
+      <text x="16" y="200" font-size="10" fill="#5f6673">※ボタンの並び方は、画面の広さで変わります</text>
       <path d="M258 100 L278 100" stroke="#d93025" stroke-width="3"/><path d="M276 92 L288 100 L276 108 Z" fill="#d93025"/>
-      <rect x="289" y="1" width="250" height="198" rx="10" fill="#fff" stroke="#c9ced8"/>
+      <rect x="289" y="1" width="250" height="248" rx="10" fill="#fff" stroke="#c9ced8"/>
       <text x="304" y="28" font-size="13" font-weight="700" fill="#3d7a4f">本</text>
       <text x="304" y="50" font-size="11" fill="#333">ISBN（動画は URL）</text>
       <rect x="304" y="58" width="132" height="26" rx="3" fill="#fff" stroke="#aaa"/><text x="312" y="76" font-size="11" fill="#999">ここに貼る</text>
@@ -253,18 +282,24 @@ const REF_ADD_HOWTO = `
       <circle cx="316" cy="108" r="12" fill="#d93025"/><text x="311" y="113" font-size="14" font-weight="700" fill="#fff">2</text>
       <text x="336" y="112" font-size="11" fill="#333">貼って「照合」（📷はバーコード）</text>
       <rect x="304" y="126" width="220" height="22" rx="3" fill="#f4f6f8"/><text x="312" y="141" font-size="11" fill="#555"><tspan fill="#d93025">＊</tspan> 書名・著者などが自動で入る</text>
-      <circle cx="316" cy="176" r="12" fill="#d93025"/><text x="311" y="181" font-size="14" font-weight="700" fill="#fff">3</text>
-      <text x="336" y="180" font-size="11" fill="#333">赤い＊が埋まったか見て「登録」</text>
+      <text x="304" y="172" font-size="10" fill="#2f6b43" font-weight="700">個人タグ</text><text x="350" y="172" font-size="10" fill="#999">（いちばん下）</text>
+      <rect x="304" y="178" width="132" height="40" rx="3" fill="#fff" stroke="#aaa"/>
+      <text x="310" y="192" font-size="10" fill="#555">選択なし</text>
+      <rect x="306" y="198" width="128" height="16" fill="#cfd4dc"/><text x="310" y="210" font-size="10" fill="#222">${REF_TAG}</text>
+      <rect x="300" y="194" width="140" height="24" rx="5" fill="none" stroke="#d93025" stroke-width="3"/>
+      <circle cx="454" cy="206" r="12" fill="#d93025"/><text x="449" y="211" font-size="14" font-weight="700" fill="#fff">3</text>
+      <rect x="470" y="222" width="52" height="22" rx="4" fill="#1a73e8"/><text x="496" y="237" font-size="11" fill="#fff" text-anchor="middle">登録</text>
+      <circle cx="456" cy="233" r="10" fill="#d93025"/><text x="452" y="237" font-size="12" font-weight="700" fill="#fff">4</text>
     </svg>
-    <figcaption>① 上の種類のボタンで「<b>本</b>」か「<b>動画</b>」を押す → ② 欄に貼って「<b>照合</b>」→ ③ 赤い「＊」の欄が埋まっているか確かめて「<b>登録</b>」</figcaption>
+    <figcaption>① 上の種類のボタンで「<b>本</b>」か「<b>動画</b>」を押す → ② 欄に貼って「<b>照合</b>」（赤い「＊」の欄が埋まったか確かめる）→ ③ いちばん下の<b>個人タグ</b>で「<b>${REF_TAG}</b>」を選ぶ（グループタグ・カスタムタグは選ばなくてよい）→ ④「<b>登録</b>」</figcaption>
   </figure>
   <table class="reftable">
     <thead><tr><th>登録するもの</th><th>押すボタン</th><th>欄に貼るもの</th><th>そのあと</th></tr></thead>
     <tbody>
-      <tr><td>本</td><td>本</td><td>ISBN（📷 でバーコードも読める）</td><td>照合 → 登録</td></tr>
-      <tr><td>動画</td><td>動画</td><td>URL</td><td>照合 → 登録（自動で入るのは YouTube だけ）</td></tr>
-      <tr><td>記事</td><td>ウェブサイト</td><td>URL</td><td>解析 → 登録</td></tr>
-      <tr><td>論文（このあと）</td><td>論文</td><td>DOI</td><td>照合 → 登録</td></tr>
+      <tr><td>本</td><td>本</td><td>ISBN（📷 でバーコードも読める）</td><td>照合 → タグ → 登録</td></tr>
+      <tr><td>動画</td><td>動画</td><td>URL</td><td>照合 → タグ → 登録（自動で入るのは YouTube だけ）</td></tr>
+      <tr><td>記事</td><td>ウェブサイト</td><td>URL</td><td>解析 → タグ → 登録</td></tr>
+      <tr><td>論文（このあと）</td><td>論文</td><td>DOI</td><td>照合 → タグ → 登録</td></tr>
     </tbody>
   </table>`;
 // 出力して貼る（11/7 先生：RefNavi を「楽だ」と早く感じる場面。第3回で出力→アプリに貼る、Quest 3 で貼り直す、RQシートに自動で載る）
@@ -332,7 +367,7 @@ function refStep(c) {
         <ul>
           <li><b>人は忘れる</b>から。「あれ、どこで読んだんだっけ？」は、だれにでもよくあること。見つけたらその場で記録しておけば、いつでも元の資料に戻れる</li>
           <li>友だちや先生に、何を読んだかを<b>正確に伝えられる</b></li>
-          <li>レポートや発表で使う<b>参考文献リストが、ボタン1つでできる</b>（④でやってみよう）</li>
+          <li>レポートや発表で使う<b>参考文献リストが、ボタン1つでできる</b>（⑤でやってみよう）</li>
         </ul>
       </div>
       <div class="share">
@@ -347,20 +382,25 @@ function refStep(c) {
       ${REF_LOGIN_HOWTO}
       ${REF_FIRST_HOWTO}
       ${(g => g ? `<p class="refrow"><span>あなたのグループコード：<b>${esc(g)}</b></span> <button type="button" class="btn small ghost" data-copytext="${esc(g)}">コピー</button></p>` : `<p class="hint">グループコードは、先生が伝えます。</p>`)(refnaviGroupOf(c.ki, c.cls))}
-      <h3>② 登録するもの</h3>
+      <h3>② 個人タグ「${REF_TAG}」を作る（初めてのときだけ）</h3>
+      <p class="hint">タグをつけておくと、あとで「個人探究で使った文献」だけをまとめて見られます。</p>
+      <p class="refrow"><span>タグ名：<b>${REF_TAG}</b></span> <button type="button" class="btn small ghost" data-copytext="${REF_TAG}">コピー</button></p>
+      ${REF_TAG_HOWTO}
+      <h3>③ 登録するもの</h3>
       <p class="hint">「コピー」を押して、RefNavi に貼ろう。動画はURL、本はISBNで登録します。</p>
       ${refList(c)}
-      <h3>③ RefNavi で登録する</h3>
+      <h3>④ RefNavi で登録する</h3>
       ${REF_ADD_HOWTO}
       <ul class="todo">
-        <li><b>本を持ってきた人は、カメラのボタンで本のバーコードを読み取ってみよう</b>（裏表紙の「978」から始まる方）。題名や著者が一気に入ります。読み取れないときは、②の一覧の ISBN を「コピー」して貼れば大丈夫</li>
+        <li><b>毎回、個人タグ「${REF_TAG}」を選んでから「登録」</b>。グループタグ・カスタムタグは選ばなくて大丈夫</li>
+        <li><b>本を持ってきた人は、カメラのボタンで本のバーコードを読み取ってみよう</b>（裏表紙の「978」から始まる方）。題名や著者が一気に入ります。読み取れないときは、③の一覧の ISBN を「コピー」して貼れば大丈夫</li>
         <li>YouTube 以外の動画は自動で入らないので、配信者・動画タイトルを手で入れよう</li>
       </ul>
-      <h3>④ 参考文献リストを出してみよう</h3>
+      <h3>⑤ 参考文献リストを出してみよう</h3>
       <p>1学期に手で書いた参考文献の書式が、<b>ボタン1つでできます</b>。</p>
       ${refOutHowto()}
       ${c.field("sanko", "参考文献リスト（RefNavi から貼る）", { rows: 5, hint: `RefNavi で出力して、そのまま貼ろう。${quest(3)}で論文を足したら貼り直します。RQ をまとめるときに、ここから自動で使います` })}
-      <h3>⑤ できたら押そう</h3>
+      <h3>⑥ できたら押そう</h3>
       <div class="choice small">${REF_CHECKS.map(([k, label]) => `<button type="button" class="choice-btn ${d[k] ? "on" : ""}" data-refchk="${k}">${d[k] ? "✓ " : ""}${label}</button>`).join("")}</div>`;
 }
 
@@ -409,7 +449,7 @@ export const L03 = {
       <h3>③ 論文を2本決める</h3>
       <p>たくさん探して、たくさん眺めてOK。その中から「<b>これだ！</b>」と思える、<b>自分の研究の師匠</b>になる論文を決めよう。何度も読み返して、考えるときのよりどころにする1〜2本です。</p>
       ${paperFields(c)}
-      <p class="hint">決めたら、RefNavi にも登録しよう。上の種類のボタンで「<b>論文</b>」→「<b>DOI</b>」の欄に<b>DOI の番号</b>を貼って「<b>照合</b>」。DOIがない論文は「<b>論文</b>」で、論文のページを見ながら入れよう：執筆者名・論文タイトル・誌名・巻号・掲載頁・発行年（見つかるものは全部）。</p>
+      <p class="hint">決めたら、RefNavi にも登録しよう。上の種類のボタンで「<b>論文</b>」→「<b>DOI</b>」の欄に<b>DOI の番号</b>を貼って「<b>照合</b>」→ 個人タグ「<b>${REF_TAG}</b>」を選んで登録。DOIがない論文は「<b>論文</b>」で、論文のページを見ながら入れよう：執筆者名・論文タイトル・誌名・巻号・掲載頁・発行年（見つかるものは全部）。</p>
       ${doiCopyButtons(2)}`;
     // i === 3：提出（提出すると Quest 3 が出る。授業の残りの時間で Quest 3 を読みはじめる：11/7）
     const ps = papers(c);
