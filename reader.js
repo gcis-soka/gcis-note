@@ -87,7 +87,7 @@ function renderPip() {
       ${head}
       <div class="pip-start">
         <button type="button" class="btn primary" data-pip-open>📄 論文${p.no}を開く ↗</button>
-        <p class="hint">押すと論文が開き、この窓はその上に浮かびます</p>
+        <p class="hint">押すと論文が開き、この窓はその上に浮かびます<br>PDFではなく論文のページが開いたら、そのページの「PDF」を押そう</p>
         <button type="button" class="linkish" data-pip-skip>もう開いている人は → メモを書く</button>
       </div>
     </div>`;
