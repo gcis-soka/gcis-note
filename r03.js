@@ -220,8 +220,11 @@ export const R03 = {
         const h = e => {
           if (e.relatedTarget && fold.contains(e.relatedTarget)) return;
           fold.removeEventListener("focusout", h);
-          if (!c.app.contains(fold)) return;
-          keepFold = true; const y = window.scrollY; c.rerender(); window.scrollTo(0, y); keepFold = false;
+          // ホームなどへ移るときも focusout が起きる。画面が入れ替わったあとに確かめてから描き直す
+          setTimeout(() => {
+            if (!c.app.contains(fold)) return;
+            keepFold = true; const y = window.scrollY; c.rerender(); window.scrollTo(0, y); keepFold = false;
+          }, 0);
         };
         fold.addEventListener("focusout", h);
         return;
