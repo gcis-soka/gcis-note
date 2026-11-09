@@ -6,7 +6,7 @@
 // data：qs（[{t:問い, k:種類, a:1＝AIで足した}]）・qftPhase（""/run/done）・qftEnd・rounds・rank・rankTotal・rankN
 //       ・toi・toiWhy・yosou（予想）・sudeni・kakame・aite（問いへの3つの答え）・houhou・houhou2（あわせて使う）
 //       ・nani・yotei・hitsuyou・kuraberu・anzen・geminiLink
-import { quest } from "./common.js";
+import { quest, memoText } from "./common.js"; // memoText：Quest 3 のメモは論文ごと（11/9）
 
 const QFT_MIN = 3;   // 1回のチャレンジの時間（分）。1人なので班の5分より短く。もう一度チャレンジで足せる
 const TOP = 20;      // 学年で何位までは順位を見せるか
@@ -82,7 +82,7 @@ const listText = qs => qs.map(q => `・${q.t}`).join("\n") || "・（まだあ�
 function promptAdd(c) {
   const L1 = c.prev("L01"), R3 = c.prev("R03");
   return `私は高校1年生です。「${tail(L1.setsu) || "（説）"}」という説から探究を始め、論文を読みました。` +
-    `分かったこと：${tail(R3.wakatta) || "（なし）"}。まだ分かっていないこと：${tail(R3.mada) || "（なし）"}。\n` +
+    `分かったこと：${tail(memoText(R3, "wakatta", "／")) || "（なし）"}。まだ分かっていないこと：${tail(memoText(R3, "mada", "／")) || "（なし）"}。\n` +
     `私は次の問いを出しました。\n${listText(qsOf(c))}\n` +
     "これとは違う角度から、問いを10個出してください。私の問いの言い換えは入れないでください。答えやヒントは書かないでください。" +
     "「問い｜どんな角度か（10文字以内）」の表にしてください。表のあとには何も書かないでください。";
@@ -297,8 +297,8 @@ function focusBox(c) {
   return `
     <div class="recap">
       <div class="tc-row"><span>説（第1回）</span><b>${esc(L1.setsu || "—")}</b></div>
-      <div class="tc-row"><span>論文で分かったこと</span><b>${esc(R3.wakatta || "—")}</b></div>
-      <div class="tc-row big"><span>まだ分かっていないこと</span><b>${esc(R3.mada || "—")}</b></div>
+      <div class="tc-row"><span>論文で分かったこと</span><b>${esc(memoText(R3, "wakatta") || "—").replace(/\n/g, "<br>")}</b></div>
+      <div class="tc-row big"><span>まだ分かっていないこと</span><b>${esc(memoText(R3, "mada") || "—").replace(/\n/g, "<br>")}</b></div>
     </div>`;
 }
 

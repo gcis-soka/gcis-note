@@ -1,7 +1,7 @@
 // 教員画面：期・クラス・回ごとの進み具合（リアルタイム）＋学年まとめ（読み込みは1回・読み直しボタン）
 import {
   escapeHtml, classLabel as baseClassLabel, kiLabel, firstYearKi, methodOf, lsGet, lsSet, quest, classSize,
-  CLASSES, TEST_CLASS, METHODS, PICK_N, listOf, booksOf, doiOf
+  CLASSES, TEST_CLASS, METHODS, PICK_N, listOf, booksOf, doiOf, memoText
 } from "./common.js";
 
 const GRADE = -1; // 「学年」タブ（全クラスのまとめ）
@@ -13,6 +13,9 @@ const esc = escapeHtml;
 const safeUrl = u => /^https:\/\//i.test(String(u || "").trim()) ? String(u).trim() : "";
 const linkCell = u => safeUrl(u) ? `<a href="${esc(safeUrl(u))}" target="_blank" rel="noopener">開く ↗</a>` : esc(u || "—");
 const item = (d, k, label) => `<div class="tc-row"><span>${label}</span><b>${esc(d[k] || "—")}</b></div>`;
+const br = t => esc(t || "").replace(/\n/g, "<br>");
+// Quest 3 のメモ（論文ごと：wakatta・wakatta2 など）をまとめて1行に（11/9）
+const memoItem = (d, k, label) => `<div class="tc-row"><span>${label}</span><b>${br(memoText(d, k)) || "—"}</b></div>`;
 const didChip = x => x === "やった" ? `<span class="mchip">やった</span>` : x === "まだ" ? `<span class="mchip zero">まだ</span>` : "";
 function resultRows(d) {
   return d.did === "まだ"
@@ -207,7 +210,7 @@ const VIEWS = {
     head: ["論文①", "論文②", "分かったこと", "まだ分かっていないこと"],
     cells: r => {
       const d = r.note?.data || {}, ps = papersOf(d.fromL03 ? d : r.l03?.data || {});
-      return [`${yomiChip(d.yomi1)} ${paperCell(ps[0])}`, `${yomiChip(d.yomi2)} ${paperCell(ps[1])}`, esc(d.wakatta || ""), esc(d.mada || "")];
+      return [`${yomiChip(d.yomi1)} ${paperCell(ps[0])}`, `${yomiChip(d.yomi2)} ${paperCell(ps[1])}`, br(memoText(d, "wakatta")), br(memoText(d, "mada"))];
     },
     nowrap: [],
     chips(rs) {
@@ -221,14 +224,14 @@ const VIEWS = {
       const d = r.note?.data || {}, ps = papersOf(d.fromL03 ? d : r.l03?.data || {}), qs = qsOf(d);
       return `
         <div class="recap">${ps.map((p, j) => `<div class="tc-row"><span>論文${j ? "②" : "①"}（${esc(d[j ? "yomi2" : "yomi1"] || "—")}）</span><b>${paperCell(p)}</b></div>`).join("") || `<div class="tc-row"><span>論文</span><b>—</b></div>`}</div>
-        ${item(d, "wakatta", "分かったこと")}${item(d, "mada", "まだ分かっていないこと")}
+        ${memoItem(d, "wakatta", "分かったこと")}${memoItem(d, "mada", "まだ分かっていないこと")}
         <div class="tc-row"><span>気になったこと</span><b>${qs.length ? `<ul class="qs">${qs.map(q => `<li>${esc(q)}</li>`).join("")}</ul>` : "—"}</b></div>
         <div class="tc-row"><span>参考文献リスト</span><b>${esc(d.sanko || r.l03?.data?.sanko || "—").replace(/\n/g, "<br>")}</b></div>`;
     },
-    csvHead: ["論文1のURL", "論文1を読んだか", "論文2のURL", "論文2を読んだか", "分かったこと", "まだ分かっていないこと", "気になったこと1", "気になったこと2", "気になったこと3", "参考文献リスト"],
+    csvHead: ["論文1のURL", "論文1を読んだか", "論文2のURL", "論文2を読んだか", "論文1：分かったこと", "論文1：まだ分かっていないこと", "論文2：分かったこと", "論文2：まだ分かっていないこと", "気になったこと1", "気になったこと2", "気になったこと3", "参考文献リスト"],
     csvRow: r => {
       const d = r.note?.data || {}, l = d.fromL03 ? d : r.l03?.data || {}; // 論文は Quest 3 で変えられる（11/7）
-      return [l.p1Url, d.yomi1, l.p2Url, d.yomi2, d.wakatta, d.mada, d.q1, d.q2, d.q3, d.sanko || r.l03?.data?.sanko];
+      return [l.p1Url, d.yomi1, l.p2Url, d.yomi2, d.wakatta, d.mada, d.wakatta2, d.mada2, d.q1, d.q2, d.q3, d.sanko || r.l03?.data?.sanko];
     }
   },
   L04: {
@@ -256,7 +259,7 @@ const VIEWS = {
     detail(r) {
       const d = r.note?.data || {}, q = r.r03?.data || {}, qs = qsList(d);
       return `
-        <div class="recap">${item(q, "wakatta", `${quest(3)}：分かったこと`)}${item(q, "mada", "まだ分かっていないこと")}</div>
+        <div class="recap">${memoItem(q, "wakatta", `${quest(3)}：分かったこと`)}${memoItem(q, "mada", "まだ分かっていないこと")}</div>
         <div class="tc-row"><span>出した問い（${qs.length}個・チャレンジ${esc(d.rounds || 0)}回）</span><b>${qs.length ? `<ul class="qs">${qs.map(x => `<li>${esc(x.t)}${x.k ? ` <span class="mchip">${esc(x.k)}</span>` : ""}${x.a ? ` <span class="hint">AI</span>` : ""}</li>`).join("")}</ul>` : "—"}</b></div>
         ${item(d, "toi", "選んだ問い")}${item(d, "toiWhy", "選んだわけ")}
         ${item(d, "yosou", "予想")}
@@ -657,7 +660,7 @@ export function mountTeacher({ be, app, dlg }) {
       if (s3 !== 3) continue;
       nt.push({ uid, lesson: "R03", step: 0, submitted: i % 3 !== 0, updatedAt: new Date(Date.now() - (i % 8) * 60000),
         data: { yomi1: i % 2 ? "全部読んだ" : "途中まで", yomi2: two ? (i % 3 ? "途中まで" : "全部読んだ") : "",
-          wakatta: "（分かったことの例）大学生40人で、カフェ程度の音のときに作業が速かった", mada: "（まだ分かっていないことの例）高校生や、歌詞のある音楽の場合は調べていない", q1: "部活のあとでも同じ？" } });
+          wakatta: "（分かったことの例）大学生40人で、カフェ程度の音のときに作業が速かった", mada: "（まだ分かっていないことの例）高校生や、歌詞のある音楽の場合は調べていない", q1: "部活のあとでも同じ？", ...(two && i % 2 ? { wakatta2: "（論文②の例）小学生では差がなかった", mada2: "（論文②の例）中学生・高校生は調べていない" } : {}) } });
       if (i % 3 === 0) continue;
       const s4 = i % 4 === 2 ? 3 : 6;
       nt.push({ uid, lesson: "L04", step: s4, submitted: s4 === 6, updatedAt: new Date(Date.now() - (i % 8) * 60000),

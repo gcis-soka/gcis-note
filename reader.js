@@ -1,102 +1,142 @@
-// 論文を読みながらメモ（第3回「読みはじめる」・Quest 3）11/7 試作
-// 論文のページをアプリの中に出し、横（狭い画面では下）にメモ欄を置く。
+// 論文を読みながらメモ（Quest 3 の画面1）11/7 試作 → 11/9 作り直し
 // 多くの論文サイトは、ほかのサイトの中での表示を許していない（白い画面・「接続が拒否されました」）。
-// アプリ側ではかわせない（かわすには論文を学校のサーバーから配り直すことになるので、しない）。
-// → そのときのために「この論文を右半分に開く」を必ず出す（Gemini と同じ開き方）。PDF の保存はさせない
-const safeUrl = u => /^https?:\/\//i.test(String(u || "").trim()) ? String(u).trim() : "";
-const hostOf = u => { try { return new URL(u).hostname.replace(/^www\./, ""); } catch { return ""; } };
+// アプリ側ではかわせない（かわすには論文を学校のサーバーから配り直すことになるので、しない）。PDF の保存はさせない。
+// → アプリの中に論文は出さない（11/9 先生）。代わりに：
+//   ① メモだけの小さな窓を論文の上に浮かせる（Chrome の Document Picture-in-Picture。Chrome 116〜・Chromebook も可）
+//   ② 使えないブラウザでは「右半分に開く」（Gemini と同じ開き方）
+// 1回のクリックで開ける窓は1つ（Chrome の決まり）。だから論文は、小さな窓の「この論文を開く」で開く。
+// 小さな窓に書くと、アプリの同じ欄に入れて input を起こす（保存・次へ・ヒントはふだんの流れで動く）。
 
-let pick = 0; // いま開いている論文（0＝①、1＝②）。保存しない
-let floatKeys = []; // 小さな窓に出す欄（[{ key, label, rows }]）
-let floatPapers = []; // 小さな窓から開く論文（[{ no, url }]）
-let pipWin = null; // 開いている小さな窓
+export const safeUrl = u => /^https?:\/\//i.test(String(u || "").trim()) ? String(u).trim() : "";
+export const hostOf = u => { try { return new URL(u).hostname.replace(/^www\./, ""); } catch { return ""; } };
+export const canFloat = () => typeof window !== "undefined" && "documentPictureInPicture" in window;
 
-// メモを小さな窓にして、論文の上に浮かせる（11/8 先生：論文サイトの多くがアプリの中での表示を拒むため）。
-// Chrome の Document Picture-in-Picture（Chrome 116〜・Chromebook も可）。使えないブラウザではボタンを出さない
-const canFloat = () => typeof window !== "undefined" && "documentPictureInPicture" in window;
+// 画面1の状態（保存しない）
+let pick = 0;      // いま開いている論文（0＝①、1＝②）
+let cfg = null;    // { papers: [{ no, url, raw }], fields: j => [{ key, label, rows, chips, placeholder }], yomi: j => key, YOMI }
+let pip = null;    // 開いている小さな窓
+let pipCtx = null; // 小さな窓を開いたときの ctx（d・set は同じノートを指す）
 
-// ps：[{ no: "①", url }]、memo：右（下）に置く欄の HTML、float：小さな窓に出す欄（[{ key, label, rows }]・なくてもよい）
-export function readerHtml(c, ps, memo, float = []) {
-  const esc = c.esc;
-  const list = ps.filter(p => safeUrl(p.url));
-  floatKeys = float; floatPapers = list;
-  if (!list.length) return `<div class="reader-memo solo">${memo}</div>`;
-  if (pick >= list.length) pick = 0;
-  const p = list.at(pick), url = safeUrl(p.url);
-  const fl = canFloat() && float.length;
-  return `
-    <div class="reader">
-      ${fl ? `
-      <div class="reader-float">
-        <button type="button" class="btn" data-reader-float>${pipWin ? "メモの小さな窓を前に出す" : "メモを浮かせて、論文を読む ↗"}</button>
-        <p class="hint"><b>メモだけの小さな窓</b>が出ます → その窓の「論文を開く」を押すと、論文が画面いっぱいに開き、メモはその上に浮かんだままになります。書いた分は、このアプリに自動で入ります。小さな窓は角をつかんで大きさを変えられます。</p>
-        ${pipWin ? `<p class="note">いま小さな窓で書いています。書き終わったら、小さな窓の「閉じる」を押そう。</p>` : ""}
-      </div>` : ""}
-      <div class="reader-bar">
-        ${list.length > 1 ? `<span class="reader-tabs">${list.map((x, j) => `<button type="button" class="choice-btn ${j === pick ? "on" : ""}" data-reader-pick="${j}">論文${x.no}</button>`).join("")}</span>` : `<b>論文${p.no}</b>`}
-        <span class="hint">${esc(hostOf(url))}</span>
-        <button type="button" class="btn small ${fl ? "ghost" : ""}" data-reader-split="${esc(url)}">この論文を右半分に開く ↗</button>
-      </div>
-      <p class="hint">白い画面や「接続が拒否されました」と出たら、その論文のサイトはアプリの中での表示を許していません。${fl ? "上の<b>「メモを浮かせて、論文を読む」</b>か、" : ""}<b>「この論文を右半分に開く」</b>で読もう。</p>
-      <div class="reader-grid">
-        <iframe class="reader-frame" src="${esc(url)}" title="論文${p.no}" referrerpolicy="no-referrer-when-downgrade"></iframe>
-        <div class="reader-memo">${memo}</div>
-      </div>
-    </div>`;
+export const getPick = () => pick;
+export function setupReader(c, conf) {
+  cfg = conf;
+  if (pick >= conf.papers.length) pick = 0;
+  if (pip) renderPip(); // アプリ側で論文を切り替えたら、小さな窓も合わせる
+  return pick;
 }
+export const isFloating = () => !!pip;
 
-function openPaper(url, { full = false, from = window } = {}) {
+// 論文の窓を開く。full＝画面いっぱい（小さな窓を上に浮かせるとき）、それ以外は右半分
+export function openPaper(url, { full = false, from = window } = {}) {
+  if (!url) return null;
   const W = screen.availWidth || 1366, H = screen.availHeight || 768;
   const feat = full ? `popup=yes,left=0,top=0,width=${W},height=${H}` : `popup=yes,left=${Math.round(W / 2)},top=0,width=${Math.round(W / 2)},height=${H}`;
-  const w = from.open(url, "gcis_paper", feat);
+  const w = from.open(url, "gcis_paper", feat) || (full ? null : window.open(url, "_blank"));
   try { w?.focus(); } catch { /* なし */ }
   return w;
 }
 
-// 小さな窓の中身。欄に書くと、アプリの同じ欄に入れて input を起こす（保存・次へ・ヒントはふだんの流れで動く）
-async function openFloat(c) {
-  if (pipWin) { try { pipWin.focus(); } catch { /* なし */ } return; }
-  let w;
-  try { w = await window.documentPictureInPicture.requestWindow({ width: 400, height: 600 }); }
-  catch (e) { console.error(e); alert("小さな窓を開けませんでした。「この論文を右半分に開く」で読もう"); return; }
-  pipWin = w;
-  const doc = w.document;
-  [...document.querySelectorAll('link[rel="stylesheet"], style')].forEach(n => doc.head.appendChild(n.cloneNode(true)));
-  doc.title = "メモ（探究ノート）";
-  doc.body.classList.add("pip");
-  const esc = c.esc;
+// ---------- 小さな窓 ----------
+const esc = s => String(s ?? "").replace(/[&<>"']/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
+const onScreen = () => !!document.querySelector("[data-reader-root]"); // アプリが画面1を出しているか
+
+function renderPip() {
+  if (!pip || !cfg) return;
+  const doc = pip.document, d = pipCtx.d, ps = cfg.papers, p = ps[pick] || ps[0];
+  if (!p) { doc.body.innerHTML = `<div class="pip-wrap"><p>論文がありません。アプリで論文を決めよう。</p></div>`; return; }
+  const yk = cfg.yomi(pick), url = safeUrl(p.url);
   doc.body.innerHTML = `
     <div class="pip-wrap">
-      <div class="pip-head"><b>読みながらメモ</b><button type="button" class="btn small ghost" data-pip-close>閉じる</button></div>
-      <div class="pip-papers">${floatPapers.map((x, j) => `<button type="button" class="btn small ${j === pick ? "" : "ghost"}" data-pip-open="${j}">論文${x.no}を開く ↗</button>`).join("")}</div>
-      <p class="hint">まず上のボタンで論文を開こう。</p>
-      ${floatKeys.map(f => `<label class="field"><span class="label">${esc(f.label)}</span><textarea data-pip-key="${f.key}" rows="${f.rows || 6}">${esc(c.d[f.key] || "")}</textarea></label>`).join("")}
-      <p class="hint">書いた分は、アプリに自動で入ります（このあと保存されます）。</p>
+      <div class="pip-head">
+        ${ps.length > 1 ? `<span class="pip-tabs">${ps.map((x, j) => `<button type="button" class="pip-tab ${j === pick ? "on" : ""}" data-pip-pick="${j}">論文${x.no}</button>`).join("")}</span>` : `<b>論文${p.no}</b>`}
+        <button type="button" class="pip-x" data-pip-close title="閉じる">閉じる</button>
+      </div>
+      ${url ? `<button type="button" class="btn primary pip-open" data-pip-open>論文${p.no}を開く ↗</button><p class="hint pip-host">${esc(hostOf(url))}　開いた論文の上に、この窓が浮かびます</p>` : ""}
+      <p class="pip-off note" data-pip-off hidden>アプリで「論文を読む」の画面を開くと、また書けます。</p>
+      ${cfg.fields(pick).map(f => `
+        <div class="pip-field">
+          <span class="label">${esc(f.label)}</span>
+          ${f.chips ? `<span class="chips">${f.chips.map(ch => `<button type="button" class="chip" data-pip-chip="${esc(ch.text)}" data-pip-target="${f.key}">${esc(ch.label)}</button>`).join("")}</span>` : ""}
+          <textarea data-pip-key="${f.key}" rows="${f.rows || 6}" placeholder="${esc(f.placeholder || "")}">${esc(d[f.key] || "")}</textarea>
+        </div>`).join("")}
+      <div class="pip-field"><span class="label">どこまで読んだ？</span>
+        <div class="choice small">${cfg.YOMI.map(y => `<button type="button" class="choice-btn ${d[yk] === y ? "on" : ""}" data-pip-yomi="${y}">${y}</button>`).join("")}</div>
+      </div>
+      <p class="hint">書いた分は、アプリに自動で入ります。</p>
     </div>`;
+  syncOff();
+}
+// アプリが画面1を出していないときは書けないようにする（別の回のノートに入るのを防ぐ）
+function syncOff() {
+  if (!pip) return;
+  const off = !onScreen(), doc = pip.document;
+  doc.querySelectorAll("textarea, [data-pip-chip], [data-pip-yomi]").forEach(el => { el.disabled = off; });
+  const m = doc.querySelector("[data-pip-off]"); if (m) m.hidden = !off;
+}
+// 小さな窓の欄 → アプリの欄
+function push(key, val) {
+  const el = document.querySelector(`[data-key="${key}"]`);
+  if (el) { el.value = val; el.dispatchEvent(new Event("input", { bubbles: true })); }
+}
+// 描き直してもスクロールの位置は保つ（renderStep は上に戻すため）
+const keepScroll = fn => { const y = window.scrollY; fn(); window.scrollTo(0, y); };
+const rerenderApp = () => { if (onScreen()) keepScroll(() => pipCtx.rerender()); };
+
+async function openFloat(c) {
+  if (pip) { try { pip.focus(); } catch { /* なし */ } return; }
+  let w;
+  try { w = await window.documentPictureInPicture.requestWindow({ width: 420, height: 700 }); }
+  catch (e) { console.error(e); alert("小さな窓を開けませんでした。「右半分に開く」で読もう"); return; }
+  pip = w; pipCtx = c;
+  const doc = w.document;
+  document.querySelectorAll('link[rel="stylesheet"]').forEach(n => { const l = doc.createElement("link"); l.rel = "stylesheet"; l.href = n.href; doc.head.appendChild(l); });
+  document.querySelectorAll("style").forEach(n => doc.head.appendChild(n.cloneNode(true)));
+  doc.title = "メモ（探究ノート）";
+  doc.body.classList.add("pip");
   doc.addEventListener("input", e => {
     const t = e.target.closest?.("[data-pip-key]");
-    if (!t) return;
-    const el = document.querySelector(`[data-key="${t.dataset.pipKey}"]`);
-    if (el) { el.value = t.value; el.dispatchEvent(new Event("input", { bubbles: true })); }
-    else c.set(t.dataset.pipKey, t.value);
+    if (t && onScreen()) push(t.dataset.pipKey, t.value);
   });
   doc.addEventListener("click", e => {
-    const o = e.target.closest?.("[data-pip-open]");
-    if (o) { const p = floatPapers[Number(o.dataset.pipOpen) || 0]; if (p) openPaper(safeUrl(p.url), { full: true, from: w }); return; }
-    if (e.target.closest?.("[data-pip-close]")) w.close();
+    const t = e.target;
+    if (t.closest?.("[data-pip-close]")) { w.close(); return; }
+    if (t.closest?.("[data-pip-open]")) { openPaper(safeUrl(cfg.papers[pick]?.url), { full: true, from: w }); return; }
+    const pk = t.closest?.("[data-pip-pick]");
+    if (pk) { pick = Number(pk.dataset.pipPick) || 0; renderPip(); rerenderApp(); return; }
+    if (!onScreen()) return;
+    const y = t.closest?.("[data-pip-yomi]");
+    if (y) { pipCtx.set(cfg.yomi(pick), y.dataset.pipYomi); renderPip(); rerenderApp(); return; }
+    const ch = t.closest?.("[data-pip-chip]");
+    if (ch) { // 書き出し：カーソルの位置に入れ、「|」の所にカーソルを置く（アプリの書き出しと同じ）
+      const ta = doc.querySelector(`[data-pip-key="${ch.dataset.pipTarget}"]`);
+      const txt = ch.dataset.pipChip, at = txt.indexOf("|"), ins = txt.replace("|", "");
+      const pos = doc.activeElement === ta ? ta.selectionStart : ta.value.length;
+      const end = doc.activeElement === ta ? ta.selectionEnd : pos;
+      ta.value = ta.value.slice(0, pos) + ins + ta.value.slice(end);
+      const to = pos + (at >= 0 ? at : ins.length);
+      ta.focus(); ta.setSelectionRange(to, to);
+      push(ta.dataset.pipKey, ta.value);
+    }
   });
+  // アプリ側の画面が変わったら、書けるかどうかを合わせる。画面1に戻ったら、アプリの値を小さな窓へ
+  let was = onScreen();
+  const timer = setInterval(() => {
+    const now = onScreen();
+    if (now !== was) { was = now; if (now) renderPip(); else syncOff(); }
+  }, 800);
   w.addEventListener("pagehide", () => {
-    pipWin = null;
+    clearInterval(timer);
+    pip = null;
     document.querySelector("[data-key]")?.dispatchEvent(new FocusEvent("focusout", { bubbles: true })); // 閉じたら保存（focusout で保存する仕組みを使う）
-    c.rerender();
+    rerenderApp();
   });
-  c.rerender();
-  // 論文は小さな窓のボタンで開く。1回のクリックで開けるのは「小さな窓」か「論文の窓」のどちらか1つ（Chrome の決まり）
+  renderPip();
+  rerenderApp();
 }
 
 export function handleReader(t, c) {
   const b = t.closest("[data-reader-pick]");
-  if (b) { pick = Number(b.dataset.readerPick) || 0; c.rerender(); return true; }
+  if (b) { pick = Number(b.dataset.readerPick) || 0; keepScroll(() => c.rerender()); return true; }
   if (t.closest("[data-reader-float]")) { openFloat(c); return true; }
   const s = t.closest("[data-reader-split]");
   if (s) { openPaper(s.dataset.readerSplit); return true; }

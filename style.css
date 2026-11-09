@@ -311,27 +311,39 @@ hr.divider { border: none; border-top: 2px solid var(--line); margin: 24px 0 18p
 /* 次へが押せないときの一言（何が書けたら進めるか） */
 .need-msg { text-align: right; font-size: 14px; color: var(--accent); font-weight: 700; margin: 6px 2px 0; }
 
-/* 論文を読みながらメモ（reader.js・11/7 試作）。カードより広く使う */
-main:has(.reader) { max-width: 1240px; }
-.reader { margin: 12px 0; }
-.reader-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 4px; }
-.reader-bar .btn { margin-left: auto; }
-.reader-tabs { display: inline-flex; gap: 6px; }
-.reader-tabs .choice-btn { flex: none; min-width: 0; padding: 6px 14px; font-size: 14px; border-radius: 10px; }
-.reader-grid { display: grid; grid-template-columns: minmax(0, 3fr) minmax(280px, 2fr); gap: 14px; align-items: start; }
-.reader-frame { width: 100%; height: 78vh; border: 2px solid var(--line); border-radius: 12px; background: #fff; }
-.reader-memo { position: sticky; top: 12px; }
-.reader-memo .field { margin-top: 0; }
-.reader-float { background: var(--card, #fff); border: 2px solid var(--accent); border-radius: 14px; padding: 12px 14px; margin-bottom: 12px; }
-.reader-float .hint, .reader-float .note { margin: 6px 0 0; }
-/* メモの小さな窓（Document Picture-in-Picture・11/8） */
-body.pip { margin: 0; font-size: 15px; }
-.pip-wrap { padding: 10px 12px; }
-.pip-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.pip-papers { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 8px; }
-body.pip .field { display: block; margin: 8px 0; }
-body.pip .label { display: block; font-weight: 700; font-size: 14px; }
-@media (max-width: 900px) { .reader-grid { grid-template-columns: 1fr; } .reader-frame { height: 65vh; } .reader-memo { position: static; } }
+/* 論文を読む（Quest 3 画面1・reader.js。11/9 作り直し：論文はアプリの中に出さない） */
+.fold.tips { margin: 8px 0 14px; }
+.fold.tips ul { margin: 4px 0 8px; }
+.ptabs { display: flex; gap: 6px; margin-top: 8px; }
+.ptab { font: inherit; flex: 1; display: flex; flex-direction: column; align-items: flex-start; gap: 0; text-align: left; cursor: pointer;
+  padding: 8px 16px 10px; border: 2px solid var(--line); border-bottom: none; border-radius: 14px 14px 0 0; background: var(--bg); color: var(--sub); }
+.ptab b { font-size: 16px; }
+.ptab span { font-size: 13px; }
+.ptab.on { background: var(--card); color: var(--ink); border-color: var(--accent); position: relative; z-index: 1; margin-bottom: -2px; padding-bottom: 12px; }
+.ptab.on span { color: var(--accent); font-weight: 700; }
+.pcard { border: 2px solid var(--line); border-radius: 14px; padding: 12px 16px 6px; background: var(--card); }
+.pcard.tabbed { border-color: var(--accent); border-top-left-radius: 0; }
+.pcard-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.pcard-head .btn { margin-left: auto; }
+.pfloat { display: flex; width: 100%; justify-content: center; margin: 10px 0 2px; }
+.pfloat-on { margin: 10px 0 4px; padding: 10px 14px; border-radius: 12px; background: var(--accent-soft); color: var(--accent); font-weight: 700; }
+/* メモの小さな窓（Document Picture-in-Picture・11/8 → 11/9 論文ごと） */
+body.pip { margin: 0; font-size: 15px; background: var(--card); }
+.pip-wrap { padding: 10px 14px 14px; }
+.pip-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+.pip-tabs { display: inline-flex; gap: 4px; background: var(--bg); padding: 3px; border-radius: 12px; }
+.pip-tab { font: inherit; font-weight: 700; font-size: 14px; border: none; background: none; color: var(--sub); padding: 5px 14px; border-radius: 9px; cursor: pointer; }
+.pip-tab.on { background: var(--card); color: var(--accent); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+.pip-x { font: inherit; font-size: 13px; border: 1px solid var(--line); background: var(--card); color: var(--sub); border-radius: 999px; padding: 3px 12px; cursor: pointer; }
+.pip-open { display: flex; width: 100%; justify-content: center; }
+.pip-host { margin: 4px 0 6px; font-size: 12px; }
+.pip-field { margin: 10px 0; }
+.pip-field .label { font-size: 14px; margin-bottom: 2px; }
+.pip-field .chips { margin: 2px 0 4px; }
+.pip-field .chip { font-size: 12px; padding: 2px 10px; }
+.pip-field textarea { font-size: 15px; }
+.pip-field textarea:disabled, .pip-field button:disabled { opacity: .5; }
+.pip-off { background: var(--warn-soft); color: var(--warn); padding: 6px 10px; border-radius: 10px; }
 /* RefNavi に登録するもの（第3回） */
 .reflist { list-style: none; padding: 0; margin: 6px 0 12px; }
 .refrow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--line); }
