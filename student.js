@@ -48,6 +48,7 @@ export function mountStudent({ be, user, app, asTeacher }) {
       rerender: () => renderStep(n.step),
       field, promptBox, chips, esc: escapeHtml, app,
       ki: profile?.ki ?? "", cls: profile?.class ?? "", // 期・クラス（RefNavi のグループコードを出すため：11/7）
+      asTeacher, // 先生が生徒画面を見ているとき（RefNavi のコードを全クラス分見せる：11/9）
       // 問いの数の順位（第4回）。学年＝期ごと。期なしは "x"、先生のテストは "t" で別に数える
       scoreRank: n => be.scoreRank({ ki: asTeacher ? "t" : (profile?.ki || "x"), lesson: cur.id, uid: user.uid, n })
     };
