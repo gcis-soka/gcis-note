@@ -1,9 +1,9 @@
 // ステージ6：Quest 3（第3回→第4回 12/7・期末をはさむ）論文を読み切った結果。第3回の授業の残りの時間で始める（11/7）
 // 仕様：ナレッジの L03.md「Quest 3」（先生 10/31：分かったこと／まだ分かっていないこと＋気になったこと）
 // 11/9 作り直し：2画面（1 論文を読む／2 読み終えたら＝気になったこと・RefNavi・提出）。メモは論文ごと。アプリの中に論文は出さない（reader.js）
-// data：yomi1・yomi2（全部読んだ／途中まで／まだ）・wakatta・mada（論文①）・wakatta2・mada2（論文②・11/9）・q1〜q3・
-//       p1Url・p2Url・p1Doi・p2Doi・kensaku・tried・sanko（第3回から写し、ここで変えられる）・fromL03
-import { quest, memoText } from "./common.js";
+// data：yomi1〜3（全部読んだ／途中まで／まだ）・wakatta・mada（論文①）・wakatta2・mada2（論文②・11/9）・wakatta3・mada3（論文③・11/9）・q1〜q3・
+//       p1Url〜p3Url・p1Doi〜p3Doi（①②は第3回から写し、ここで変えられる。③は Quest 3 だけ）・kensaku・tried・sanko・fromL03
+import { quest, memoText, doiOf } from "./common.js";
 export { memoText };
 import { setupReader, handleReader, canFloat, isFloating, safeUrl, hostOf, paperOpenUrl } from "./reader.js";
 import { searchTools, paperFields, handleSearch, handlePaperInput, REF_FORMAT } from "./l03.js";
@@ -21,8 +21,23 @@ const Q = quest(3);
 const YOMI = ["全部読んだ", "途中まで", "まだ"];
 
 // 論文ごとの欄の名前（①は前からの名前のまま）
-const KEYS = [{ w: "wakatta", m: "mada", y: "yomi1", u: "p1Url" }, { w: "wakatta2", m: "mada2", y: "yomi2", u: "p2Url" }];
-const papersOf = c => KEYS.map((k, j) => ({ j, no: j ? "②" : "①", raw: c.v(k.u), url: safeUrl(c.v(k.u)), doi: c.v(`p${j + 1}Doi`) })).filter(p => p.raw);
+// 論文③は「もっと読みたくなった」生徒のため（11/9 先生）。欄は Quest 3 の「論文を変えたいとき・もう1本足したいとき」の中
+const KEYS = [{ w: "wakatta", m: "mada", y: "yomi1", u: "p1Url" }, { w: "wakatta2", m: "mada2", y: "yomi2", u: "p2Url" }, { w: "wakatta3", m: "mada3", y: "yomi3", u: "p3Url" }];
+const NO = ["①", "②", "③"];
+const papersOf = c => KEYS.map((k, j) => ({ j, no: NO[j], raw: c.v(k.u), url: safeUrl(c.v(k.u)), doi: c.v(`p${j + 1}Doi`) })).filter(p => p.raw);
+const sigOf = ps => ps.map(p => p.j).join(",");
+let shownSig = ""; // いまタブに出ている論文の組（③を入れたときにタブを足すため）
+let keepFold = false; // 描き直しても「論文を変えたいとき」を開いたままにする
+const readerConf = ps => ({ papers: ps, fields: j => fieldsOf(ps[j]?.j ?? 0), yomi: j => KEYS[ps[j]?.j ?? 0].y, YOMI });
+// 論文のタブ（2本以上のとき）
+function tabsHtml(c, ps, pick) {
+  if (ps.length < 2) return "";
+  return `<div class="ptabs" role="tablist">${ps.map((x, j) => `
+        <button type="button" role="tab" class="ptab ${j === pick ? "on" : ""}" data-reader-pick="${j}" aria-selected="${j === pick}">
+          <b>論文${x.no}</b><span>${c.esc(c.d[KEYS[x.j].y] || (doneOf(c, x.j) ? "メモあり" : "これから"))}</span>
+        </button>`).join("")}
+      </div>`;
+}
 const doneOf = (c, j) => !!(c.v(KEYS[j].w) && c.v(KEYS[j].m));
 
 const Q_CHIPS = [
@@ -86,21 +101,17 @@ const FLOAT_HOWTO = `
 function readStep(c) {
   const { field, esc, d } = c;
   const ps = papersOf(c);
-  const pick = setupReader(c, { papers: ps, fields: j => fieldsOf(ps[j]?.j ?? 0), yomi: j => KEYS[ps[j]?.j ?? 0].y, YOMI });
+  const pick = setupReader(c, readerConf(ps));
+  shownSig = sigOf(ps);
   const findFold = open => `
-      <details class="fold" ${open ? "open" : ""}>
-        <summary>${ps.length ? "論文を変えたいとき・もう1本足したいとき" : "論文を探す"}</summary>
+      <details class="fold pfind" ${open || keepFold ? "open" : ""}>
+        <summary>${!ps.length ? "論文を探す" : ps.length < 3 ? "論文を変えたいとき・もう1本足したいとき" : "論文を変えたいとき"}</summary>
         ${searchTools(c)}
-        ${paperFields(c)}
+        ${paperFields(c, 3)}
       </details>`;
   if (!ps.length) return `<p class="note">まだ論文がありません。下で探して、URLを入れよう。</p>${findFold(true)}`;
   const p = ps[pick], k = KEYS[p.j], open = paperOpenUrl(p), fl = canFloat() && !!open, floating = isFloating();
-  const tabs = ps.length > 1 ? `
-      <div class="ptabs" role="tablist">${ps.map((x, j) => `
-        <button type="button" role="tab" class="ptab ${j === pick ? "on" : ""}" data-reader-pick="${j}" aria-selected="${j === pick}">
-          <b>論文${x.no}</b><span>${esc(d[KEYS[x.j].y] || (doneOf(c, x.j) ? "メモあり" : "これから"))}</span>
-        </button>`).join("")}
-      </div>` : "";
+  const tabs = `<div data-ptabs>${tabsHtml(c, ps, pick)}</div>`;
   // メモ欄：小さな窓が使えるときは折りたたむ（小さな窓で書いた分がここに入る。こちらに打ちこまないように：11/9 先生）
   const memo = `
         <div class="memo2">
@@ -138,7 +149,7 @@ function readStep(c) {
         <div class="field"><span class="label">どこまで読んだ？</span>
           <div class="choice small">${YOMI.map(y => `<button type="button" class="choice-btn ${d[k.y] === y ? "on" : ""}" data-yomi="${k.y}" data-val="${y}">${y}</button>`).join("")}</div>
         </div>
-        ${ps.length > 1 && pick === 0 ? `<p class="hint">読めたら、上の<b>「論文②」</b>へ。</p>` : ""}
+        ${pick < ps.length - 1 ? `<p class="hint">読めたら、上の<b>「論文${ps[pick + 1].no}」</b>へ。</p>` : ""}
       </div>
       ${findFold(false)}
     </div>`;
@@ -167,10 +178,10 @@ function afterStep(c) {
 }
 // RefNavi に貼る DOI（コピーボタンつき）
 function doiList(c) {
-  const xs = [["①", "p1Doi", "p1Url"], ["②", "p2Doi", "p2Url"]].map(([no, dk, uk]) => ({ no, doi: c.v(dk), url: c.v(uk) })).filter(x => x.doi || x.url);
+  const xs = NO.map((no, j) => ({ no, doi: doiOf(c.v(`p${j + 1}Doi`)), url: c.v(`p${j + 1}Url`) })).filter(x => x.doi || x.url); // RefNavi には番号だけ
   if (!xs.length) return "";
   return `<div class="recap">${xs.map(x => `<div class="tc-row"><span>論文${x.no}</span><b>${x.doi
-    ? `DOI ${c.esc(x.doi)} <button type="button" class="btn small ghost" data-copytext="${c.esc(x.doi)}">コピー</button>`
+    ? `DOI の番号 ${c.esc(x.doi)} <button type="button" class="btn small ghost" data-copytext="${c.esc(x.doi)}">コピー</button>`
     : `<span class="hint">DOI なし → URL で登録</span> <button type="button" class="btn small ghost" data-copytext="${c.esc(x.url)}">URLをコピー</button>`}</b></div>`).join("")}</div>`;
 }
 
@@ -190,15 +201,39 @@ export const R03 = {
     return i === 0 ? readStep(c) : afterStep(c);
   },
 
-  onInput(el, c) { handlePaperInput(el, c); },
+  onInput(el, c) {
+    handlePaperInput(el, c);
+    // 論文のURLを入れた・消したとき：タブだけ描き直す（入力中の欄は描き直さない）
+    if (/^p[123]Url$/.test(el.dataset.key || "")) {
+      const ps = papersOf(c), box = c.app.querySelector("[data-ptabs]");
+      if (sigOf(ps) === shownSig) return;
+      if (!box) { // 論文がなかった画面に1本目が入った：「論文を探す」の外へ出たら描き直してカードを出す（中の欄どうしの移動では描き直さない）
+        const fold = el.closest(".pfind");
+        if (!fold || fold.dataset.waitFirst) return;
+        fold.dataset.waitFirst = "1";
+        const h = e => {
+          if (e.relatedTarget && fold.contains(e.relatedTarget)) return;
+          fold.removeEventListener("focusout", h);
+          if (!c.app.contains(fold)) return;
+          keepFold = true; const y = window.scrollY; c.rerender(); window.scrollTo(0, y); keepFold = false;
+        };
+        fold.addEventListener("focusout", h);
+        return;
+      }
+      shownSig = sigOf(ps);
+      const pick = setupReader(c, readerConf(ps));
+      box.innerHTML = tabsHtml(c, ps, pick);
+      c.app.querySelector(".pcard")?.classList.toggle("tabbed", ps.length > 1);
+    }
+  },
 
   // 画面1：どちらかの論文で「分かったこと」と「まだ分かっていないこと」が書けたら次へ
   canNext(i, c) {
-    if (i === 0) return doneOf(c, 0) || doneOf(c, 1);
+    if (i === 0) return KEYS.some((k, j) => doneOf(c, j));
     return true;
   },
   need(i, c) {
-    if (i === 0) return ["どちらかの論文の「分かったこと」と「まだ分かっていないこと」"];
+    if (i === 0) return ["どれか1本の論文の「分かったこと」と「まだ分かっていないこと」"];
     return [];
   },
 

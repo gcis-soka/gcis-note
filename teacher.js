@@ -31,8 +31,11 @@ const nCols = (label, unit) => PICK_N.map((n, i) => `${label}${i + 1}`);
 const nVals = (d, base) => PICK_N.map(n => d?.[base + n] || "");
 // 第3回：決めた論文（題名・URL）
 // 論文は URL だけ（題名は RefNavi：11/7）
+// 論文の欄ごと（③は Quest 3 だけ：11/9）。空も含めて番号順
+const paperSlots = d => [1, 2, 3].map(n => ({ n, no: "①②③"[n - 1], url: String(d[`p${n}Url`] || "").trim(), doi: doiOf(d[`p${n}Doi`]) || String(d[`p${n}Doi`] || "").trim(), yomi: d[`yomi${n}`] || "" }));
 const papersOf = d => [["p1Url", "p1Doi"], ["p2Url", "p2Doi"]].map(([k, o]) => ({ url: String(d[k] || "").trim(), doi: doiOf(d[o]) || String(d[o] || "").trim() })).filter(p => p.url);
-const paperCell = p => p ? linkCell(p.url) + (p.doi ? ` <span class="hint">DOI ${esc(p.doi)}</span>` : "") : "";
+// DOI はリンクの形で開けるように（番号だけは RefNavi に写すときだけ：11/9）
+const paperCell = p => p ? linkCell(p.url) + (p.doi ? ` <a class="hint" href="https://doi.org/${esc(p.doi)}" target="_blank" rel="noopener">DOI ↗</a>` : "") : "";
 // 第3回：RefNavi の進み具合（生徒が自分で押す：l03.js の REF_CHECKS と同じ）
 const REF_LABELS = [["refLogin", "ログイン"], ["refDouga", "動画"], ["refHon", "本"], ["refHan", "班の全員"]];
 const refDone = d => !!(d.refDouga || d.refHon);
@@ -207,10 +210,11 @@ const VIEWS = {
   R03: {
     tab: quest(3), date: "2026-11-17", noStall: true, // 家でやるので「止まってる？」は出さない
     stepNames: ["記録"],
-    head: ["論文①", "論文②", "分かったこと", "まだ分かっていないこと"],
+    head: ["論文①", "論文②（③）", "分かったこと", "まだ分かっていないこと"],
     cells: r => {
-      const d = r.note?.data || {}, ps = papersOf(d.fromL03 ? d : r.l03?.data || {});
-      return [`${yomiChip(d.yomi1)} ${paperCell(ps[0])}`, `${yomiChip(d.yomi2)} ${paperCell(ps[1])}`, br(memoText(d, "wakatta")), br(memoText(d, "mada"))];
+      const d = r.note?.data || {}, s = paperSlots({ ...(d.fromL03 ? d : r.l03?.data || {}), yomi1: d.yomi1, yomi2: d.yomi2, yomi3: d.yomi3, p3Url: d.p3Url, p3Doi: d.p3Doi });
+      const cell = p => p.url ? `${yomiChip(p.yomi)} ${paperCell(p)}` : "";
+      return [cell(s[0]), [cell(s[1]), s[2].url ? `③ ${cell(s[2])}` : ""].filter(Boolean).join("<br>"), br(memoText(d, "wakatta")), br(memoText(d, "mada"))];
     },
     nowrap: [],
     chips(rs) {
@@ -221,17 +225,18 @@ const VIEWS = {
         : "";
     },
     detail(r) {
-      const d = r.note?.data || {}, ps = papersOf(d.fromL03 ? d : r.l03?.data || {}), qs = qsOf(d);
+      const d = r.note?.data || {}, qs = qsOf(d);
+      const ps = paperSlots({ ...(d.fromL03 ? d : r.l03?.data || {}), yomi1: d.yomi1, yomi2: d.yomi2, yomi3: d.yomi3, p3Url: d.p3Url, p3Doi: d.p3Doi }).filter(p => p.url);
       return `
-        <div class="recap">${ps.map((p, j) => `<div class="tc-row"><span>論文${j ? "②" : "①"}（${esc(d[j ? "yomi2" : "yomi1"] || "—")}）</span><b>${paperCell(p)}</b></div>`).join("") || `<div class="tc-row"><span>論文</span><b>—</b></div>`}</div>
+        <div class="recap">${ps.map(p => `<div class="tc-row"><span>論文${p.no}（${esc(p.yomi || "—")}）</span><b>${paperCell(p)}</b></div>`).join("") || `<div class="tc-row"><span>論文</span><b>—</b></div>`}</div>
         ${memoItem(d, "wakatta", "分かったこと")}${memoItem(d, "mada", "まだ分かっていないこと")}
         <div class="tc-row"><span>気になったこと</span><b>${qs.length ? `<ul class="qs">${qs.map(q => `<li>${esc(q)}</li>`).join("")}</ul>` : "—"}</b></div>
         <div class="tc-row"><span>参考文献リスト</span><b>${esc(d.sanko || r.l03?.data?.sanko || "—").replace(/\n/g, "<br>")}</b></div>`;
     },
-    csvHead: ["論文1のURL", "論文1を読んだか", "論文2のURL", "論文2を読んだか", "論文1：分かったこと", "論文1：まだ分かっていないこと", "論文2：分かったこと", "論文2：まだ分かっていないこと", "気になったこと1", "気になったこと2", "気になったこと3", "参考文献リスト"],
+    csvHead: ["論文1のURL", "論文1を読んだか", "論文2のURL", "論文2を読んだか", "論文1：分かったこと", "論文1：まだ分かっていないこと", "論文2：分かったこと", "論文2：まだ分かっていないこと", "論文3のURL", "論文3を読んだか", "論文3：分かったこと", "論文3：まだ分かっていないこと", "気になったこと1", "気になったこと2", "気になったこと3", "参考文献リスト"],
     csvRow: r => {
       const d = r.note?.data || {}, l = d.fromL03 ? d : r.l03?.data || {}; // 論文は Quest 3 で変えられる（11/7）
-      return [l.p1Url, d.yomi1, l.p2Url, d.yomi2, d.wakatta, d.mada, d.wakatta2, d.mada2, d.q1, d.q2, d.q3, d.sanko || r.l03?.data?.sanko];
+      return [l.p1Url, d.yomi1, l.p2Url, d.yomi2, d.wakatta, d.mada, d.wakatta2, d.mada2, d.p3Url, d.yomi3, d.wakatta3, d.mada3, d.q1, d.q2, d.q3, d.sanko || r.l03?.data?.sanko];
     }
   },
   L04: {

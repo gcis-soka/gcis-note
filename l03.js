@@ -84,35 +84,55 @@ const PAPER_HOWTO = `
       <text x="16" y="386" font-size="11" fill="#555">抄録</text>
       <path d="M16 396 H360 M16 404 H300" stroke="#ddd" stroke-width="4"/>
     </svg>
-    <figcaption>J-STAGE の例：① Scholar で<b>題名</b>を押す（右に <b>[PDF]</b> があれば、本文を無料で読めます）→ ② 開いたページの<b>アドレスバーのURL</b>をコピーして「論文のURL」へ → ③ <b>DOI</b> のリンクを右クリック（Chromebook は2本指でタップ）→「<b>リンクのアドレスをコピー</b>」→「DOI」の欄に貼る（番号だけに自動で直ります）→ ④「<b>PDFをダウンロード</b>」で本文を開いて読む。ほかのサイトでも「DOI」「doi.org」を探そう</figcaption>
+    <figcaption>J-STAGE の例：① Scholar で<b>題名</b>を押す（右に <b>[PDF]</b> があれば、本文を無料で読めます）→ ② 開いたページの<b>アドレスバーのURL</b>をコピーして「論文のURL」へ → ③ <b>DOI</b> のリンクを右クリック（Chromebook は2本指でタップ）→「<b>リンクのアドレスをコピー</b>」→「DOI」の欄に貼る → ④「<b>PDFをダウンロード</b>」で本文を開いて読む。ほかのサイトでも「DOI」「doi.org」を探そう</figcaption>
   </figure>`;
-// 論文①②のURL欄（右に「この論文を開く」）と DOI 欄（RefNavi は論文を DOI で登録する：RefNavi_manual_52。11/7）
-// DOI 欄は「https://doi.org/…」を貼っても番号だけに直す。URL 欄に doi.org のリンクを貼ったときは、空の DOI 欄に番号を入れる（11/8）
-export function paperFields(c) {
-  return PAPER_HOWTO + ["1", "2"].map(n => `
+// 論文①②（Quest 3 は③も：11/9）のURL欄（右に「この論文を開く」）と DOI 欄（RefNavi は論文を DOI で登録する：RefNavi_manual_52。11/7）
+// DOI 欄はリンクの形（https://doi.org/10.…）にそろえ、右に「このDOIを開く」。番号だけを使うのは RefNavi に写すときだけ（11/9 先生）。
+// 番号だけ・「DOI: 10.…」を貼ってもリンクの形に直す。URL 欄に doi.org のリンクを貼ったときは、空の DOI 欄に入れる
+export function paperFields(c, count = 2) {
+  const NO = { 1: "①", 2: "②", 3: "③" };
+  return PAPER_HOWTO + ["1", "2", "3"].slice(0, count).map(n => `
       <div class="paperbox">
         <div class="urlrow">
-          ${c.field(`p${n}Url`, `論文${n === "1" ? "①" : "②"}のURL`, { type: "url", placeholder: "https://…", hint: n === "1" ? "論文のページのURL（アドレスバー）をコピーして貼ろう" : "" })}
+          ${c.field(`p${n}Url`, `論文${NO[n]}のURL${n === "3" ? "（もっと読みたくなったら）" : ""}`, { type: "url", placeholder: "https://…", hint: n === "1" ? "論文のページのURL（アドレスバー）をコピーして貼ろう" : n === "3" ? "入れると、上に「論文③」のタブができて、メモが書けます" : "" })}
           <a class="btn small ghost openurl" data-open-url="p${n}Url" target="_blank" rel="noopener" hidden>この論文を開く ↗</a>
         </div>
-        ${c.field(`p${n}Doi`, `論文${n === "1" ? "①" : "②"}のDOI`, { type: "text", placeholder: "例：https://doi.org/10.xxxxx/xxxxx", hint: n === "1" ? "DOI のリンク（https://doi.org/…）をそのまま貼ればOK。番号だけに直します。DOI がない論文は空でOK" : "" })}
-        <p class="hint okmsg" data-doi-note="${n}" hidden>DOI の番号だけにしました ✓</p>
+        <div class="urlrow">
+          ${c.field(`p${n}Doi`, `論文${NO[n]}のDOI`, { type: "url", placeholder: "https://doi.org/10.xxxxx/xxxxx", hint: n === "1" ? "DOI のリンク（https://doi.org/…）を貼ろう。DOI がない論文は空でOK" : "" })}
+          <a class="btn small ghost openurl" data-open-url="p${n}Doi" target="_blank" rel="noopener" hidden>このDOIを開く ↗</a>
+        </div>
+        <p class="hint okmsg" data-doi-note="${n}" hidden>DOI のリンクの形にしました ✓</p>
       </div>`).join("");
 }
-// 入力のたびに：DOI 欄を番号だけに／URL 欄が doi.org のリンクなら空の DOI 欄に入れる（第3回・Quest 3 の onInput から呼ぶ）
+// 入力のたびに：DOI 欄をリンクの形に／URL 欄が doi.org のリンクなら空の DOI 欄に入れる（第3回・Quest 3 の onInput から呼ぶ）
+export const doiLink = s => { const d = doiOf(s); return d ? `https://doi.org/${d}` : ""; };
 export function handlePaperInput(el, c) {
-  const m = /^p([12])(Url|Doi)$/.exec(el.dataset.key || "");
+  const m = /^p([123])(Url|Doi)$/.exec(el.dataset.key || "");
   if (!m) return;
   const n = m[1], box = el.closest(".paperbox");
   const note = () => { const p = box?.querySelector(`[data-doi-note="${n}"]`); if (p) p.hidden = false; };
   if (m[2] === "Doi") {
-    const doi = doiOf(el.value);
-    if (doi && doi !== el.value.trim()) { el.value = doi; c.set(el.dataset.key, doi); note(); }
+    const link = doiLink(el.value);
+    if (link && link !== el.value.trim()) { el.value = link; c.set(el.dataset.key, link); note(); }
     return;
   }
-  const doi = /doi\.org\//i.test(el.value) ? doiOf(el.value) : "";
+  const link = /doi\.org\//i.test(el.value) ? doiLink(el.value) : "";
   const t = box?.querySelector(`[data-key="p${n}Doi"]`);
-  if (doi && t && !c.v(`p${n}Doi`)) { t.value = doi; c.set(`p${n}Doi`, doi); note(); }
+  if (link && t && !c.v(`p${n}Doi`)) { t.value = link; c.set(`p${n}Doi`, link); t.dispatchEvent(new Event("input", { bubbles: true })); }
+}
+// RefNavi に写すとき用：DOI の番号だけをコピーするボタン（押したときの欄の値から作る）
+export function doiCopyButtons(count) {
+  return `<div class="searchbtns doicopy">${["①", "②", "③"].slice(0, count).map((no, j) =>
+    `<button type="button" class="btn small ghost" data-copydoi="p${j + 1}Doi">論文${no}のDOI番号をコピー</button>`).join("")}</div>`;
+}
+export function handleDoiCopy(t, c) {
+  const b = t.closest("[data-copydoi]");
+  if (!b) return false;
+  const d = doiOf(c.v(b.dataset.copydoi)), was = b.textContent;
+  if (d) copyText(d);
+  b.textContent = d ? "コピーしました ✓" : "DOI がまだありません";
+  setTimeout(() => { b.textContent = was; }, 1500);
+  return true;
 }
 // 検索ボタン（試した言葉を残す：新しい順・10個まで）
 export function handleSearch(t, c) {
@@ -371,7 +391,8 @@ export const L03 = {
       ${searchTools(c)}
       <h3>③ 論文を2本決める</h3>
       ${paperFields(c)}
-      <p class="hint">決めたら、RefNavi にも登録しよう。ホームの「メディアの選択」で論文を選び、「ISBN コード／DOI コード／URL」の欄に<b>DOI</b>を貼ります。DOIがない論文は、URLで登録します。</p>`;
+      <p class="hint">決めたら、RefNavi にも登録しよう。ホームの「メディアの選択」で論文を選び、「ISBN コード／DOI コード／URL」の欄に<b>DOI の番号</b>を貼ります。DOIがない論文は、URLで登録します。</p>
+      ${doiCopyButtons(2)}`;
     // i === 3：提出（提出すると Quest 3 が出る。授業の残りの時間で Quest 3 を読みはじめる：11/7）
     const ps = papers(c);
     return `
@@ -393,6 +414,7 @@ export const L03 = {
   },
 
   onClick(t, c) {
+    if (handleDoiCopy(t, c)) return true;
     const k = t.closest("[data-refchk]");
     if (k) { c.set(k.dataset.refchk, c.d[k.dataset.refchk] ? "" : 1); c.rerender(); return true; }
     const cp = t.closest("[data-copytext]");

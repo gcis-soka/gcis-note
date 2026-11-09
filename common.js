@@ -33,9 +33,9 @@ export function doiOf(s) {
 }
 // Quest 3 のメモ（論文ごと：wakatta・wakatta2 など。11/9）を第4回・教員画面で使う：2本分をまとめた文（1本だけならそのまま。2本なら「論文①：…」「論文②：…」）
 export function memoText(d, base, sep = "\n") {
-  const xs = [[1, d?.[base]], [2, d?.[base + "2"]]].map(([n, t]) => [n, String(t || "").trim()]).filter(([, t]) => t);
+  const xs = [[1, d?.[base]], [2, d?.[base + "2"]], [3, d?.[base + "3"]]].map(([n, t]) => [n, String(t || "").trim()]).filter(([, t]) => t);
   if (xs.length < 2) return xs[0]?.[1] || "";
-  return xs.map(([n, t]) => `論文${n === 1 ? "①" : "②"}：${t}`).join(sep);
+  return xs.map(([n, t]) => `論文${"①②③"[n - 1]}：${t}`).join(sep);
 }
 export const YOUTUBE_SEARCH = q => `https://www.youtube.com/results?search_query=${encodeURIComponent(q)}`;
 // 授業の外でやってくること（L01で決めた一歩）の呼び名。Quest 1, Quest 2 …（quest・question・inquiry は同じ語源）
