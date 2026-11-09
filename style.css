@@ -311,8 +311,8 @@ select.ki { width: auto; padding: 3px 10px; border-radius: 999px; font-size: 15p
 /* 1つの画面の中の区切り（例：第2回 画面3の①読む／②気になったこと） */
 hr.divider { border: none; border-top: 2px solid var(--line); margin: 24px 0 18px; }
 /* チャットのURLをどこからコピーするかの図 */
-.urlhowto { margin: 10px 0 4px; }
-.urlhowto svg { display: block; width: 100%; max-width: 520px; height: auto; font-family: var(--font); }
+.urlhowto { margin: 12px auto 6px; max-width: 560px; } /* 図は中央に（11/10 先生）。説明文は図と同じ幅で左ぞろえ */
+.urlhowto svg { display: block; width: 100%; max-width: 560px; height: auto; margin: 0 auto; font-family: var(--font); }
 .urlhowto figcaption { font-size: 14px; margin-top: 6px; }
 /* 本か動画を探す：動画の組と本の組 */
 .findrow { border-left: 4px solid var(--line); padding: 2px 0 2px 12px; margin: 10px 0 14px; }
