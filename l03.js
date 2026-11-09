@@ -426,7 +426,7 @@ function refStep(c) {
       <p class="refrow"><span>タグ名：<b>${REF_TAG}</b></span> <button type="button" class="btn small ghost" data-copytext="${REF_TAG}">コピー</button></p>
       ${REF_TAG_HOWTO}
       <h3>③ 登録するもの</h3>
-      <p class="hint">「コピー」を押して、RefNavi に貼ろう。動画はURL、本はISBNで登録します。</p>
+      <p class="hint">「コピー」を押して、RefNavi に貼ろう。動画と記事はURL、本はISBNで登録します。</p>
       ${refList(c)}
       <h3>④ RefNavi で登録する</h3>
       ${REF_ADD_HOWTO}
