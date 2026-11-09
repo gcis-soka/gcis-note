@@ -36,7 +36,7 @@ const paperSlots = d => [1, 2, 3].map(n => ({ n, no: "①②③"[n - 1], url: St
 const papersOf = d => [["p1Url", "p1Doi"], ["p2Url", "p2Doi"]].map(([k, o]) => ({ url: String(d[k] || "").trim(), doi: doiOf(d[o]) || String(d[o] || "").trim() })).filter(p => p.url);
 // DOI はリンクの形で開けるように（番号だけは RefNavi に写すときだけ：11/9）
 const paperCell = p => p ? linkCell(p.url) + (p.doi ? ` <a class="hint" href="https://doi.org/${esc(p.doi)}" target="_blank" rel="noopener">DOI ↗</a>` : "") : "";
-// 第3回：RefNavi の進み具合（生徒が自分で押す：l03.js の REF_CHECKS と同じ）
+// 第3回：RefNavi の進み具合（生徒が自分で押す：l03.js の refStep・REF_KINDS と同じキー）
 const REF_LABELS = [["refLogin", "ログイン"], ["refDouga", "動画"], ["refHon", "本"], ["refKiji", "記事"], ["refHan", "班の全員"]];
 const refDone = d => !!(d.refDouga || d.refHon || d.refKiji);
 const refCell = d => d.refLogin || refDone(d) ? `<span class="mchip ${refDone(d) ? "" : "zero"}">${refDone(d) ? "登録" : "ログイン"}</span>` : "";
