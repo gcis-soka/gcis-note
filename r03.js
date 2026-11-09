@@ -125,7 +125,7 @@ function readStep(c) {
         <div class="pcard-head">
           <b>論文${p.no}</b>
           <span class="hint">${esc(p.url ? hostOf(p.url) : p.raw)}</span>
-          ${open ? `<button type="button" class="btn small ghost" data-reader-split="${esc(open)}">右半分に開く ↗</button>` : ""}
+          ${open ? `<button type="button" class="btn small ghost" data-reader-split="${pick}">右半分に開く ↗</button>` : ""}
         </div>
         ${fl ? (floating
           ? `<p class="pfloat-on">📝 いま小さな窓でメモしています。書いた分は、下の「書いたメモ」に入ります。</p>`

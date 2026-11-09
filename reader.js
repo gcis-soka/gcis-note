@@ -1,3 +1,5 @@
+import { doiOf } from "./common.js";
+
 // 論文を読みながらメモ（Quest 3 の画面1）11/7 試作 → 11/9 作り直し
 // 多くの論文サイトは、ほかのサイトの中での表示を許していない（白い画面・「接続が拒否されました」）。
 // アプリ側ではかわせない（かわすには論文を学校のサーバーから配り直すことになるので、しない）。PDF の保存はさせない。
@@ -9,16 +11,29 @@
 
 export const safeUrl = u => /^https?:\/\//i.test(String(u || "").trim()) ? String(u).trim() : "";
 export const hostOf = u => { try { return new URL(u).hostname.replace(/^www\./, ""); } catch { return ""; } };
-// 論文を開くときのURL（11/9）。J-STAGE の論文のページ（…/_article/…）なら、本文の PDF（…/_pdf）を直接開く。
-// URL がなく DOI だけなら doi.org（論文のページに飛ぶ。PDF かどうかはサイトしだい）
+// 論文を開くときのURL（11/9）。J-STAGE の論文なら、本文の PDF（…/_pdf）を直接開く。
+//  - URL が J-STAGE の論文のページ（…/_article/…）→ …/_pdf
+//  - URL が doi.org のリンク、または J-STAGE 以外で DOI がある → DOI の行き先（doi.org の API で調べておく）が J-STAGE なら …/_pdf
+//  - それ以外は URL のまま（URL がなく DOI だけなら doi.org）。PDF かどうかはサイトしだい
+const JSTAGE = /^(https?:\/\/(?:www\.)?jstage\.jst\.go\.jp\/article\/.+?)\/_article(?:[/?#].*)?$/i;
+const toPdf = u => { const m = JSTAGE.exec(u || ""); return m ? `${m[1]}/_pdf` : ""; };
+const doiOfPaper = p => (/doi\.org\//i.test(p?.url || "") ? doiOf(p.url) : "") || doiOf(p?.doi);
+const landing = new Map(); // DOI → 行き先のURL（調べ中は null、分からなければ ""）。保存しない
 export function paperOpenUrl(p) {
-  const u = safeUrl(p?.url);
-  if (u) {
-    const m = /^(https?:\/\/(?:www\.)?jstage\.jst\.go\.jp\/article\/.+?)\/_article(?:\/.*)?$/i.exec(u);
-    return m ? `${m[1]}/_pdf` : u;
-  }
-  const d = String(p?.doi || "").trim();
-  return /^10\.\d{4,9}\/\S+$/.test(d) ? `https://doi.org/${d}` : "";
+  const u = safeUrl(p?.url), doi = doiOfPaper(p);
+  return toPdf(u) || toPdf(landing.get(doi)) || u || (doi ? `https://doi.org/${doi}` : "");
+}
+// DOI の行き先を doi.org の API（だれでも使える・鍵なし）で調べる。終わったら then() を呼ぶ
+function resolveDois(ps, then) {
+  ps.forEach(p => {
+    const doi = doiOfPaper(p);
+    if (!doi || toPdf(safeUrl(p.url)) || landing.has(doi)) return;
+    landing.set(doi, null);
+    fetch(`https://doi.org/api/handles/${doi}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(j => { landing.set(doi, j?.values?.find(v => v.type === "URL")?.data?.value || ""); then(); })
+      .catch(() => landing.set(doi, ""));
+  });
 }
 export const canFloat = () => typeof window !== "undefined" && "documentPictureInPicture" in window;
 
@@ -33,6 +48,7 @@ export const getPick = () => pick;
 export function setupReader(c, conf) {
   cfg = conf;
   if (pick >= conf.papers.length) pick = 0;
+  resolveDois(conf.papers, () => { if (pip) renderPip(); });
   if (pip) renderPip(); // アプリ側で論文を切り替えたら、小さな窓も合わせる
   return pick;
 }
@@ -174,7 +190,7 @@ export function handleReader(t, c) {
   const b = t.closest("[data-reader-pick]");
   if (b) { pick = Number(b.dataset.readerPick) || 0; keepScroll(() => c.rerender()); return true; }
   if (t.closest("[data-reader-float]")) { openFloat(c); return true; }
-  const s = t.closest("[data-reader-split]");
-  if (s) { openPaper(s.dataset.readerSplit); return true; }
+  const s = t.closest("[data-reader-split]"); // 開くURLは押したときに決める（DOI の行き先があとから分かることがある）
+  if (s) { openPaper(paperOpenUrl(cfg?.papers[Number(s.dataset.readerSplit) || 0])); return true; }
   return false;
 }
