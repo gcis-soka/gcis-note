@@ -187,7 +187,7 @@ function doiList(c) {
   if (!xs.length) return "";
   return `<div class="recap">${xs.map(x => `<div class="tc-row"><span>論文${x.no}</span><b>${x.doi
     ? `DOI の番号 ${c.esc(x.doi)} <button type="button" class="btn small ghost" data-copytext="${c.esc(x.doi)}">コピー</button>`
-    : `<span class="hint">DOI なし → URL で登録</span> <button type="button" class="btn small ghost" data-copytext="${c.esc(x.url)}">URLをコピー</button>`}</b></div>`).join("")}</div>`;
+    : `<span class="hint">DOI なし → 「<b>論文</b>」で、論文のページを見ながら入れよう：執筆者名・論文タイトル・誌名・巻号・掲載頁・発行年（見つかるものは全部）</span> ${safeUrl(x.url) ? `<a class="btn small ghost" href="${c.esc(safeUrl(x.url))}" target="_blank" rel="noopener">論文のページを開く ↗</a>` : ""}`}</b></div>`).join("")}</div>`;
 }
 
 export const R03 = {
