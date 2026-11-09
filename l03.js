@@ -3,7 +3,7 @@
 // RefNavi への登録は授業で（URLを貼るだけ）。アプリは登録しないが、登録するもの（第2回の記事・Quest 2 の動画と本）を一覧で出す（11/5）
 // data：hanMemo・refLogin・refDouga・refHon・refKiji・refHan（RefNavi の進み具合）・kensaku・tried・p1Url・p2Url・p1Doi・p2Doi・sanko（RefNavi から貼った参考文献リスト）（読むのは Quest 3。授業中に始める：11/7）
 // 論文は URL だけ（題名は RefNavi に入れる：11/7）。Geminiのチャットは AIの文の下の chatUrl で預かる（共有リンク欄は 11/7 廃止）
-import { quest, listOf, booksOf, refnaviGroupOf, REFNAVI_GROUPS, doiOf } from "./common.js";
+import { quest, listOf, booksOf, refnaviGroupOf, REFNAVI_GROUPS, doiOf, snapFirst } from "./common.js";
 import { copyText } from "./r02.js";
 // Quest 2 で見たもの・読んだもの（動画・本の2欄）
 const pickText = R => [...listOf(R, "douga"), ...listOf(R, "honTitle")].join(" ／ ");
@@ -438,6 +438,7 @@ function refStep(c) {
         </ul>
       </div>
       <h3>① RefNavi を開いて、ログイン</h3>
+      ${snapFirst("RefNavi")}
       <div class="searchbtns"><button type="button" class="btn" data-refnavi>RefNavi を右半分に開く ↗</button></div>
       ${REF_LOGIN_HOWTO}
       ${REF_FIRST_HOWTO}

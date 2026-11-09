@@ -97,6 +97,8 @@ details.help { margin-top: 8px; font-size: 15px; } details.help summary { cursor
 .warn-text { color: var(--warn); }
 .link.small { font-size: 13px; margin-left: 6px; }
 .snap { margin: 8px 0 0; background: #fff; border-radius: 10px; padding: 6px 10px; }
+.snapfirst { background: #eef5ff; border: 1px solid #c9dcf5; margin: 8px 0; line-height: 1.9; }
+.snapfirst span { white-space: nowrap; }
 .snap kbd { font-family: inherit; font-weight: 700; border: 1px solid var(--line); border-bottom-width: 3px; border-radius: 6px; padding: 0 6px; background: var(--bg); }
 
 .rules { background: var(--warn-soft); border-radius: 12px; padding: 10px 14px; font-size: 15px; margin-top: 12px; }

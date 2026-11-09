@@ -145,6 +145,14 @@ export function snapKeys() {
   return "";
 }
 
+// 右半分に別の窓を開く前に、アプリの窓を左半分に寄せる案内（11/9 先生：開く前に必ず。Windows・Chromebook どちらも出す。使っている端末の方を先に）
+export function snapFirst(what = "Gemini") {
+  const ua = navigator.userAgent || "";
+  const win = `<span><kbd>Windowsキー ＋ ←</kbd>（Windows）</span>`, cros = `<span><kbd>Alt ＋ [</kbd>（Chromebook）</span>`;
+  const keys = /CrOS/.test(ua) ? [cros, win] : [win, cros];
+  return `<p class="snap snapfirst">🪟 <b>${what}を開く前に</b>、まずこのアプリの窓を<b>左半分</b>に寄せよう：${keys.join("　／　")}</p>`;
+}
+
 export function lsGet(k) { try { return localStorage.getItem(k); } catch { return null; } }
 export function lsSet(k, v) { try { localStorage.setItem(k, v); } catch { /* 保存できなくても動く */ } }
 

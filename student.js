@@ -1,7 +1,7 @@
 // 生徒画面の枠：ホーム・クラスと番号・保存・画面の切り替え
 // ステージ（前のステージを提出すると次が出る）の中身は l01.js・r01.js・l02.js・r02.js・l03.js・r03.js・l04.js … に書く
 import {
-  escapeHtml, kiOf, classLabel, openGemini, chatUrlOf, chatUrlProblem, snapKeys, quest,
+  escapeHtml, kiOf, classLabel, openGemini, chatUrlOf, chatUrlProblem, snapKeys, snapFirst, quest,
   CLASSES, MAX_NUMBER, TEST_CLASS
 } from "./common.js";
 import { L01 } from "./l01.js";
@@ -132,6 +132,7 @@ export function mountStudent({ be, user, app, asTeacher }) {
       <div class="prompt ${link ? "has-link" : ""}">
         <div class="prompt-head">AIに送る文（自動でできています）</div>
         <pre class="prompt-text">${escapeHtml(text)}</pre>
+        ${first ? `<div class="if-nolink">${snapFirst("Gemini")}</div>` : ""}
         <div class="prompt-actions">
           <button class="btn" data-copy>コピーする</button>
           <button class="btn ghost" data-gemini><span class="if-link">このチャットに戻る ↗</span><span class="if-nolink">${first ? "Geminiを右半分に開く ↗" : "Geminiの窓に戻る ↗"}</span></button>
