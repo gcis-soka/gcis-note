@@ -121,7 +121,7 @@ export function pickFields(c, { done = false } = {}) {
   const books = PICK_N.map((n, i) => `
       <div class="pickone"${reveal(i, "honTitle" + PICK_N[i - 1])}>
         ${field("honTitle" + n, `${done ? "読んだ" : "読む"}本の題名${nth(i, "冊")}`, { type: "text", placeholder: "例：『〇〇〇〇』", hint: i ? "" : "入力すると次の欄が出ます" })}
-        ${done ? field("isbn" + n, "ISBN（題名を書いたら必ず）", { type: "text", placeholder: "例：9784780802047", hint: i ? "" : "本の裏表紙のバーコードの上か、奥付にある「978」から始まる13桁。蛍雪図書館の本なら、蔵書検索の本の画面（書誌詳細）にもあります。第3回に RefNavi に登録するときに使います" }) : ""}
+        ${done ? field("isbn" + n, "ISBN", { type: "text", placeholder: "例：9784780802047", hint: i ? "" : "本の裏表紙のバーコードの上か、奥付にある「978」から始まる13桁。蛍雪図書館の本なら、蔵書検索の本の画面（書誌詳細）にもあります。第3回に RefNavi に登録するときに使います" }) : ""}
       </div>`).join("");
   return `<div class="findrow">${videos}</div><div class="findrow">${books}</div>`;
 }

@@ -526,8 +526,14 @@ export const L03 = {
   onInput(el, c) { handlePaperInput(el, c); },
 
   canNext(i, c) {
+    if (i === 2) return !!c.v("sanko"); // 参考文献リストは必須（11/9 先生）
     if (i === 3) return !!c.v("p1Url"); // 2本が目標。見つからない生徒も先へ進める
     return true;
+  },
+  // 次へが押せないときに出す名前（「〜が書けたら、次へ進もう」）
+  need(i, c) {
+    if (i === 2 && !c.v("sanko")) return ["「参考文献リスト」"];
+    return [];
   },
 
   onClick(t, c) {
