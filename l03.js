@@ -205,60 +205,68 @@ const REF_LOGIN_HOWTO = `
     </svg>
     <figcaption>① 「<b>Googleでログイン</b>」を押す → ② <b>学校のアカウント</b>（…@tokyo.soka.ed.jp）を選ぶ</figcaption>
   </figure>`;
-// 初めて RefNavi に入るとき（RefNavi_manual_52：「児童・生徒」を選び、グループコードを入力して登録）。59期は今回が初めて（11/7）
+// 初めて RefNavi に入るとき：「児童・生徒」を丸で選び、グループコードを入れて「RefNaviに入る」（11/9 実際の画面に合わせた）
 const REF_FIRST_HOWTO = `
-  <figure class="urlhowto libhowto" aria-label="初めてのとき：児童・生徒を選び、グループコードを入れて登録">
+  <figure class="urlhowto libhowto" aria-label="初めてのとき：児童・生徒を選び、グループコードを入れてRefNaviに入る">
     <svg viewBox="0 0 540 150" role="img" xmlns="http://www.w3.org/2000/svg">
       <rect x="1" y="1" width="250" height="148" rx="10" fill="#fff" stroke="#c9ced8"/>
-      <text x="126" y="30" font-size="13" font-weight="700" fill="#222" text-anchor="middle">あなたは？</text>
-      <rect x="26" y="50" width="90" height="40" rx="6" fill="#f4f6f8" stroke="#ddd"/><text x="71" y="75" font-size="12" fill="#999" text-anchor="middle">先生</text>
-      <rect x="136" y="50" width="90" height="40" rx="6" fill="#f4f6f8" stroke="#bbb"/><text x="181" y="75" font-size="12" fill="#333" text-anchor="middle">児童・生徒</text>
-      <rect x="132" y="46" width="98" height="48" rx="8" fill="none" stroke="#d93025" stroke-width="3"/>
-      <circle cx="181" cy="116" r="12" fill="#d93025"/><text x="176" y="121" font-size="14" font-weight="700" fill="#fff">3</text>
+      <text x="16" y="30" font-size="11" fill="#333">先生か児童生徒のどちらか選んでください。</text>
+      <circle cx="36" cy="62" r="7" fill="#fff" stroke="#1a73e8" stroke-width="2"/><circle cx="36" cy="62" r="3.5" fill="#1a73e8"/>
+      <text x="50" y="67" font-size="12" fill="#222">児童・生徒</text>
+      <circle cx="36" cy="88" r="7" fill="#fff" stroke="#999" stroke-width="1.5"/>
+      <text x="50" y="93" font-size="12" fill="#999">先生</text>
+      <rect x="22" y="48" width="104" height="28" rx="6" fill="none" stroke="#d93025" stroke-width="3"/>
+      <circle cx="146" cy="62" r="12" fill="#d93025"/><text x="141" y="67" font-size="14" font-weight="700" fill="#fff">3</text>
       <path d="M258 75 L278 75" stroke="#d93025" stroke-width="3"/><path d="M276 67 L288 75 L276 83 Z" fill="#d93025"/>
       <rect x="289" y="1" width="250" height="148" rx="10" fill="#fff" stroke="#c9ced8"/>
-      <text x="304" y="30" font-size="12" font-weight="700" fill="#333">グループコード</text>
-      <rect x="304" y="40" width="150" height="28" rx="3" fill="#fff" stroke="#aaa"/><text x="312" y="59" font-size="11" fill="#999">ここに入れる</text>
-      <rect x="300" y="36" width="158" height="36" rx="6" fill="none" stroke="#d93025" stroke-width="3"/>
-      <circle cx="476" cy="54" r="12" fill="#d93025"/><text x="471" y="59" font-size="14" font-weight="700" fill="#fff">4</text>
-      <rect x="304" y="90" width="80" height="30" rx="4" fill="#388e3c"/><text x="344" y="110" font-size="12" fill="#fff" text-anchor="middle">登録</text>
+      <text x="304" y="44" font-size="11" fill="#333">グループコード：</text>
+      <rect x="402" y="28" width="104" height="26" rx="3" fill="#fff" stroke="#1a73e8"/><text x="410" y="46" font-size="11" fill="#999">ここに入れる</text>
+      <rect x="398" y="24" width="112" height="34" rx="6" fill="none" stroke="#d93025" stroke-width="3"/>
+      <circle cx="524" cy="41" r="11" fill="#d93025"/><text x="519" y="46" font-size="14" font-weight="700" fill="#fff">4</text>
+      <rect x="330" y="84" width="150" height="30" rx="4" fill="#1a73e8"/><text x="405" y="104" font-size="12" fill="#fff" text-anchor="middle">RefNaviに入る</text>
+      <rect x="326" y="80" width="158" height="38" rx="6" fill="none" stroke="#d93025" stroke-width="3"/>
+      <circle cx="500" cy="99" r="12" fill="#d93025"/><text x="495" y="104" font-size="14" font-weight="700" fill="#fff">5</text>
     </svg>
-    <figcaption>初めてのときだけ：③ 「<b>児童・生徒</b>」を選ぶ → ④ <b>グループコード</b>を入れて登録（2回目からは、ログインするとすぐホームが出ます）</figcaption>
+    <figcaption>初めてのときだけ：③ 「<b>児童・生徒</b>」を選ぶ → ④ <b>グループコード</b>を入れる → ⑤ 「<b>RefNaviに入る</b>」（2回目からは、ログインするだけで使えます）</figcaption>
   </figure>`;
-// 登録の図（ホームの「メディアの選択」→「ISBN コード／DOI コード／URL」欄→照合・解析）。
-// RefNavi 操作マニュアル（RefNavi_manual_52, 2026/10）の名前どおり。並びは図式（実際の画面写真があれば描き直す）
+// 登録の図：上の種類のボタン（本・論文・雑誌・新聞・動画／ウェブサイト…）→ 欄に貼って「照合」→ 登録（11/9 実際の画面に合わせた）
+// 本＝ISBN→照合（カメラでバーコードも）／動画＝URL→照合（YouTube だけ自動）／記事＝ウェブサイト・URL→解析／論文＝DOI→照合
 const REF_ADD_HOWTO = `
-  <figure class="urlhowto libhowto" aria-label="RefNaviの登録：メディアの選択で種類を選び、ISBNかURLを貼って照合・解析し、確かめて登録">
-    <svg viewBox="0 0 540 222" role="img" xmlns="http://www.w3.org/2000/svg">
-      <rect x="1" y="1" width="250" height="220" rx="10" fill="#fff" stroke="#c9ced8"/>
-      <text x="16" y="28" font-size="14" font-weight="700" fill="#222">ホーム</text>
-      <path d="M12 40 H240" stroke="#e3e3e3"/>
-      <text x="20" y="66" font-size="12" font-weight="700" fill="#333">メディアの選択</text>
-      <rect x="20" y="80" width="64" height="40" rx="6" fill="#f4f6f8" stroke="#bbb"/><text x="52" y="105" font-size="12" fill="#333" text-anchor="middle">図書</text>
-      <rect x="92" y="80" width="64" height="40" rx="6" fill="#f4f6f8" stroke="#bbb"/><text x="124" y="105" font-size="12" fill="#333" text-anchor="middle">動画</text>
-      <rect x="164" y="80" width="64" height="40" rx="6" fill="#f4f6f8" stroke="#ddd"/><text x="196" y="105" font-size="12" fill="#999" text-anchor="middle">…</text>
-      <rect x="16" y="76" width="144" height="48" rx="8" fill="none" stroke="#d93025" stroke-width="3"/>
-      <circle cx="40" cy="146" r="12" fill="#d93025"/><text x="35" y="151" font-size="14" font-weight="700" fill="#fff">1</text>
-      <text x="60" y="144" font-size="11" fill="#333">本は「図書」</text>
-      <text x="60" y="160" font-size="11" fill="#333">動画は「動画」を選ぶ</text>
-      <path d="M258 120 L278 120" stroke="#d93025" stroke-width="3"/><path d="M276 112 L288 120 L276 128 Z" fill="#d93025"/>
-      <rect x="289" y="1" width="250" height="220" rx="10" fill="#fff" stroke="#c9ced8"/>
-      <text x="304" y="28" font-size="14" font-weight="700" fill="#222">情報登録</text>
-      <path d="M300 40 H528" stroke="#e3e3e3"/>
-      <text x="304" y="62" font-size="11" fill="#333">ISBN コード／DOI コード／URL</text>
-      <rect x="304" y="70" width="150" height="28" rx="3" fill="#fff" stroke="#aaa"/>
-      <text x="312" y="89" font-size="11" fill="#999">ここに貼り付け</text>
-      <rect x="460" y="70" width="64" height="28" rx="4" fill="#388e3c"/><text x="492" y="89" font-size="11" fill="#fff" text-anchor="middle">照合／解析</text>
-      <rect x="300" y="66" width="228" height="36" rx="6" fill="none" stroke="#d93025" stroke-width="3"/>
-      <circle cx="316" cy="124" r="12" fill="#d93025"/><text x="311" y="129" font-size="14" font-weight="700" fill="#fff">2</text>
-      <text x="336" y="122" font-size="11" fill="#333">本＝ISBN →「照合」</text>
-      <text x="336" y="138" font-size="11" fill="#333">動画＝URL →「解析」</text>
-      <rect x="304" y="152" width="220" height="22" rx="3" fill="#f4f6f8"/><text x="312" y="167" font-size="11" fill="#555"><tspan fill="#d93025">*</tspan> 書名・著者などが自動で入る</text>
-      <circle cx="316" cy="196" r="12" fill="#d93025"/><text x="311" y="201" font-size="14" font-weight="700" fill="#fff">3</text>
-      <text x="336" y="200" font-size="11" fill="#333">確かめて、登録する</text>
+  <figure class="urlhowto libhowto" aria-label="RefNaviの登録：上の種類のボタンを押し、ISBNやURLを貼って照合し、確かめて登録">
+    <svg viewBox="0 0 540 200" role="img" xmlns="http://www.w3.org/2000/svg">
+      <rect x="1" y="1" width="250" height="198" rx="10" fill="#fff" stroke="#c9ced8"/>
+      <text x="16" y="30" font-size="12" font-weight="700" fill="#222">上の種類のボタン</text>
+      <rect x="10" y="48" width="44" height="20" rx="10" fill="#3d7a4f"/><text x="32" y="62" font-size="10" fill="#fff" text-anchor="middle">本</text><rect x="58" y="48" width="44" height="20" rx="10" fill="#8fd6a3"/><text x="80" y="62" font-size="10" fill="#1f3d2a" text-anchor="middle">論文</text><rect x="106" y="48" width="44" height="20" rx="10" fill="#8fd6a3"/><text x="128" y="62" font-size="10" fill="#1f3d2a" text-anchor="middle">雑誌</text><rect x="154" y="48" width="44" height="20" rx="10" fill="#8fd6a3"/><text x="176" y="62" font-size="10" fill="#1f3d2a" text-anchor="middle">新聞</text><rect x="202" y="48" width="44" height="20" rx="10" fill="#3d7a4f"/><text x="224" y="62" font-size="10" fill="#fff" text-anchor="middle">動画</text><rect x="10" y="74" width="76" height="20" rx="10" fill="#8fd6a3"/><text x="48" y="88" font-size="10" fill="#1f3d2a" text-anchor="middle">ウェブサイト</text><rect x="90" y="74" width="76" height="20" rx="10" fill="#8fd6a3"/><text x="128" y="88" font-size="10" fill="#1f3d2a" text-anchor="middle">パンフレット類</text><rect x="170" y="74" width="76" height="20" rx="10" fill="#8fd6a3"/><text x="208" y="88" font-size="10" fill="#1f3d2a" text-anchor="middle">インタビュー</text><rect x="10" y="100" width="116" height="20" rx="10" fill="#8fd6a3"/><text x="68" y="114" font-size="10" fill="#1f3d2a" text-anchor="middle">行政資料・白書</text><rect x="130" y="100" width="116" height="20" rx="10" fill="#8fd6a3"/><text x="188" y="114" font-size="10" fill="#1f3d2a" text-anchor="middle">統計データ</text>
+      <rect x="6" y="44" width="52" height="28" rx="14" fill="none" stroke="#d93025" stroke-width="3"/>
+      <rect x="198" y="44" width="52" height="28" rx="14" fill="none" stroke="#d93025" stroke-width="3"/>
+      <circle cx="30" cy="150" r="12" fill="#d93025"/><text x="25" y="155" font-size="14" font-weight="700" fill="#fff">1</text>
+      <text x="50" y="148" font-size="11" fill="#333">本は「本」、動画は「動画」</text>
+      <text x="50" y="164" font-size="11" fill="#333">（押すと、下の欄が変わる）</text>
+      <path d="M258 100 L278 100" stroke="#d93025" stroke-width="3"/><path d="M276 92 L288 100 L276 108 Z" fill="#d93025"/>
+      <rect x="289" y="1" width="250" height="198" rx="10" fill="#fff" stroke="#c9ced8"/>
+      <text x="304" y="28" font-size="13" font-weight="700" fill="#3d7a4f">本</text>
+      <text x="304" y="50" font-size="11" fill="#333">ISBN（動画は URL）</text>
+      <rect x="304" y="58" width="132" height="26" rx="3" fill="#fff" stroke="#aaa"/><text x="312" y="76" font-size="11" fill="#999">ここに貼る</text>
+      <rect x="442" y="58" width="38" height="26" rx="3" fill="#f4f6f8" stroke="#888"/><text x="461" y="76" font-size="11" fill="#222" text-anchor="middle">照合</text>
+      <rect x="486" y="58" width="32" height="26" rx="3" fill="#f4f6f8" stroke="#888"/><text x="502" y="76" font-size="12" text-anchor="middle">📷</text>
+      <rect x="300" y="54" width="184" height="34" rx="6" fill="none" stroke="#d93025" stroke-width="3"/>
+      <circle cx="316" cy="108" r="12" fill="#d93025"/><text x="311" y="113" font-size="14" font-weight="700" fill="#fff">2</text>
+      <text x="336" y="112" font-size="11" fill="#333">貼って「照合」（📷はバーコード）</text>
+      <rect x="304" y="126" width="220" height="22" rx="3" fill="#f4f6f8"/><text x="312" y="141" font-size="11" fill="#555"><tspan fill="#d93025">＊</tspan> 書名・著者などが自動で入る</text>
+      <circle cx="316" cy="176" r="12" fill="#d93025"/><text x="311" y="181" font-size="14" font-weight="700" fill="#fff">3</text>
+      <text x="336" y="180" font-size="11" fill="#333">赤い＊が埋まったか見て「登録」</text>
     </svg>
-    <figcaption>① ホームの「<b>メディアの選択</b>」で、本は「図書」、動画は「動画」→ ② 「<b>ISBN コード／DOI コード／URL</b>」の欄に貼って、本は「<b>照合</b>」、動画は「<b>解析</b>」→ ③ 赤い「＊」の欄が埋まっているか確かめて登録</figcaption>
-  </figure>`;
+    <figcaption>① 上の種類のボタンで「<b>本</b>」か「<b>動画</b>」を押す → ② 欄に貼って「<b>照合</b>」→ ③ 赤い「＊」の欄が埋まっているか確かめて「<b>登録</b>」</figcaption>
+  </figure>
+  <table class="reftable">
+    <thead><tr><th>登録するもの</th><th>押すボタン</th><th>欄に貼るもの</th><th>そのあと</th></tr></thead>
+    <tbody>
+      <tr><td>本</td><td>本</td><td>ISBN（📷 でバーコードも読める）</td><td>照合 → 登録</td></tr>
+      <tr><td>動画</td><td>動画</td><td>URL</td><td>照合 → 登録（自動で入るのは YouTube だけ）</td></tr>
+      <tr><td>記事</td><td>ウェブサイト</td><td>URL</td><td>解析 → 登録</td></tr>
+      <tr><td>論文（このあと）</td><td>論文</td><td>DOI</td><td>照合 → 登録</td></tr>
+    </tbody>
+  </table>`;
 // 出力して貼る（11/7 先生：RefNavi を「楽だ」と早く感じる場面。第3回で出力→アプリに貼る、Quest 3 で貼り直す、RQシートに自動で載る）
 // 書式は1学期 GCIS 第2回のスライド（「著者名（年）.『書名』. 出版社.」など、著者と年が先に来る形）にいちばん近い RefNavi の出力形式。
 // RefNavi の形式：MLA 第9版・APA・ハーバード式・Bibtex・SIST02・学びの技（初期設定）・Refnavi。仮に APA（11/7。先生が RefNavi で出力を確かめたら確定）
@@ -319,6 +327,14 @@ function refStep(c) {
   const { d, esc } = c;
   return `
       <p class="lead">班で協力して、<b>${quest(2)} で見た動画・読んだ本を RefNavi に登録</b>しよう。</p>
+      <div class="why">
+        <b>なぜ登録するの？</b>
+        <ul>
+          <li><b>人は忘れる</b>から。「あれ、どこで読んだんだっけ？」は、だれにでもよくあること。見つけたらその場で記録しておけば、いつでも元の資料に戻れる</li>
+          <li>友だちや先生に、何を読んだかを<b>正確に伝えられる</b></li>
+          <li>レポートや発表で使う<b>参考文献リストが、ボタン1つでできる</b>（④でやってみよう）</li>
+        </ul>
+      </div>
       <div class="share">
         <b>班で進めよう</b>
         <ul>
@@ -338,7 +354,7 @@ function refStep(c) {
       ${REF_ADD_HOWTO}
       <ul class="todo">
         <li><b>本を持ってきた人は、カメラのボタンで本のバーコードを読み取ってみよう</b>（裏表紙の「978」から始まる方）。題名や著者が一気に入ります。読み取れないときは、②の一覧の ISBN を「コピー」して貼れば大丈夫</li>
-        <li>動画は YouTube のURLだけ登録できます</li>
+        <li>YouTube 以外の動画は自動で入らないので、配信者・動画タイトルを手で入れよう</li>
       </ul>
       <h3>④ 参考文献リストを出してみよう</h3>
       <p>1学期に手で書いた参考文献の書式が、<b>ボタン1つでできます</b>。</p>
@@ -391,8 +407,9 @@ export const L03 = {
       <h3>② 自分で探す</h3>
       ${searchTools(c)}
       <h3>③ 論文を2本決める</h3>
+      <p>たくさん探して、たくさん眺めてOK。その中から「<b>これだ！</b>」と思える、<b>自分の研究の師匠</b>になる論文を決めよう。何度も読み返して、考えるときのよりどころにする1〜2本です。</p>
       ${paperFields(c)}
-      <p class="hint">決めたら、RefNavi にも登録しよう。「メディアの選択」で「<b>論文</b>」→「<b>DOI</b>」の欄に<b>DOI の番号</b>を貼って「<b>照合</b>」。DOIがない論文は「<b>論文</b>」で、論文のページを見ながら入れよう：執筆者名・論文タイトル・誌名・巻号・掲載頁・発行年（見つかるものは全部）。</p>
+      <p class="hint">決めたら、RefNavi にも登録しよう。上の種類のボタンで「<b>論文</b>」→「<b>DOI</b>」の欄に<b>DOI の番号</b>を貼って「<b>照合</b>」。DOIがない論文は「<b>論文</b>」で、論文のページを見ながら入れよう：執筆者名・論文タイトル・誌名・巻号・掲載頁・発行年（見つかるものは全部）。</p>
       ${doiCopyButtons(2)}`;
     // i === 3：提出（提出すると Quest 3 が出る。授業の残りの時間で Quest 3 を読みはじめる：11/7）
     const ps = papers(c);

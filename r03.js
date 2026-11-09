@@ -171,7 +171,7 @@ function afterStep(c) {
       ${field("q3", "③", { type: "text", qmark: true })}
       <h3>論文も RefNavi に登録して、参考文献リストを新しくしよう</h3>
       <ol class="todo">
-        <li>RefNavi の「メディアの選択」で「<b>論文</b>」→「<b>DOI</b>」の欄に、下の<b>DOI の番号</b>を貼って「<b>照合</b>」→ 登録</li>
+        <li>RefNavi の上の種類のボタンで「<b>論文</b>」→「<b>DOI</b>」の欄に、下の<b>DOI の番号</b>を貼って「<b>照合</b>」→ 登録</li>
         <li>「整理する」の「リスト」で全部にチェック →「出力」→ ${REF_FORMAT ? `「${REF_FORMAT}」` : "先生が指定した書式"} → コピー</li>
         <li>下の欄を消して、貼り直す</li>
       </ol>
