@@ -481,6 +481,7 @@ export const L03 = {
     { title: "提出して、Quest 3 へ", mins: 2 }
   ],
   geminiKey: "gcis_gemini_L03", // 第3回の新しいチャット
+  needChat: true, // 画面4（AIで検索語）は、この回のチャットのURLを貼るまで次へ進めない（11/9 先生：まだ3回目なので必須に）
 
   render(i, c) {
     const { field, promptBox, esc, d } = c;
