@@ -311,6 +311,11 @@ const REF_ADD_HOWTO = `
     </svg>
     <figcaption><b>どの種類も同じ4ステップ</b>：① 上の種類のボタン → ② 本は 📷 でバーコードを読む／記事・動画は URL を貼って「解析」「照合」（赤い＊が埋まったか見る）→ ③ いちばん下の個人タグで「<b>${REF_TAG}</b>」を選ぶ（グループタグ・カスタムタグは選ばない）→ ④「<b>登録</b>」</figcaption>
   </figure>`;
+// 出力して貼る（11/7 先生：RefNavi を「楽だ」と早く感じる場面。第3回で出力→アプリに貼る、Quest 3 で貼り直す、RQシートに自動で載る）
+// 書式は1学期 GCIS 第2回のスライド（「著者名（年）.『書名』. 出版社.」など、著者と年が先に来る形）にいちばん近い RefNavi の出力形式。
+// RefNavi の形式：MLA 第9版・APA・ハーバード式・Bibtex・SIST02・学びの技（初期設定）・Refnavi。仮に APA（11/7。先生が RefNavi で出力を確かめたら確定）
+export const REF_FORMAT = "APA";
+const fmtName = () => REF_FORMAT ? `「${REF_FORMAT}」` : "先生が指定した書式";
 // 出力の図（「整理する」→「リスト」→「表示中を全て選択」→「出力」→書式→コピー）。11/9 先生の画面写真に合わせた（出力のあとは RefNavi_manual_52 の名前どおり・図式）
 const refOutHowto = () => `
   <figure class="urlhowto libhowto" aria-label="RefNaviの出力：整理するのリストで、表示中を全て選択し、出力で書式を選んでコピー">
