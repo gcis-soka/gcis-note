@@ -291,6 +291,15 @@ select.ki { width: auto; padding: 3px 10px; border-radius: 999px; font-size: 15p
 .qpick { display: block; width: 100%; text-align: left; font: inherit; padding: 8px 12px; margin: 4px 0; border-radius: 10px; border: 2px solid var(--line); background: #fff; cursor: pointer; }
 .qpick:hover { border-color: var(--kc, var(--accent)); }
 .qpick.on { border-color: var(--kc, var(--accent)); background: color-mix(in srgb, var(--kc, var(--accent)) 10%, #fff); font-weight: 700; }
+/* Quest 3 画面2：読みながら気になったことの札（11/10） */
+.fuda-list { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 14px; }
+.fuda { display: inline-flex; align-items: baseline; gap: 6px; max-width: 100%; text-align: left; font: inherit; padding: 8px 12px; border-radius: 10px; border: 2px solid var(--line); background: #fffdf8; cursor: pointer; box-shadow: 0 1px 0 var(--line); }
+.fuda em { font-style: normal; font-size: 12px; color: var(--sub); flex: 0 0 auto; }
+.fuda i { font-style: normal; color: var(--accent); font-weight: 700; }
+.fuda:hover:not(:disabled) { border-color: var(--accent); }
+.fuda.on { border-color: var(--accent); background: var(--accent-soft); font-weight: 700; }
+.fuda:disabled { opacity: .45; cursor: default; }
+.tagq3 { font-style: normal; font-size: 12px; color: var(--accent); border: 1px solid var(--accent); border-radius: 6px; padding: 0 5px; }
 
 /* ホームのカード：done＝提出済み（背景を少し暗く・緑に✓）／now＝いま（緑の枠・緑の輪）／todo＝まだ（点線） */
 .lesson h3 { margin: 0; }

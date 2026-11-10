@@ -1,7 +1,9 @@
 // ステージ6：Quest 3（第3回→第4回 12/7・期末をはさむ）論文を読み切った結果。第3回の授業の残りの時間で始める（11/7）
 // 仕様：ナレッジの L03.md「Quest 3」（先生 10/31：分かったこと／まだ分かっていないこと＋気になったこと）
 // 11/9 作り直し：2画面（1 論文を読む／2 読み終えたら＝気になったこと・RefNavi・提出）。メモは論文ごと。アプリの中に論文は出さない（reader.js）
-// data：yomi1〜3（全部読んだ／途中まで／まだ）・wakatta・mada（論文①）・wakatta2・mada2（論文②・11/9）・wakatta3・mada3（論文③・11/9）・q1〜q3・
+// 11/10 先生：メモの右の欄を「まだ分かっていないこと」→「読みながら気になったこと」（教科書 p.60 d 疑問点・不足事項）。
+//       右の欄の1行＝1枚の札。画面2で札から「確かめてみたい？」を q1〜q3 に選ぶ。欄の名前（mada…）は前のまま
+// data：yomi1〜3（全部読んだ／途中まで／まだ）・wakatta・mada（論文①。mada＝読みながら気になったこと）・wakatta2・mada2（論文②・11/9）・wakatta3・mada3（論文③・11/9）・q1〜q3・
 //       p1Url〜p3Url・p1Doi〜p3Doi（①②は第3回から写し、ここで変えられる。③は Quest 3 だけ）・kensaku・tried・sanko・fromL03
 import { quest, memoText, doiOf } from "./common.js";
 export { memoText };
@@ -56,15 +58,19 @@ const WAKATTA_CHIPS = [
   { label: "〜を調べたら、〜だった", text: "|を調べたら、" },
   { label: "〜と比べたら", text: "|と比べたら、" }
 ];
+// 右の欄：読みながら気になったこと（1行に1つ。あとで札になる）
 const MADA_CHIPS = [
-  { label: "〜の場合は調べていない", text: "|の場合は調べていない" },
-  { label: "なぜ〜かは分かっていない", text: "なぜ|かは分かっていない" },
+  { label: "えっ、〜って本当？", text: "えっ、|って本当？" },
+  { label: "なぜ〜なんだろう？", text: "なぜ|なんだろう？" },
+  { label: "〜の場合はどうなる？", text: "|の場合はどうなる？" },
   { label: "今後の課題に〜とあった", text: "今後の課題に「|」とあった" }
 ];
+const MADA_LABEL = "読みながら気になったこと";
+const MADA_PH = "えっ？と思ったこと・疑問・足りないと思ったところ。1行に1つ書こう";
 
 const fieldsOf = j => [
   { key: KEYS[j].w, label: "分かったこと", placeholder: "何を・誰に・どうやって調べて、何が分かった？", rows: 5, chips: WAKATTA_CHIPS },
-  { key: KEYS[j].m, label: "まだ分かっていないこと", placeholder: "論文の最後の「今後の課題」や、自分の場面との違いを見てみよう", rows: 5, chips: MADA_CHIPS }
+  { key: KEYS[j].m, label: MADA_LABEL, placeholder: MADA_PH, rows: 5, chips: MADA_CHIPS }
 ];
 
 // 浮かせて読むようすの図（11/9 先生の画面写真：論文の PDF が画面いっぱい、その下にメモの小さな窓）。題名・本文は線だけの見本
@@ -93,7 +99,7 @@ const FLOAT_HOWTO = `
       <text x="56" y="210" font-size="10" font-weight="700" fill="#23272f">分かったこと</text>
       <rect x="54" y="214" width="214" height="34" rx="5" fill="#fffdf8" stroke="#e4ded2"/>
       <path d="M62 226 H220 M62 238 H180" stroke="#7a8696" stroke-width="2"/>
-      <text x="276" y="210" font-size="10" font-weight="700" fill="#23272f">まだ分かっていないこと</text>
+      <text x="276" y="210" font-size="10" font-weight="700" fill="#23272f">読みながら気になったこと</text>
       <rect x="274" y="214" width="212" height="34" rx="5" fill="#fffdf8" stroke="#e4ded2"/>
       <path d="M282 226 H430" stroke="#7a8696" stroke-width="2"/>
       <rect x="50" y="200" width="440" height="52" rx="7" fill="none" stroke="#d93025" stroke-width="3"/>
@@ -121,19 +127,20 @@ function readStep(c) {
   const memo = `
         <div class="memo2">
           ${field(k.w, "分かったこと", { rows: 5, placeholder: "何を・誰に・どうやって調べて、何が分かった？", chips: WAKATTA_CHIPS })}
-          ${field(k.m, "まだ分かっていないこと", { rows: 5, placeholder: "論文の最後の「今後の課題」や、自分の場面との違いを見てみよう", chips: MADA_CHIPS })}
+          ${field(k.m, MADA_LABEL, { rows: 5, placeholder: MADA_PH, chips: MADA_CHIPS })}
         </div>`;
   const memoN = [k.w, k.m].filter(x => c.v(x)).length;
   return `
     <div data-reader-root>
-      <p class="lead">いよいよ<b>論文</b>を読みます。研究者が何を調べて、何が分かったのか。読みながら、<b>分かったこと</b>と<b>まだ分かっていないこと</b>をメモしていこう。</p>
+      <p class="lead">いよいよ<b>論文</b>を読みます。研究者が何を調べて、何が分かったのか。読みながら、<b>分かったこと</b>と、<b>読みながら気になったこと</b>（えっ？・なぜ？・足りないと思ったところ）をメモしていこう。</p>
       ${fl && !floating ? FLOAT_HOWTO : ""}
       <details class="fold tips">
         <summary>読み方のコツ</summary>
         <ul>
           <li>知らない言葉は、すぐ調べなくてOK。印をつけて先へ</li>
           <li>「何を・誰に・どうやって調べたか」と「何が分かったか」を探しながら読む</li>
-          <li>最後の「まとめ・今後の課題」に、<b>まだ分かっていないこと</b>が書いてあることが多い</li>
+          <li>最後の「まとめ・今後の課題」には、研究者自身が<b>まだ分かっていないこと</b>を書いていることが多い。気になったら右の欄へ</li>
+          <li>気になったことは<b>1行に1つ</b>。あとで、この中から確かめてみたいものを選びます</li>
         </ul>
       </details>
       ${tabs}
@@ -161,11 +168,35 @@ function readStep(c) {
 }
 
 // 画面2：読み終えたら（気になったこと・RefNavi・提出）
+// 右の欄（読みながら気になったこと）の1行＝1枚の札（11/10）
+const QK = ["q1", "q2", "q3"];
+const norm = s => String(s || "").trim().replace(/[？?]+$/u, "");
+const withQ = s => /[？?]$/.test(s) ? s : s + "？";
+function fudaOf(c) {
+  const seen = new Set(), out = [];
+  KEYS.forEach((k, j) => String(c.v(k.m) || "").split(/\r?\n/).forEach(line => {
+    const t = line.trim().replace(/^[・\-－*＊●○◯•]+\s*|^[0-9０-９]+[.．、)）]\s*/u, "").trim();
+    if (t.length < 2 || seen.has(norm(t))) return;
+    seen.add(norm(t)); out.push({ t, no: NO[j] });
+  }));
+  return out;
+}
+function fudaHtml(c) {
+  const fs = fudaOf(c), esc = c.esc;
+  if (!fs.length) return `<p class="hint">「読みながら気になったこと」に書いた行が、ここに札で出ます。</p>`;
+  const picked = QK.map(k => norm(c.v(k)));
+  const full = QK.every(k => c.v(k));
+  return `<div class="fuda-list">${fs.map(f => {
+    const on = picked.includes(norm(f.t));
+    return `<button type="button" class="fuda ${on ? "on" : ""}" data-fuda="${esc(f.t)}" ${!on && full ? "disabled" : ""}><em>論文${f.no}</em><span>${esc(f.t)}</span>${on ? `<i>✓</i>` : ""}</button>`;
+  }).join("")}</div>${full ? `<p class="hint">3つまで選べます。外したいときは、選んだ札をもう一度押そう。</p>` : ""}`;
+}
 function afterStep(c) {
   const { field, chips } = c;
   return `
-      <p class="lead">論文を読んで、<b>気になったこと</b>はある？ 第4回で問いを立てるときのタネになります。</p>
-      <div class="field"><span class="label">気になったこと（「？」で終わる形・なくてもOK）</span><span class="hint">書き出しを押すと、空いている欄に入ります</span>${chips(Q_CHIPS, "q1,q2,q3")}</div>
+      <p class="lead">読みながら気になったことの中から、<b>いちばん確かめてみたいもの</b>を1〜3つ選ぼう。第4回で問いを立てるとき、はじめから入っています。</p>
+      <div data-fuda-box>${fudaHtml(c)}</div>
+      <div class="field"><span class="label">確かめてみたいこと（「？」で終わる形・なくてもOK）</span><span class="hint">札を押すと、空いている欄に入ります。自分で書いても、直してもOK</span>${chips(Q_CHIPS, "q1,q2,q3")}</div>
       ${field("q1", "①", { type: "text", qmark: true })}
       ${field("q2", "②", { type: "text", qmark: true })}
       ${field("q3", "③", { type: "text", qmark: true })}
@@ -209,6 +240,7 @@ export const R03 = {
 
   onInput(el, c) {
     handlePaperInput(el, c);
+    if (/^q[123]$/.test(el.dataset.key || "")) { const box = c.app.querySelector("[data-fuda-box]"); if (box) box.innerHTML = fudaHtml(c); }
     // 論文のURLを入れた・消したとき：タブだけ描き直す（入力中の欄は描き直さない）
     if (/^p[123]Url$/.test(el.dataset.key || "")) {
       const ps = papersOf(c), box = c.app.querySelector("[data-ptabs]");
@@ -236,13 +268,13 @@ export const R03 = {
     }
   },
 
-  // 画面1：どちらかの論文で「分かったこと」と「まだ分かっていないこと」が書けたら次へ
+  // 画面1：どちらかの論文で「分かったこと」と「読みながら気になったこと」が書けたら次へ
   canNext(i, c) {
     if (i === 0) return KEYS.some((k, j) => doneOf(c, j));
     return true;
   },
   need(i, c) {
-    if (i === 0) return ["どれか1本の論文の「分かったこと」と「まだ分かっていないこと」"];
+    if (i === 0) return ["どれか1本の論文の「分かったこと」と「読みながら気になったこと」"];
     return [];
   },
 
@@ -260,6 +292,15 @@ export const R03 = {
       copyText(cp.dataset.copytext);
       const was = cp.textContent; cp.textContent = "コピーしました ✓";
       setTimeout(() => { cp.textContent = was; }, 1500);
+      return true;
+    }
+    const fu = t.closest("[data-fuda]");
+    if (fu) { // 札を押す：選んでいなければ空いている欄へ（「？」をつける）、選んでいれば外す
+      const t0 = fu.dataset.fuda, at = QK.find(k => norm(c.v(k)) === norm(t0));
+      if (at) c.set(at, "");
+      else { const e = QK.find(k => !c.v(k)); if (!e) return true; c.set(e, withQ(t0)); }
+      QK.forEach(k => { const inp = c.app.querySelector(`[data-key="${k}"]`); if (inp) inp.value = c.d[k] || ""; });
+      const box = c.app.querySelector("[data-fuda-box]"); if (box) box.innerHTML = fudaHtml(c);
       return true;
     }
     const b = t.closest("[data-yomi]");

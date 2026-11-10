@@ -5,7 +5,8 @@
 // 計画の点検（安全・倫理）と着手は第5回（12/14）
 // data：qs（[{t:問い, k:種類, a:1＝AIで足した}]）・qftPhase（""/run/done）・qftEnd・rounds・rank・rankTotal・rankN
 //       ・toi・toiWhy・yosou（予想）・sudeni・kakame・aite（問いへの3つの答え）・houhou・houhou2（あわせて使う）
-//       ・nani・yotei・hitsuyou・kuraberu・anzen・geminiLink
+//       ・nani・yotei・hitsuyou・kuraberu・anzen・geminiLink・seeded（Quest 3 の「確かめてみたいこと」を入れたか）
+// 11/10 先生：焦点は「説＋論文で分かったこと」。Quest 3 で選んだ「確かめてみたいこと」（q1〜q3）は、はじめから問いのリストに入れる（s:1。順位の数には入れない）
 import { quest, memoText } from "./common.js"; // memoText：Quest 3 のメモは論文ごと（11/9）
 
 const QFT_MIN = 3;   // 1回のチャレンジの時間（分）。1人なので班の5分より短く。もう一度チャレンジで足せる
@@ -82,7 +83,7 @@ const listText = qs => qs.map(q => `・${q.t}`).join("\n") || "・（まだあ�
 function promptAdd(c) {
   const L1 = c.prev("L01"), R3 = c.prev("R03");
   return `私は高校1年生です。「${tail(L1.setsu) || "（説）"}」という説から探究を始め、論文を読みました。` +
-    `分かったこと：${tail(memoText(R3, "wakatta", "／")) || "（なし）"}。まだ分かっていないこと：${tail(memoText(R3, "mada", "／")) || "（なし）"}。\n` +
+    `分かったこと：${tail(memoText(R3, "wakatta", "／")) || "（なし）"}。読みながら気になったこと：${tail(memoText(R3, "mada", "／")) || "（なし）"}。\n` +
     `私は次の問いを出しました。\n${listText(qsOf(c))}\n` +
     "これとは違う角度から、問いを10個出してください。私の問いの言い換えは入れないでください。答えやヒントは書かないでください。" +
     "「問い｜どんな角度か（10文字以内）」の表にしてください。表のあとには何も書かないでください。";
@@ -125,10 +126,20 @@ function refreshPlan(c) {
 
 // ---------- 問いのリスト ----------
 const qsOf = c => Array.isArray(c.d.qs) ? c.d.qs : [];
+const ownN = qs => qs.filter(q => !q.s).length; // 順位に入る数（Quest 3 から入れた問いは数えない）
+// Quest 3 で選んだ「確かめてみたいこと」を、はじめて開いたときに1回だけ問いのリストへ（消したら入れ直さない）
+function seedFromR03(c) {
+  if (c.d.seeded) return;
+  const R3 = c.prev("R03"), have = new Set(qsOf(c).map(q => tail(q.t)));
+  const add = ["q1", "q2", "q3"].map(k => String(R3[k] || "").trim()).filter(t => t && !have.has(tail(t)))
+    .map(t => ({ t: /[？?]$/.test(t) ? t : t + "？", k: "", s: 1 }));
+  c.set("seeded", 1);
+  if (add.length) c.set("qs", [...add, ...qsOf(c)]);
+}
 function listHtml(qs, esc, { del = true } = {}) {
   if (!qs.length) return `<p class="hint">まだありません</p>`;
   return `<ol class="qlist">${qs.map((q, i) =>
-    `<li><span>${esc(q.t)}</span>${q.a ? `<em class="tagai">AI</em>` : ""}${del ? `<button type="button" class="qdel" data-qdel="${i}" aria-label="消す">×</button>` : ""}</li>`).join("")}</ol>`;
+    `<li><span>${esc(q.t)}</span>${q.s ? `<em class="tagq3">${quest(3)}</em>` : ""}${q.a ? `<em class="tagai">AI</em>` : ""}${del ? `<button type="button" class="qdel" data-qdel="${i}" aria-label="消す">×</button>` : ""}</li>`).join("")}</ol>`;
 }
 const addBox = (label = "追加") => `
   <div class="qadd"><input type="text" data-qadd-input placeholder="思いついた問いを入れて Enter" autocomplete="off"><button type="button" class="btn primary" data-qadd>${label}</button></div>`;
@@ -138,7 +149,7 @@ function refreshList(c) {
   const box = c.app.querySelector("[data-qlist]");
   if (box) box.innerHTML = listHtml(qsOf(c), c.esc);
   const n = c.app.querySelector("[data-qcount]");
-  if (n) n.textContent = String(qsOf(c).length);
+  if (n) n.textContent = String(ownN(qsOf(c)));
 }
 function refreshNav(c, ok) {
   const b = c.app.querySelector(".nav .primary");
@@ -251,7 +262,7 @@ function startRound(c) {
 async function finishRound(c) {
   if (busy) return;
   busy = true;
-  const n = qsOf(c).length;
+  const n = ownN(qsOf(c));
   c.set("qftPhase", "done");
   c.set("rounds", (Number(c.d.rounds) || 0) + 1);
   c.set("rankN", n);
@@ -297,8 +308,7 @@ function focusBox(c) {
   return `
     <div class="recap">
       <div class="tc-row"><span>説（第1回）</span><b>${esc(L1.setsu || "—")}</b></div>
-      <div class="tc-row"><span>論文で分かったこと</span><b>${esc(memoText(R3, "wakatta") || "—").replace(/\n/g, "<br>")}</b></div>
-      <div class="tc-row big"><span>まだ分かっていないこと</span><b>${esc(memoText(R3, "mada") || "—").replace(/\n/g, "<br>")}</b></div>
+      <div class="tc-row big"><span>論文で分かったこと</span><b>${esc(memoText(R3, "wakatta") || "—").replace(/\n/g, "<br>")}</b></div>
     </div>`;
 }
 
@@ -322,6 +332,7 @@ export const L04 = {
 
   render(i, c) {
     ctxRef = c;
+    seedFromR03(c);
     const { field, promptBox, chips, esc, d } = c;
     const qs = qsOf(c);
 
@@ -341,7 +352,7 @@ export const L04 = {
       if (phase === "run") {
         ensureTick();
         return `
-          <div class="qft-head"><div class="timer" data-timer>${QFT_MIN}:00</div><div class="qcount"><b data-qcount>${qs.length}</b><span>個</span></div></div>
+          <div class="qft-head"><div class="timer" data-timer>${QFT_MIN}:00</div><div class="qcount"><b data-qcount>${ownN(qs)}</b><span>個</span></div></div>
           ${focusBox(c)}
           ${addBox()}
           <div data-qlist>${listHtml(qs, esc)}</div>`;
@@ -351,7 +362,7 @@ export const L04 = {
         return `
           <div class="qresult" data-qresult>
             <p class="eyebrow">${d.rounds > 1 ? `${d.rounds}回目の` : ""}結果</p>
-            <div class="qr-n"><b>${Number(d.rankN) || qs.length}</b>個</div>
+            <div class="qr-n"><b>${Number(d.rankN) || ownN(qs)}</b>個</div>
             <div class="qr-big">${r === 0 ? "集計中…" : r < 0 ? "おつかれさま！" : v.big}</div>
             ${r > 0 && v.sub ? `<p>${v.sub}</p>` : ""}
             ${r < 0 ? `<p class="hint">順位を出せませんでした（通信）。問いはちゃんと残っています。</p>` : ""}
@@ -361,7 +372,8 @@ export const L04 = {
           <div data-qlist>${listHtml(qs, esc)}</div>`;
       }
       return `
-        <p>${quest(3)}の「まだ分かっていないこと」を見ながら、<b>${QFT_MIN}分間で問いをできるだけたくさん</b>出そう。学年で何位か出ます。</p>
+        <p>説と、論文で分かったことを見ながら、<b>${QFT_MIN}分間で問いをできるだけたくさん</b>出そう。学年で何位か出ます。</p>
+        ${qs.some(q => q.s) ? `<p class="hint">${quest(3)}で選んだ「確かめてみたいこと」は、はじめから下に入っています（<em class="tagq3">${quest(3)}</em>。数には入りません）。</p>` : ""}
         ${focusBox(c)}
         ${rules}
         <div class="qstart"><button type="button" class="btn primary big" data-qft-start>スタート（${QFT_MIN}分）</button></div>

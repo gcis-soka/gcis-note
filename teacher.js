@@ -135,12 +135,12 @@ const VIEWS = {
       return `
         <div class="recap">${item(s, "setsu", "第1回の説")}${item(s, "ippo", MISSION)}${item(s, "yosou", "予想")}</div>
         ${resultRows(r.r01?.data || {})}${item(d, "tomo", "友だちに言われたこと")}
-        <div class="tc-row"><span>気になったこと</span><b>${qs.length ? `<ul class="qs">${qs.map(q => `<li>${esc(q)}</li>`).join("")}</ul>` : "—"}</b></div>
+        <div class="tc-row"><span>確かめてみたいこと</span><b>${qs.length ? `<ul class="qs">${qs.map(q => `<li>${esc(q)}</li>`).join("")}</ul>` : "—"}</b></div>
         <div class="tc-row"><span>読んだ記事</span><b>${linksCell(listOf(d, "kiji")) || "—"}</b></div>
         <div class="tc-row"><span>見る動画</span><b>${linksCell(listOf(d, "douga")) || "—"}</b></div>
         <div class="tc-row"><span>読む本</span><b>${listOf(d, "honTitle").map(esc).join("<br>") || "—"}</b></div>`;
     },
-    csvHead: ["説（第1回）", "やった／まだ", "友だちに言われたこと", "気になったこと1", "気になったこと2", "気になったこと3", "読んだ記事1", "読んだ記事2", "読んだ記事3", ...nCols("見る動画"), ...nCols("読む本")],
+    csvHead: ["説（第1回）", "やった／まだ", "友だちに言われたこと", "確かめてみたいこと1", "確かめてみたいこと2", "確かめてみたいこと3", "読んだ記事1", "読んだ記事2", "読んだ記事3", ...nCols("見る動画"), ...nCols("読む本")],
     csvRow: r => {
       const d = r.note?.data || {}, s = r.l01?.data || {};
       return [s.setsu, r.r01?.data?.did, d.tomo, d.q1, d.q2, d.q3, d.kiji || "", d.kiji2 || "", d.kiji3 || "", ...nVals(d, "douga"), ...nVals(d, "honTitle")];
@@ -210,7 +210,7 @@ const VIEWS = {
   R03: {
     tab: quest(3), date: "2026-11-17", noStall: true, // 家でやるので「止まってる？」は出さない
     stepNames: ["記録"],
-    head: ["論文①", "論文②（③）", "分かったこと", "まだ分かっていないこと"],
+    head: ["論文①", "論文②（③）", "分かったこと", "読みながら気になったこと"],
     cells: r => {
       const d = r.note?.data || {}, s = paperSlots({ ...(d.fromL03 ? d : r.l03?.data || {}), yomi1: d.yomi1, yomi2: d.yomi2, yomi3: d.yomi3, p3Url: d.p3Url, p3Doi: d.p3Doi });
       const cell = p => p.url ? `${yomiChip(p.yomi)} ${paperCell(p)}` : "";
@@ -229,11 +229,11 @@ const VIEWS = {
       const ps = paperSlots({ ...(d.fromL03 ? d : r.l03?.data || {}), yomi1: d.yomi1, yomi2: d.yomi2, yomi3: d.yomi3, p3Url: d.p3Url, p3Doi: d.p3Doi }).filter(p => p.url);
       return `
         <div class="recap">${ps.map(p => `<div class="tc-row"><span>論文${p.no}（${esc(p.yomi || "—")}）</span><b>${paperCell(p)}</b></div>`).join("") || `<div class="tc-row"><span>論文</span><b>—</b></div>`}</div>
-        ${memoItem(d, "wakatta", "分かったこと")}${memoItem(d, "mada", "まだ分かっていないこと")}
-        <div class="tc-row"><span>気になったこと</span><b>${qs.length ? `<ul class="qs">${qs.map(q => `<li>${esc(q)}</li>`).join("")}</ul>` : "—"}</b></div>
+        ${memoItem(d, "wakatta", "分かったこと")}${memoItem(d, "mada", "読みながら気になったこと")}
+        <div class="tc-row"><span>確かめてみたいこと</span><b>${qs.length ? `<ul class="qs">${qs.map(q => `<li>${esc(q)}</li>`).join("")}</ul>` : "—"}</b></div>
         <div class="tc-row"><span>参考文献リスト</span><b>${esc(d.sanko || r.l03?.data?.sanko || "—").replace(/\n/g, "<br>")}</b></div>`;
     },
-    csvHead: ["論文1のURL", "論文1を読んだか", "論文2のURL", "論文2を読んだか", "論文1：分かったこと", "論文1：まだ分かっていないこと", "論文2：分かったこと", "論文2：まだ分かっていないこと", "論文3のURL", "論文3を読んだか", "論文3：分かったこと", "論文3：まだ分かっていないこと", "気になったこと1", "気になったこと2", "気になったこと3", "参考文献リスト"],
+    csvHead: ["論文1のURL", "論文1を読んだか", "論文2のURL", "論文2を読んだか", "論文1：分かったこと", "論文1：読みながら気になったこと", "論文2：分かったこと", "論文2：読みながら気になったこと", "論文3のURL", "論文3を読んだか", "論文3：分かったこと", "論文3：読みながら気になったこと", "確かめてみたいこと1", "確かめてみたいこと2", "確かめてみたいこと3", "参考文献リスト"],
     csvRow: r => {
       const d = r.note?.data || {}, l = d.fromL03 ? d : r.l03?.data || {}; // 論文は Quest 3 で変えられる（11/7）
       return [l.p1Url, d.yomi1, l.p2Url, d.yomi2, d.wakatta, d.mada, d.wakatta2, d.mada2, d.p3Url, d.yomi3, d.wakatta3, d.mada3, d.q1, d.q2, d.q3, d.sanko || r.l03?.data?.sanko];
@@ -244,9 +244,9 @@ const VIEWS = {
     stepNames: ["問いを出す", "AIで広げる", "7種類に分ける", "1つ選ぶ", "計画", "AIに見せる", "提出"],
     head: ["問いの数", "選んだ問い", "調べ方", "確かめること", "予定"],
     cells: r => {
-      const d = r.note?.data || {}, qs = qsList(d), own = qs.filter(q => !q.a).length;
+      const d = r.note?.data || {}, qs = qsList(d), own = qs.filter(q => !q.a && !q.s).length, ai = qs.filter(q => q.a).length, q3 = qs.filter(q => q.s).length;
       const k = qs.find(q => q.t === d.toi)?.k;
-      return [qs.length ? `${own}${qs.length > own ? `<span class="hint">＋AI ${qs.length - own}</span>` : ""}` : "",
+      return [qs.length ? `${own}${ai ? `<span class="hint">＋AI ${ai}</span>` : ""}${q3 ? `<span class="hint">＋Q3 ${q3}</span>` : ""}` : "",
         `${esc(d.toi || "")}${k ? ` <span class="mchip">${esc(k)}</span>` : ""}`,
         d.houhou ? `<span class="mchip">${esc(d.houhou)}</span>` : "", esc(d.nani || ""), esc(d.yotei || "")];
     },
@@ -254,7 +254,7 @@ const VIEWS = {
     chips(rs) {
       const names = ["文献・データ", "アンケート", "インタビュー", "観察", "実験・制作"];
       const count = n => rs.filter(r => r.note?.data?.houhou === n).length;
-      const ns = rs.map(r => qsList(r.note?.data || {}).filter(q => !q.a).length).filter(n => n > 0);
+      const ns = rs.map(r => qsList(r.note?.data || {}).filter(q => !q.a && !q.s).length).filter(n => n > 0);
       const avg = ns.length ? (ns.reduce((a, b) => a + b, 0) / ns.length).toFixed(1) : "";
       return rs.some(r => r.note)
         ? `${avg ? `<span class="hint">問いの数（自分で出した）：</span><span class="mchip">平均 <b>${avg}</b></span><span class="mchip">最多 <b>${Math.max(...ns)}</b></span>` : ""}` +
@@ -264,8 +264,8 @@ const VIEWS = {
     detail(r) {
       const d = r.note?.data || {}, q = r.r03?.data || {}, qs = qsList(d);
       return `
-        <div class="recap">${memoItem(q, "wakatta", `${quest(3)}：分かったこと`)}${memoItem(q, "mada", "まだ分かっていないこと")}</div>
-        <div class="tc-row"><span>出した問い（${qs.length}個・チャレンジ${esc(d.rounds || 0)}回）</span><b>${qs.length ? `<ul class="qs">${qs.map(x => `<li>${esc(x.t)}${x.k ? ` <span class="mchip">${esc(x.k)}</span>` : ""}${x.a ? ` <span class="hint">AI</span>` : ""}</li>`).join("")}</ul>` : "—"}</b></div>
+        <div class="recap">${memoItem(q, "wakatta", `${quest(3)}：分かったこと`)}${memoItem(q, "mada", "読みながら気になったこと")}</div>
+        <div class="tc-row"><span>出した問い（${qs.length}個・チャレンジ${esc(d.rounds || 0)}回）</span><b>${qs.length ? `<ul class="qs">${qs.map(x => `<li>${esc(x.t)}${x.k ? ` <span class="mchip">${esc(x.k)}</span>` : ""}${x.a ? ` <span class="hint">AI</span>` : ""}${x.s ? ` <span class="hint">${quest(3)}</span>` : ""}</li>`).join("")}</ul>` : "—"}</b></div>
         ${item(d, "toi", "選んだ問い")}${item(d, "toiWhy", "選んだわけ")}
         ${item(d, "yosou", "予想")}
         <div class="tc-row"><span>問いへの答え</span><b>${[d.sudeni && `もう調べられていそう：${esc(d.sudeni)}`, d.kakame && `確かめたい：${esc(d.kakame)}`, d.aite && `相手：${esc(d.aite)}`].filter(Boolean).join("／") || "—"}</b></div>
@@ -665,7 +665,7 @@ export function mountTeacher({ be, app, dlg }) {
       if (s3 !== 4) continue;
       nt.push({ uid, lesson: "R03", step: 0, submitted: i % 3 !== 0, updatedAt: new Date(Date.now() - (i % 8) * 60000),
         data: { yomi1: i % 2 ? "全部読んだ" : "途中まで", yomi2: two ? (i % 3 ? "途中まで" : "全部読んだ") : "",
-          wakatta: "（分かったことの例）大学生40人で、カフェ程度の音のときに作業が速かった", mada: "（まだ分かっていないことの例）高校生や、歌詞のある音楽の場合は調べていない", q1: "部活のあとでも同じ？", ...(two && i % 2 ? { wakatta2: "（論文②の例）小学生では差がなかった", mada2: "（論文②の例）中学生・高校生は調べていない" } : {}) } });
+          wakatta: "（分かったことの例）大学生40人で、カフェ程度の音のときに作業が速かった", mada: "（読みながら気になったことの例）高校生でも同じ？\n歌詞のある音楽だとどうなる？", q1: "部活のあとでも同じ？", ...(two && i % 2 ? { wakatta2: "（論文②の例）小学生では差がなかった", mada2: "（論文②の例）なぜ小学生では差がないんだろう？" } : {}) } });
       if (i % 3 === 0) continue;
       const s4 = i % 4 === 2 ? 3 : 6;
       nt.push({ uid, lesson: "L04", step: s4, submitted: s4 === 6, updatedAt: new Date(Date.now() - (i % 8) * 60000),
