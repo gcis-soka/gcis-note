@@ -241,8 +241,8 @@ const VIEWS = {
   },
   L04: {
     tab: "第4回", date: "2026-12-07",
-    stepNames: ["問いを出す", "AIで広げる", "7種類に分ける", "1つ選ぶ", "計画", "AIに見せる", "提出"],
-    head: ["問いの数", "選んだ問い", "調べ方", "確かめること", "予定"],
+    stepNames: ["班で紹介", "問いを出す", "AIで広げる", "7種類に分ける", "1つ選ぶ", "計画", "AIに見せる", "提出"],
+    head: ["問いの数", "選んだ問い", "調べ方", "確かめること", "序の口"],
     cells: r => {
       const d = r.note?.data || {}, qs = qsList(d), own = qs.filter(q => !q.a && !q.s).length, ai = qs.filter(q => q.a).length, q3 = qs.filter(q => q.s).length;
       const k = qs.find(q => q.t === d.toi)?.k;
@@ -269,15 +269,42 @@ const VIEWS = {
         ${item(d, "toi", "選んだ問い")}${item(d, "toiWhy", "選んだわけ")}
         ${item(d, "yosou", "予想")}
         <div class="tc-row"><span>問いへの答え</span><b>${[d.sudeni && `もう調べられていそう：${esc(d.sudeni)}`, d.kakame && `確かめたい：${esc(d.kakame)}`, d.aite && `相手：${esc(d.aite)}`].filter(Boolean).join("／") || "—"}</b></div>
-        ${item(d, "houhou", "調べ方")}${item(d, "houhou2", "あわせて使う調べ方")}${item(d, "nani", "確かめること")}${item(d, "yotei", "予定")}
+        ${item(d, "houhou", "調べ方")}${item(d, "houhou2", "あわせて使う調べ方")}${item(d, "nani", "確かめること")}${item(d, "yotei", "序の口（12/14まで）")}${item(d, "yotei2", "冬休み")}
         ${item(d, "hitsuyou", "必要なもの・人")}${item(d, "kuraberu", "比べるもの")}${item(d, "anzen", "気をつけること（安全・倫理）")}
         <div class="tc-row"><span>Geminiのチャット</span><b>${linkCell(d.geminiLink)}</b></div>`;
     },
-    csvHead: ["出した問い（種類）", "問いの数", "うちAI", "チャレンジ回数", "選んだ問い", "選んだわけ", "予想", "もう調べられていそう", "確かめたい", "相手", "調べ方", "あわせて使う調べ方", "確かめること", "予定", "必要なもの・人", "比べるもの", "気をつけること", "Geminiのリンク"],
+    csvHead: ["出した問い（種類）", "問いの数", "うちAI", "チャレンジ回数", "選んだ問い", "選んだわけ", "予想", "もう調べられていそう", "確かめたい", "相手", "調べ方", "あわせて使う調べ方", "確かめること", "序の口（12/14まで）", "冬休み", "必要なもの・人", "比べるもの", "気をつけること", "班で出たこと", "Geminiのリンク"],
     csvRow: r => {
       const d = r.note?.data || {}, qs = qsList(d);
       return [qs.map(x => `${x.t}（${x.k || "未分類"}${x.a ? "・AI" : ""}）`).join(" / "), qs.length, qs.filter(x => x.a).length, d.rounds || 0,
-        d.toi, d.toiWhy, d.yosou, d.sudeni, d.kakame, d.aite, d.houhou, d.houhou2, d.nani, d.yotei, d.hitsuyou, d.kuraberu, d.anzen, d.geminiLink];
+        d.toi, d.toiWhy, d.yosou, d.sudeni, d.kakame, d.aite, d.houhou, d.houhou2, d.nani, d.yotei, d.yotei2, d.hitsuyou, d.kuraberu, d.anzen, d.hanMemo, d.geminiLink];
+    }
+  },
+  R04: {
+    tab: quest(4), date: "2026-12-08", noStall: true, // 家でやるので「止まってる？」は出さない
+    stepNames: ["記録"],
+    head: ["選んだ問い（第4回）", "やった？", "やったこと", "分かったこと", "気になったこと", "予想とのズレ"],
+    cells: r => {
+      const d = r.note?.data || {}, s = r.l04?.data || {};
+      return [esc(s.toi || ""), didChip(d.did), esc(d.did === "まだ" ? d.yarunara || "" : d.yatta || ""), br(d.wakatta), br(d.kini), esc(d.zure || "")];
+    },
+    nowrap: [1],
+    chips(rs) {
+      const n = x => rs.filter(r => (r.note?.data?.did || "") === x).length;
+      return rs.some(r => r.note)
+        ? `<span class="hint">${quest(4)}：</span><span class="mchip">やった <b>${n("やった")}</b></span><span class="mchip zero">まだ <b>${n("まだ")}</b></span>`
+        : "";
+    },
+    detail(r) {
+      const d = r.note?.data || {}, s = r.l04?.data || {};
+      return `
+        <div class="recap">${item(s, "toi", "選んだ問い（第4回）")}${item(s, "yosou", "予想")}${item(s, "houhou", "調べ方")}${item(s, "yotei", "序の口の計画")}${item(s, "yotei2", "冬休みの計画")}${item(s, "anzen", "気をつけること")}</div>
+        ${d.did === "まだ" ? item(d, "yarunara", "いつ・何からやる") : `${item(d, "yatta", "やったこと")}${item(d, "wakatta", "分かったこと")}${item(d, "kini", "やってみて気になったこと")}${item(d, "zure", "予想とのズレ")}${item(d, "hirogeru", "次はどう広げたい")}`}`;
+    },
+    csvHead: ["選んだ問い（第4回）", "序の口の計画", "やった／まだ", "やったこと", "分かったこと", "やってみて気になったこと", "予想とのズレ", "次はどう広げたい", "いつ・何からやる"],
+    csvRow: r => {
+      const d = r.note?.data || {}, s = r.l04?.data || {};
+      return [s.toi, s.yotei, d.did, d.yatta, d.wakatta, d.kini, d.zure, d.hirogeru, d.yarunara];
     }
   }
 };
@@ -667,13 +694,18 @@ export function mountTeacher({ be, app, dlg }) {
         data: { yomi1: i % 2 ? "全部読んだ" : "途中まで", yomi2: two ? (i % 3 ? "途中まで" : "全部読んだ") : "",
           wakatta: "（分かったことの例）大学生40人で、カフェ程度の音のときに作業が速かった", mada: "（読みながら気になったことの例）高校生でも同じ？\n歌詞のある音楽だとどうなる？", q1: "部活のあとでも同じ？", ...(two && i % 2 ? { wakatta2: "（論文②の例）小学生では差がなかった", mada2: "（論文②の例）なぜ小学生では差がないんだろう？" } : {}) } });
       if (i % 3 === 0) continue;
-      const s4 = i % 4 === 2 ? 3 : 6;
-      nt.push({ uid, lesson: "L04", step: s4, submitted: s4 === 6, updatedAt: new Date(Date.now() - (i % 8) * 60000),
+      const s4 = i % 4 === 2 ? 4 : 7;
+      nt.push({ uid, lesson: "L04", step: s4, submitted: s4 === 7, updatedAt: new Date(Date.now() - (i % 8) * 60000),
         data: { qs: [{ t: "なんで雑音があると集中できるの？", k: "原因" }, { t: "高校生でも同じ？", k: "比較" }, { t: "どのくらいの音の大きさがいい？", k: "方法・関連性" },
             { t: "歌詞があるとなぜ気が散る？", k: "原因" }, ...Array.from({ length: i % 9 }, (_, j) => ({ t: `（問いの例${j + 1}）`, k: "影響" })), { t: "（AIの例）", k: "定義", a: 1 }], rounds: 1 + (i % 2),
-          toi: s4 >= 3 ? "高校生でも、カフェ程度の音があると問題を速く解けるか？" : "", houhou: s4 === 6 ? ["実験・制作", "アンケート", "観察"][i % 3] : "",
-          yosou: s4 === 6 ? "（予想の例）高校生も、カフェくらいの音があると速く解けると思う。" : "", kakame: s4 === 6 ? "条件で変わるか" : "", aite: s4 === 6 ? "人" : "", sudeni: s4 === 6 ? "わからない" : "",
-          nani: s4 === 6 ? "（確かめることの例）" : "", yotei: s4 === 6 ? "（予定の例）冬休みに3日ずつ" : "", anzen: s4 === 6 ? "名前や連絡先は集めない。" : "" } });
+          toi: s4 >= 4 ? "高校生でも、カフェ程度の音があると問題を速く解けるか？" : "", houhou: s4 === 7 ? ["実験・制作", "アンケート", "観察"][i % 3] : "",
+          yosou: s4 === 7 ? "（予想の例）高校生も、カフェくらいの音があると速く解けると思う。" : "", kakame: s4 === 7 ? "条件で変わるか" : "", aite: s4 === 7 ? "人" : "", sudeni: s4 === 7 ? "わからない" : "",
+          nani: s4 === 7 ? "（確かめることの例）" : "", yotei: s4 === 7 ? "（序の口の例）12/9に家で15分ずつ2回" : "", yotei2: s4 === 7 ? "（冬休みの例）クラスの10人に" : "", anzen: s4 === 7 ? "名前や連絡先は集めない。" : "" } });
+      if (s4 !== 7 || i % 5 === 0) continue;
+      nt.push({ uid, lesson: "R04", step: 0, submitted: i % 3 !== 1, updatedAt: new Date(Date.now() - (i % 8) * 60000),
+        data: i % 4 === 1
+          ? { did: "まだ", yarunara: "（例）12/12の放課後に、まず自分で試す" }
+          : { did: "やった", yatta: "（やったことの例）12/9に家で15分ずつ2回", wakatta: "（分かったことの例）無音12問、雑音15問", kini: "（例）歌詞のある曲だとどうなる？\n友だちでも同じ？", zure: "予想どおりだった。" } });
     }
     return [st, nt];
   }

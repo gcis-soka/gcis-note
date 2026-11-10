@@ -2,10 +2,11 @@
 // 流れ：問いを出す（タイムアタック・学年順位・もう一度チャレンジ）→ AIで広げる（なくてもOK）
 //       → 問いの7種類で分ける（選択式）→ 種類の順に並べ直して1つ選ぶ（合言葉で直す）
 //       → 調べ方を選んで計画を書く → Geminiが指摘 → 提出
-// 計画の点検（安全・倫理）と着手は第5回（12/14）
+// 11/10 先生：はじめに班で Quest 3 の論文を紹介（共有のあとスライドで「師匠になる論文」の話）。
+//       計画は 12/7〜1/18 の長めの計画：序の口（12/14まで・小さく）→ Quest 4 に記録 → 第5回で途中経過を見て対象を広げる（安全・倫理の点検）→ 冬休み
 // data：qs（[{t:問い, k:種類, a:1＝AIで足した}]）・qftPhase（""/run/done）・qftEnd・rounds・rank・rankTotal・rankN
 //       ・toi・toiWhy・yosou（予想）・sudeni・kakame・aite（問いへの3つの答え）・houhou・houhou2（あわせて使う）
-//       ・nani・yotei・hitsuyou・kuraberu・anzen・geminiLink・seeded（Quest 3 の「確かめてみたいこと」を入れたか）
+//       ・nani・yotei（序の口：12/14まで）・yotei2（冬休み）・hitsuyou・kuraberu・anzen・geminiLink・hanMemo（班で出たこと）・seeded（Quest 3 の「確かめてみたいこと」を入れたか）
 // 11/10 先生：焦点は「説＋論文で分かったこと」。Quest 3 で選んだ「確かめてみたいこと」（q1〜q3）は、はじめから問いのリストに入れる（s:1。順位の数には入れない）
 import { quest, memoText } from "./common.js"; // memoText：Quest 3 のメモは論文ごと（11/9）
 
@@ -92,10 +93,10 @@ function promptPlan(c) {
   const v = c.v;
   return "私は高校1年生です。次の問いを確かめる計画を立てました。\n" +
     `問い：${v("toi") || "（未記入）"}\n予想：${v("yosou") || "（未記入）"}\n調べ方：${v("houhou") || "（未記入）"}${v("houhou2") ? `（あわせて${v("houhou2")}）` : ""}\nこの調べ方で確かめること：${v("nani") || "（未記入）"}\n` +
-    `予定（いつ・どこで・どうやって）：${v("yotei") || "（未記入）"}\n必要なもの・人：${v("hitsuyou") || "（未記入）"}\n` +
+    `序の口（12/14までに小さくやること）：${v("yotei") || "（未記入）"}\n冬休みにやること：${v("yotei2") || "（未記入）"}\n必要なもの・人：${v("hitsuyou") || "（未記入）"}\n` +
     `比べるもの：${v("kuraberu") || "（未記入）"}\n気をつけること：${v("anzen") || "（未記入）"}\n` +
     "この計画を書き直さずに、良くするための指摘を3つまでください。" +
-    "見てほしいのは、①12月から冬休みのあいだにできる量か、②この調べ方と比べ方で、予想が合っているかを確かめられるか、③必要なものや協力してくれる人がそろうか、④人を傷つけたり、個人情報を集めたりしないか、です。" +
+    "見てほしいのは、①序の口は1週間で小さく試せる量か、冬休みに対象を広げてしっかり確かめる計画になっているか、②この調べ方と比べ方で、予想が合っているかを確かめられるか、③必要なものや協力してくれる人がそろうか、④人を傷つけたり、個人情報を集めたりしないか、です。" +
     "指摘は質問の形にして、1つ40文字以内にしてください。最後にまとめは書かないでください。";
 }
 
@@ -121,7 +122,7 @@ function planHtml(c) {
 function refreshPlan(c) {
   const box = c.app.querySelector("[data-plan]");
   if (box) box.innerHTML = planHtml(c);
-  refreshNav(c, L04.canNext(4, c));
+  refreshNav(c, canNextMain(4, c));
 }
 
 // ---------- 問いのリスト ----------
@@ -196,7 +197,7 @@ function sendTo(c, k) {
   sorting = true;
   qs[idx].k = k;
   c.set("qs", qs);
-  refreshNav(c, L04.canNext(2, c));
+  refreshNav(c, canNextMain(2, c));
   const card = c.app.querySelector("[data-sortcard]"), box = c.app.querySelector(`.kbox[data-k="${k}"]`);
   if (card && box) {
     const a = card.getBoundingClientRect(), b = box.getBoundingClientRect();
@@ -312,6 +313,31 @@ function focusBox(c) {
     </div>`;
 }
 
+// 画面0：班で論文を紹介（Quest 3 の共有。11/10 先生）
+function shareStep(c) {
+  const R3 = c.prev("R03"), esc = c.esc;
+  const ps = [1, 2, 3].map(n => ({ no: "①②③"[n - 1], url: String(R3[`p${n}Url`] || "").trim() })).filter(p => p.url);
+  const host = u => { try { return new URL(u).hostname; } catch { return u; } };
+  const qs3 = ["q1", "q2", "q3"].map(k => String(R3[k] || "").trim()).filter(Boolean);
+  return `
+    <p>${quest(3)}で読んだ論文を、班で紹介し合おう。</p>
+    <div class="recap">
+      <div class="tc-row"><span>読んだ論文</span><b>${ps.length ? ps.map(p => `論文${p.no}　${esc(host(p.url))}`).join("<br>") : "—"}</b></div>
+      <div class="tc-row"><span>分かったこと</span><b>${esc(memoText(R3, "wakatta") || "—").replace(/\n/g, "<br>")}</b></div>
+      <div class="tc-row"><span>確かめてみたいこと</span><b>${qs3.length ? qs3.map(esc).join("<br>") : "—"}</b></div>
+    </div>
+    <div class="share">
+      <b>話す人（1分くらい）</b>
+      <ol class="todo">
+        <li>どんな論文？（誰に・何を・どうやって調べた研究か）</li>
+        <li>何が分かった？</li>
+        <li>読みながら「えっ？」と思ったこと・確かめてみたいこと</li>
+      </ol>
+      <p class="hint">全部読めていなくてもOK。読めたところまでを話そう。話し終わったら、話した人が「ありがとう！じゃあ次、〇〇さん」と次の人を指名します。</p>
+    </div>
+    ${c.field("hanMemo", "班で出たこと・友だちの論文で気になったこと（なくてもOK）", { rows: 2 })}`;
+}
+
 export const L04 = {
   id: "L04",
   no: 4,
@@ -320,6 +346,7 @@ export const L04 = {
   after: "R03", // Quest 3 を出すと開く（先に進みたい生徒は空白期間にもできる）
   uses: ["L01", "L03", "R03"],
   steps: [
+    { title: "班で論文を紹介", mins: 6 },
     { title: "問いを出す（タイムアタック）", mins: 10 },
     { title: "AIで広げる（なくてもOK）", mins: 3 },
     { title: "問いを7種類に分ける", mins: 8 },
@@ -333,6 +360,15 @@ export const L04 = {
   render(i, c) {
     ctxRef = c;
     seedFromR03(c);
+    return i === 0 ? shareStep(c) : renderMain(i - 1, c);
+  },
+  canNext(i, c) { return i === 0 ? true : canNextMain(i - 1, c); },
+  onClick(t, c) { return onClickMain(t, c); }
+};
+
+// 第4回の本体（画面1〜7。番号は班の紹介を足す前のまま 0〜6）
+const L04Main = {
+  render(i, c) {
     const { field, promptBox, chips, esc, d } = c;
     const qs = qsOf(c);
 
@@ -418,7 +454,9 @@ export const L04 = {
         ${field("yosou", "① 予想：【誰が・何が】は【どうなる】と思う？", { rows: 2, hint: "答えを予想してから調べ方を決めよう（1学期 第4回）", chips: YOSOU_CHIPS, placeholder: "例：高校生も、カフェくらいの音があると、無音のときより計算問題を速く解けると思う。" })}
         <div data-plan>${planHtml(c)}</div>
         ${field("nani", "④ この調べ方で、何を確かめる？", { rows: 2, placeholder: "例：雑音ありとなしで、同じ問題を解いた数を比べる" })}
-        ${field("yotei", "予定（いつ・どこで・どうやって）", { rows: 3, placeholder: "例：12/14の授業で問題を作る。冬休みに家で3日ずつ、15分×2回" })}
+        <div class="share"><b>⑤ 1月までの計画</b><p>まず<b>序の口</b>を小さくやってみて（12/14まで）、第5回で途中経過を見て、<b>対象を広げて冬休みに</b>しっかりやります。</p></div>
+        ${field("yotei", "序の口：12/14までにやること（小さく・具体的に。いつ・どこで・だれと・どうやって）", { rows: 3, placeholder: "例：12/9に家で、無音と雑音で15分ずつ計算問題を2回。まず自分で試して、問題の量と時間を確かめる" })}
+        ${field("yotei2", "冬休みにやること（対象を広げて。大まかでOK）", { rows: 3, placeholder: "例：クラスの友だち10人に同じことをやってもらい、無音と雑音で比べる" })}
         ${field("hitsuyou", "必要なもの・協力してくれる人", { rows: 2, placeholder: "例：計算問題（同じ難しさのもの）、タイマー、雑音の音源" })}
         ${field("kuraberu", "何と比べる？", { type: "text", placeholder: "例：無音のとき" })}
         ${field("anzen", "気をつけること（人に聞く・写真を撮るとき）", { rows: 2, hint: "書き出しを押すと入ります", chips: ANZEN_CHIPS })}
@@ -428,10 +466,11 @@ export const L04 = {
     if (i === 5) return `
       <p>計画を<b>AIに見てもらおう</b>。AIは書き直さず、指摘だけをくれます。<b>同じチャットに</b>送ります。</p>
       ${promptBox(promptPlan(c))}
-      <p>指摘を見て、計画を直そう。全部に従わなくてOK。第5回（12/14）に先生と点検してから始めます。</p>
+      <p>指摘を見て、計画を直そう。全部に従わなくてOK。まず序の口を12/14までにやってみよう。第5回で途中経過を見て、計画を直します。</p>
       ${field("yosou", "予想", { rows: 2 })}
       ${field("nani", "この調べ方で、何を確かめる？", { rows: 2 })}
-      ${field("yotei", "予定（いつ・どこで・どうやって）", { rows: 3 })}
+      ${field("yotei", "序の口：12/14までにやること", { rows: 3 })}
+      ${field("yotei2", "冬休みにやること", { rows: 3 })}
       ${field("hitsuyou", "必要なもの・協力してくれる人", { rows: 2 })}
       ${field("kuraberu", "何と比べる？", { type: "text" })}
       ${field("anzen", "気をつけること", { rows: 2 })}
@@ -446,12 +485,13 @@ export const L04 = {
         <div class="tc-row"><span>予想</span><b>${esc(d.yosou || "—")}</b></div>
         <div class="tc-row"><span>調べ方</span><b>${esc(d.houhou || "—")}${d.houhou2 ? `（あわせて${esc(d.houhou2)}）` : ""}</b></div>
         <div class="tc-row"><span>確かめること</span><b>${esc(d.nani || "—")}</b></div>
-        <div class="tc-row"><span>予定</span><b>${esc(d.yotei || "—")}</b></div>
+        <div class="tc-row"><span>序の口（12/14まで）</span><b>${esc(d.yotei || "—")}</b></div>
+        <div class="tc-row"><span>冬休み</span><b>${esc(d.yotei2 || "—")}</b></div>
         <div class="tc-row"><span>必要なもの・人</span><b>${esc(d.hitsuyou || "—")}</b></div>
         <div class="tc-row"><span>比べるもの</span><b>${esc(d.kuraberu || "—")}</b></div>
         <div class="tc-row"><span>気をつけること</span><b>${esc(d.anzen || "—")}</b></div>
       </div>
-      <div class="share"><b>次は 第5回（12/14）</b><p>計画を先生と点検して（安全・倫理）、授業の中で始めます。冬休みの計画も立てます。</p></div>
+      <div class="share"><b>次は ${quest(4)}：序の口をやってみる（12/14まで）</b><p>提出すると、ホームに「${quest(4)}」が出ます。序の口をやったら、<b>その日のうちに</b>${quest(4)}に書こう。第5回で途中経過を班で報告して、対象を広げる計画に直します。</p></div>
       ${c.submitted ? `<p class="okmsg">提出済み ✓　あとから直しても自動で保存されます。</p>` : ""}`;
   },
 
@@ -461,8 +501,8 @@ export const L04 = {
     if (i === 1) return qs.length >= MIN_Q;
     if (i === 2) return qs.length >= MIN_Q && qs.every(q => q.k);
     if (i === 3) return !!c.v("toi");
-    if (i === 4) return !!(c.v("yosou") && BUNSEKI.every(b => c.d[b.key]) && c.v("houhou") && c.v("nani") && c.v("yotei"));
-    if (i === 5) return !!(c.v("yosou") && c.v("houhou") && c.v("nani") && c.v("yotei"));
+    if (i === 4) return !!(c.v("yosou") && BUNSEKI.every(b => c.d[b.key]) && c.v("houhou") && c.v("nani") && c.v("yotei") && c.v("yotei2"));
+    if (i === 5) return !!(c.v("yosou") && c.v("houhou") && c.v("nani") && c.v("yotei") && c.v("yotei2"));
     return true;
   },
 
@@ -510,3 +550,6 @@ export const L04 = {
     return false;
   }
 };
+const renderMain = (i, c) => L04Main.render(i, c);
+const canNextMain = (i, c) => L04Main.canNext(i, c);
+const onClickMain = (t, c) => L04Main.onClick(t, c);

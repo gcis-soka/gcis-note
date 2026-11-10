@@ -11,9 +11,10 @@ import { R02 } from "./r02.js";
 import { L03 } from "./l03.js";
 import { R03 } from "./r03.js";
 import { L04 } from "./l04.js";
+import { R04 } from "./r04.js";
 
 // ステージの順。足すときはここに並べる（teacher.js の VIEWS・firestore.rules の lesson も足す）
-const LESSONS = [L01, R01, L02, R02, L03, R03, L04];
+const LESSONS = [L01, R01, L02, R02, L03, R03, L04, R04];
 const stageLabel = L => L.no ? `第${L.no}回` : L.quest ? quest(L.quest) : "";
 const MAP = ["気になる", "一歩", "文献", "問い", "計画", "着手", "RQ"];
 const SHORT_MSG = "思いついたことを、もう少しだけ足してみよう（いつ？どんなとき？）";

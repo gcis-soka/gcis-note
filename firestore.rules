@@ -62,7 +62,7 @@ service cloud.firestore {
         || (isStudent() && noteId.matches(request.auth.uid + '_[LR][0-9][0-9]'));
       allow create, update: if (isStudent() || isTeacher())
         && noteId == request.auth.uid + '_' + request.resource.data.lesson
-        && request.resource.data.lesson in ['L01', 'R01', 'L02', 'R02', 'L03', 'R03', 'L04']
+        && request.resource.data.lesson in ['L01', 'R01', 'L02', 'R02', 'L03', 'R03', 'L04', 'R04']
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.keys().hasOnly(['uid', 'lesson', 'ki', 'class', 'number', 'step', 'submitted', 'data', 'updatedAt', 'submittedAt'])
         && request.resource.data.data is map
