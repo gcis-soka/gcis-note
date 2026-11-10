@@ -370,7 +370,7 @@ function refCards(c) {
   const items = {
     refHon: booksOf(R2).map(b => b.isbn ? `
       <li class="refrow"><span class="reftext">${esc(b.title)}</span>
-        <details class="isbnfall"><summary>読み取れないときは</summary><span>ISBN ${esc(b.isbn)}</span> <button type="button" class="btn small ghost" data-copytext="${esc(b.isbn)}">コピー</button> <span class="hint">を「ISBN」の欄に貼って「照合」</span></details></li>`
+        <span class="isbnfall"><span class="hint">読み取れないときは</span> ISBN ${esc(b.isbn)} <button type="button" class="btn small ghost" data-copytext="${esc(b.isbn)}">コピー</button> <span class="hint">→「ISBN」の欄に貼って「照合」</span></span></li>`
       : row(`${b.title}（ISBNなし：題名で探して手で入れる）`, b.title, "")),
     refKiji: listOf(L2, "kiji").map(u => row(u, u, safeUrl(u))),
     refDouga: listOf(R2, "douga").map(u => row(u, u, safeUrl(u)))
@@ -432,7 +432,7 @@ function refStep(c) {
         <div class="choice small">${chk("refLogin", "準備ができた")}</div>
       </details>
       ${d.refLogin ? `<div class="searchbtns"><button type="button" class="btn ghost" data-refnavi>RefNavi を右半分に開く ↗</button></div>` : ""}
-      <h3>1件ずつ登録しよう</h3>
+      <h3 id="regstart">1件ずつ登録しよう</h3>
       ${REF_ADD_HOWTO}
       ${refCards(c)}
       <div class="choice small">${chk("refHan", "班の全員が登録できた")}</div>`;
@@ -518,7 +518,13 @@ export const L03 = {
   onClick(t, c) {
     if (handleDoiCopy(t, c)) return true;
     const k = t.closest("[data-refchk]");
-    if (k) { c.set(k.dataset.refchk, c.d[k.dataset.refchk] ? "" : 1); c.rerender(); return true; }
+    if (k) {
+      const key = k.dataset.refchk, on = !c.d[key];
+      c.set(key, on ? 1 : ""); c.rerender();
+      // 準備ができたら、準備は閉じて「1件ずつ登録しよう」へ（閉じた分だけ画面が縮むため）
+      if (key === "refLogin" && on) c.app.querySelector("#regstart")?.scrollIntoView({ block: "start", behavior: "smooth" });
+      return true;
+    }
     const cp = t.closest("[data-copytext]");
     if (cp) {
       copyText(cp.dataset.copytext);

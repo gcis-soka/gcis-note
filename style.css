@@ -129,9 +129,7 @@ details.help { margin-top: 8px; font-size: 15px; } details.help summary { cursor
 .regcard .reflist { margin: 6px 0; }
 .regcard .choice-btn { margin-top: 4px; }
 .camsteps { margin: 6px 0; padding-left: 1.5em; font-size: 15px; }
-.isbnfall { margin-left: auto; font-size: 14px; }
-.isbnfall > summary { cursor: pointer; color: #5f6673; }
-.isbnfall[open] { flex-basis: 100%; margin-left: 0; padding: 4px 0 2px 12px; }
+.isbnfall { flex-basis: 100%; font-size: 14px; padding: 0 0 2px 12px; }
 .regsetup h3 { margin-top: 14px; }
 .reftable { width: 100%; max-width: 640px; margin: 4px 0 10px; border-collapse: collapse; font-size: 14px; }
 .reftable th, .reftable td { border: 1px solid #d6dae2; padding: 5px 8px; text-align: left; vertical-align: top; }
