@@ -297,8 +297,8 @@ const REF_ADD_HOWTO = `
       <rect x="40" y="40" width="52" height="20" rx="10" fill="#3d7a4f"/><text x="66" y="54" font-size="10" fill="#fff" text-anchor="middle">本</text><rect x="98" y="40" width="52" height="20" rx="10" fill="#cfe9d6"/><text x="124" y="54" font-size="10" fill="#5f6673" text-anchor="middle">論文</text><rect x="156" y="40" width="52" height="20" rx="10" fill="#cfe9d6"/><text x="182" y="54" font-size="10" fill="#5f6673" text-anchor="middle">雑誌</text><rect x="214" y="40" width="52" height="20" rx="10" fill="#cfe9d6"/><text x="240" y="54" font-size="10" fill="#5f6673" text-anchor="middle">新聞</text><rect x="272" y="40" width="52" height="20" rx="10" fill="#3d7a4f"/><text x="298" y="54" font-size="10" fill="#fff" text-anchor="middle">動画</text><rect x="330" y="40" width="84" height="20" rx="10" fill="#3d7a4f"/><text x="372" y="54" font-size="10" fill="#fff" text-anchor="middle">ウェブサイト</text><rect x="420" y="40" width="84" height="20" rx="10" fill="#cfe9d6"/><text x="462" y="54" font-size="10" fill="#5f6673" text-anchor="middle">パンフレット類</text>
       <text x="512" y="54" font-size="10" fill="#5f6673" text-anchor="end">…</text>
       <path d="M14 86 H526" stroke="#e3e3e3"/>
-      <rect x="14" y="96" width="164" height="84" rx="8" fill="#fff" stroke="#c9ced8"/><text x="24" y="116" font-size="12" font-weight="700" fill="#3d7a4f">本</text><text x="24" y="136" font-size="10" fill="#333">ISBN</text><rect x="24" y="144" width="74" height="22" rx="3" fill="#fff" stroke="#aaa"/><text x="30" y="159" font-size="10" fill="#999">ここに貼る</text><rect x="102" y="144" width="38" height="22" rx="3" fill="#f4f6f8" stroke="#888"/><text x="121" y="159" font-size="10" fill="#222" text-anchor="middle">照合</text><rect x="100" y="142" width="42" height="26" rx="5" fill="none" stroke="#d93025" stroke-width="2.5"/><rect x="144" y="144" width="26" height="22" rx="3" fill="#f4f6f8" stroke="#888"/><text x="157" y="160" font-size="11" text-anchor="middle">📷</text><rect x="188" y="96" width="164" height="84" rx="8" fill="#fff" stroke="#c9ced8"/><text x="198" y="116" font-size="12" font-weight="700" fill="#3d7a4f">記事 →「ウェブサイト」</text><text x="198" y="136" font-size="10" fill="#333">URL</text><rect x="198" y="144" width="104" height="22" rx="3" fill="#fff" stroke="#aaa"/><text x="204" y="159" font-size="10" fill="#999">ここに貼る</text><rect x="306" y="144" width="38" height="22" rx="3" fill="#f4f6f8" stroke="#888"/><text x="325" y="159" font-size="10" fill="#222" text-anchor="middle">解析</text><rect x="304" y="142" width="42" height="26" rx="5" fill="none" stroke="#d93025" stroke-width="2.5"/><rect x="362" y="96" width="164" height="84" rx="8" fill="#fff" stroke="#c9ced8"/><text x="372" y="116" font-size="12" font-weight="700" fill="#3d7a4f">動画</text><text x="372" y="136" font-size="10" fill="#333">URL</text><rect x="372" y="144" width="104" height="22" rx="3" fill="#fff" stroke="#aaa"/><text x="378" y="159" font-size="10" fill="#999">ここに貼る</text><rect x="480" y="144" width="38" height="22" rx="3" fill="#f4f6f8" stroke="#888"/><text x="499" y="159" font-size="10" fill="#222" text-anchor="middle">照合</text><rect x="478" y="142" width="42" height="26" rx="5" fill="none" stroke="#d93025" stroke-width="2.5"/>
-      <text x="270" y="198" font-size="11" fill="#222" text-anchor="middle"><tspan font-weight="700" fill="#d93025">②</tspan> 欄に貼って「照合」か「解析」→ 題名などが自動で入る（赤い＊が埋まったか見る）</text>
+      <rect x="14" y="96" width="164" height="84" rx="8" fill="#fff" stroke="#c9ced8"/><text x="24" y="116" font-size="12" font-weight="700" fill="#3d7a4f">本</text><text x="24" y="136" font-size="10" fill="#333">ISBN</text><rect x="24" y="144" width="74" height="22" rx="3" fill="#fff" stroke="#aaa"/><text x="30" y="159" font-size="10" fill="#999">ここに貼る</text><rect x="102" y="144" width="38" height="22" rx="3" fill="#f4f6f8" stroke="#888"/><text x="121" y="159" font-size="10" fill="#222" text-anchor="middle">照合</text><rect x="100" y="142" width="42" height="26" rx="5" fill="none" stroke="#d93025" stroke-width="2.5"/><rect x="144" y="144" width="26" height="22" rx="3" fill="#f4f6f8" stroke="#888"/><text x="157" y="160" font-size="11" text-anchor="middle">📷</text><rect x="141" y="141" width="32" height="28" rx="5" fill="none" stroke="#d93025" stroke-width="2.5"/><text x="157" y="134" font-size="9" font-weight="700" fill="#d93025" text-anchor="middle">本はここ</text><rect x="188" y="96" width="164" height="84" rx="8" fill="#fff" stroke="#c9ced8"/><text x="198" y="116" font-size="12" font-weight="700" fill="#3d7a4f">記事 →「ウェブサイト」</text><text x="198" y="136" font-size="10" fill="#333">URL</text><rect x="198" y="144" width="104" height="22" rx="3" fill="#fff" stroke="#aaa"/><text x="204" y="159" font-size="10" fill="#999">ここに貼る</text><rect x="306" y="144" width="38" height="22" rx="3" fill="#f4f6f8" stroke="#888"/><text x="325" y="159" font-size="10" fill="#222" text-anchor="middle">解析</text><rect x="304" y="142" width="42" height="26" rx="5" fill="none" stroke="#d93025" stroke-width="2.5"/><rect x="362" y="96" width="164" height="84" rx="8" fill="#fff" stroke="#c9ced8"/><text x="372" y="116" font-size="12" font-weight="700" fill="#3d7a4f">動画</text><text x="372" y="136" font-size="10" fill="#333">URL</text><rect x="372" y="144" width="104" height="22" rx="3" fill="#fff" stroke="#aaa"/><text x="378" y="159" font-size="10" fill="#999">ここに貼る</text><rect x="480" y="144" width="38" height="22" rx="3" fill="#f4f6f8" stroke="#888"/><text x="499" y="159" font-size="10" fill="#222" text-anchor="middle">照合</text><rect x="478" y="142" width="42" height="26" rx="5" fill="none" stroke="#d93025" stroke-width="2.5"/>
+      <text x="270" y="198" font-size="11" fill="#222" text-anchor="middle"><tspan font-weight="700" fill="#d93025">②</tspan> 本は 📷 でバーコード、記事・動画は URL を貼って「解析」「照合」→ 自動で入る</text>
       <path d="M14 210 H526" stroke="#e3e3e3"/>
       <circle cx="28" cy="238" r="11" fill="#d93025"/><text x="28" y="243" font-size="13" font-weight="700" fill="#fff" text-anchor="middle">3</text><text x="46" y="234" font-size="11" font-weight="700" fill="#222">いちばん下の個人タグ</text>
       <rect x="180" y="222" width="140" height="32" rx="3" fill="#fff" stroke="#aaa"/>
@@ -309,7 +309,7 @@ const REF_ADD_HOWTO = `
       <circle cx="400" cy="238" r="11" fill="#d93025"/><text x="400" y="243" font-size="13" font-weight="700" fill="#fff" text-anchor="middle">4</text>
       <rect x="420" y="226" width="64" height="26" rx="4" fill="#1a73e8"/><text x="452" y="243" font-size="12" fill="#fff" text-anchor="middle">登録</text>
     </svg>
-    <figcaption><b>どの種類も同じ4ステップ</b>：① 上の種類のボタン → ② 欄に貼って「照合」（記事は「解析」）→ ③ いちばん下の個人タグで「<b>${REF_TAG}</b>」を選ぶ（グループタグ・カスタムタグは選ばない）→ ④「<b>登録</b>」</figcaption>
+    <figcaption><b>どの種類も同じ4ステップ</b>：① 上の種類のボタン → ② 本は 📷 でバーコードを読む／記事・動画は URL を貼って「解析」「照合」（赤い＊が埋まったか見る）→ ③ いちばん下の個人タグで「<b>${REF_TAG}</b>」を選ぶ（グループタグ・カスタムタグは選ばない）→ ④「<b>登録</b>」</figcaption>
   </figure>`;
 // 出力の図（「整理する」→「リスト」→「表示中を全て選択」→「出力」→書式→コピー）。11/9 先生の画面写真に合わせた（出力のあとは RefNavi_manual_52 の名前どおり・図式）
 const refOutHowto = () => `
@@ -353,9 +353,9 @@ const refOutHowto = () => `
 // 班の進み具合（自分で押す）：refLogin（準備）・refHon・refKiji・refDouga（種類ごとのカード）・refHan（班の全員）。教員画面にも出る
 // 種類ごとのカード（11/10）：押すボタン・貼るもの・自分の文献（コピー）・その種類のコツ・「できた」ボタンを1か所に。本→記事→動画の順（本は自動で入る気持ちよさが大きいので最初）
 const REF_KINDS = [
-  { key: "refHon", kind: "本", tab: "本", paste: "ISBN", btn: "照合", tip: "本を持ってきた人は、📷 で裏表紙のバーコード（「978」から始まる方）を読み取ってみよう。題名や著者が一気に入ります" },
-  { key: "refKiji", kind: "記事", tab: "ウェブサイト", paste: "URL", btn: "解析", tip: "赤い＊の欄が空いたら、記事の見出しやサイト名（新聞社など）を手で入れよう" },
-  { key: "refDouga", kind: "動画", tab: "動画", paste: "URL", btn: "照合", tip: "自動で入るのは YouTube だけ。ほかの動画は、配信者と動画タイトルを手で入れよう" }
+  { key: "refHon", kind: "本", tab: "本", paste: "<b>📷</b> でバーコード", btn: "照合", tip: "" }, // 11/10 先生：コピーより📷を先に（A案）。ISBN のコピーは「読み取れないときは」の中
+  { key: "refKiji", kind: "記事", tab: "ウェブサイト", paste: "貼る：<b>URL</b>", btn: "解析", tip: "赤い＊の欄が空いたら、記事の見出しやサイト名（新聞社など）を手で入れよう" },
+  { key: "refDouga", kind: "動画", tab: "動画", paste: "貼る：<b>URL</b>", btn: "照合", tip: "自動で入るのは YouTube だけ。ほかの動画は、配信者と動画タイトルを手で入れよう" }
 ];
 function refCards(c) {
   const L2 = c.prev("L02"), R2 = c.prev("R02"), { esc, d } = c;
@@ -363,7 +363,10 @@ function refCards(c) {
       <li class="refrow"><span class="reftext">${esc(label)}</span>
         <button type="button" class="btn small ghost" data-copytext="${esc(copy)}">コピー</button>${open ? ` <a class="btn small ghost openurl" href="${esc(open)}" target="_blank" rel="noopener">開く ↗</a>` : ""}</li>`;
   const items = {
-    refHon: booksOf(R2).map(b => b.isbn ? row(`${b.title}　ISBN ${b.isbn}`, b.isbn, "") : row(`${b.title}（ISBNなし：題名で探して手で入れる）`, b.title, "")),
+    refHon: booksOf(R2).map(b => b.isbn ? `
+      <li class="refrow"><span class="reftext">${esc(b.title)}</span>
+        <details class="isbnfall"><summary>読み取れないときは</summary><span>ISBN ${esc(b.isbn)}</span> <button type="button" class="btn small ghost" data-copytext="${esc(b.isbn)}">コピー</button> <span class="hint">を「ISBN」の欄に貼って「照合」</span></details></li>`
+      : row(`${b.title}（ISBNなし：題名で探して手で入れる）`, b.title, "")),
     refKiji: listOf(L2, "kiji").map(u => row(u, u, safeUrl(u))),
     refDouga: listOf(R2, "douga").map(u => row(u, u, safeUrl(u)))
   };
@@ -371,9 +374,10 @@ function refCards(c) {
   return REF_KINDS.map(k => `
     <div class="regcard ${d[k.key] ? "done" : ""}">
       <div class="regcard-head"><span class="regkind">${k.kind}</span>
-        <span class="regsteps"><span>押す：<b>${k.tab}</b></span><span>貼る：<b>${k.paste}</b></span><span><b>${k.btn}</b> → タグ → 登録</span></span></div>
+        <span class="regsteps"><span>押す：<b>${k.tab}</b></span><span>${k.paste}</span><span><b>${k.btn}</b> → タグ → 登録</span></span></div>
+      ${k.key === "refHon" && items.refHon.length ? `<ol class="camsteps"><li><b>本を手に持つ</b>（裏表紙の「978」から始まるバーコード）</li><li>「本」の欄の <b>📷</b> を押して、<b>画面のカメラにバーコードをかざす</b>。題名や著者が一気に入ります</li></ol>` : ""}
       ${items[k.key].length ? `<ul class="reflist">${items[k.key].join("")}</ul>` : `<p class="hint">${empty[k.key]}</p>`}
-      <p class="hint">💡 ${k.tip}</p>
+      ${k.tip ? `<p class="hint">💡 ${k.tip}</p>` : ""}
       ${items[k.key].length ? `<button type="button" class="choice-btn ${d[k.key] ? "on" : ""}" data-refchk="${k.key}">${d[k.key] ? "✓ " : ""}${k.kind}を登録できた</button>` : ""}
     </div>`).join("");
 }
