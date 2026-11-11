@@ -137,9 +137,11 @@ function seedFromR03(c) {
   c.set("seeded", 1);
   if (add.length) c.set("qs", [...add, ...qsOf(c)]);
 }
-function listHtml(qs, esc, { del = true } = {}) {
+function listHtml(qs, esc, { del = true, rev = false } = {}) {
   if (!qs.length) return `<p class="hint">まだありません</p>`;
-  return `<ol class="qlist">${qs.map((q, i) =>
+  const xs = qs.map((q, i) => [q, i]);
+  if (rev) xs.reverse(); // タイムアタック中は新しい順（消すときの番号はもとの順のまま）
+  return `<ol class="qlist">${xs.map(([q, i]) =>
     `<li><span>${esc(q.t)}</span>${q.s ? `<em class="tagq3">${quest(3)}</em>` : ""}${q.a ? `<em class="tagai">AI</em>` : ""}${del ? `<button type="button" class="qdel" data-qdel="${i}" aria-label="消す">×</button>` : ""}</li>`).join("")}</ol>`;
 }
 const addBox = (label = "追加") => `
@@ -148,7 +150,7 @@ const addBox = (label = "追加") => `
 // 画面の一部だけ書き換える（全体を描き直すと入力欄のカーソルとスクロールが戻るため）
 function refreshList(c) {
   const box = c.app.querySelector("[data-qlist]");
-  if (box) box.innerHTML = listHtml(qsOf(c), c.esc);
+  if (box) box.innerHTML = listHtml(qsOf(c), c.esc, { rev: !!box.closest(".qft-run") });
   const n = c.app.querySelector("[data-qcount]");
   if (n) n.textContent = String(ownN(qsOf(c)));
 }
@@ -280,6 +282,12 @@ async function finishRound(c) {
   if (c.app.querySelector("[data-qresult]")) c.rerender();
 }
 
+// 上の帯（.top）の高さ。時間・入力の帯をその下にとめる
+function fitTopH() {
+  const h = document.querySelector(".top")?.offsetHeight;
+  if (h) document.documentElement.style.setProperty("--top-h", `${h}px`);
+}
+
 // タイマー：画面に [data-timer] があるあいだ動く
 function ensureTick() {
   if (tickId) return;
@@ -304,10 +312,10 @@ if (typeof document !== "undefined") {
   });
 }
 
-function focusBox(c) {
+function focusBox(c, compact = false) {
   const L1 = c.prev("L01"), R3 = c.prev("R03"), esc = c.esc;
   return `
-    <div class="recap">
+    <div class="recap ${compact ? "compact" : ""}">
       <div class="tc-row"><span>説（第1回）</span><b>${esc(L1.setsu || "—")}</b></div>
       <div class="tc-row big"><span>論文で分かったこと</span><b>${esc(memoText(R3, "wakatta") || "—").replace(/\n/g, "<br>")}</b></div>
     </div>`;
@@ -387,11 +395,21 @@ const L04Main = {
         </div>`;
       if (phase === "run") {
         ensureTick();
+        // 11/11 先生：説・論文のメモが長いと、時間と入力欄が画面の外に出て問いが打てなかった。
+        // 時間・入力・個数を上にとめ、説と論文は高さを決めた箱の中でスクロール。出した問いは新しい順
+        setTimeout(fitTopH, 0);
         return `
-          <div class="qft-head"><div class="timer" data-timer>${QFT_MIN}:00</div><div class="qcount"><b data-qcount>${ownN(qs)}</b><span>個</span></div></div>
-          ${focusBox(c)}
-          ${addBox()}
-          <div data-qlist>${listHtml(qs, esc)}</div>`;
+          <div class="qft-run">
+            <div class="qft-bar">
+              <div class="timer" data-timer>${QFT_MIN}:00</div>
+              ${addBox()}
+              <div class="qcount"><b data-qcount>${ownN(qs)}</b><span>個</span></div>
+            </div>
+            <div class="qft-cols">
+              <div><p class="qft-cap">説と、論文で分かったこと</p>${focusBox(c, true)}</div>
+              <div><p class="qft-cap">出した問い（新しい順）</p><div data-qlist>${listHtml(qs, esc, { rev: true })}</div></div>
+            </div>
+          </div>`;
       }
       if (phase === "done") {
         const r = Number(d.rank) || 0, v = verdict(r > 0 ? r : 0, Number(d.rankTotal) || 0);
