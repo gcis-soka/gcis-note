@@ -443,7 +443,7 @@ const L04Main = {
           <b>直し方の合言葉（1学期 第7回）</b>
           <ul>${AIKOTOBA.map(([a, b]) => `<li><b>${a}</b>：${b}</li>`).join("")}</ul>
         </div>
-        ${field("toi", "選んだ問い（合言葉で直してOK）", { type: "text", qmark: true })}
+        ${field("toi", "選んだ問い（合言葉で直してOK）", { type: "line", qmark: true })}
         ${field("toiWhy", "この問いを選んだわけ（なくてもOK）", { rows: 2 })}`;
     }
 
@@ -458,7 +458,7 @@ const L04Main = {
         ${field("yotei", "序の口：12/14までにやること（小さく・具体的に。いつ・どこで・だれと・どうやって）", { rows: 3, placeholder: "例：12/9に家で、無音と雑音で15分ずつ計算問題を2回。まず自分で試して、問題の量と時間を確かめる" })}
         ${field("yotei2", "冬休みにやること（対象を広げて。大まかでOK）", { rows: 3, placeholder: "例：クラスの友だち10人に同じことをやってもらい、無音と雑音で比べる" })}
         ${field("hitsuyou", "必要なもの・協力してくれる人", { rows: 2, placeholder: "例：計算問題（同じ難しさのもの）、タイマー、雑音の音源" })}
-        ${field("kuraberu", "何と比べる？", { type: "text", placeholder: "例：無音のとき" })}
+        ${field("kuraberu", "何と比べる？", { type: "line", placeholder: "例：無音のとき" })}
         ${field("anzen", "気をつけること（人に聞く・写真を撮るとき）", { rows: 2, hint: "書き出しを押すと入ります", chips: ANZEN_CHIPS })}
         <p class="hint">書けたら次へ。AIに見てもらいます。</p>`;
     }
@@ -472,7 +472,7 @@ const L04Main = {
       ${field("yotei", "序の口：12/14までにやること", { rows: 3 })}
       ${field("yotei2", "冬休みにやること", { rows: 3 })}
       ${field("hitsuyou", "必要なもの・協力してくれる人", { rows: 2 })}
-      ${field("kuraberu", "何と比べる？", { type: "text" })}
+      ${field("kuraberu", "何と比べる？", { type: "line" })}
       ${field("anzen", "気をつけること", { rows: 2 })}
       ${field("geminiLink", "Geminiのチャットのリンク（なくてもOK）", { type: "url", placeholder: "https://…" })}`;
 

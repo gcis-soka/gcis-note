@@ -78,6 +78,8 @@ h2 { font-size: 21px; margin: 0; } h3 { margin: 0; font-size: 19px; }
 .label { display: block; font-weight: 700; margin-bottom: 4px; }
 textarea, input, select { width: 100%; font: inherit; padding: 10px 12px; border: 2px solid var(--line); border-radius: 12px; background: #fffdf8; color: var(--ink); }
 textarea { resize: vertical; }
+/* 1行の欄（type "line"）：長くなったら折り返して全部見せる。改行は入れない（11/11 先生） */
+textarea.line { resize: none; overflow: hidden; field-sizing: content; min-height: calc(1.7em + 24px); }
 .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .row3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
 @media (max-width: 560px) { .row3 { grid-template-columns: 1fr; } .row3 .field { margin: 6px 0; } }
@@ -341,7 +343,8 @@ hr.divider { border: none; border-top: 2px solid var(--line); margin: 24px 0 18p
 .need-msg { text-align: right; font-size: 14px; color: var(--accent); font-weight: 700; margin: 6px 2px 0; }
 
 /* 論文を読む（Quest 3 画面1・reader.js。11/9 作り直し：論文はアプリの中に出さない） */
-.fold.tips { margin: 8px 0 14px; }
+.fold.tips { margin: 8px 0 14px; background: #fdf6e3; border-color: #f0dca8; } /* 全員が読む：うすい黄色（AIの文＝緑・注意＝橙と分ける。11/11） */
+.fold.tips[open] > summary { border-bottom-color: #f0dca8; }
 .fold.tips ul { margin: 4px 0 8px; }
 .ptabs { display: flex; gap: 6px; margin-top: 8px; }
 .ptab { font: inherit; flex: 1; display: flex; flex-direction: column; align-items: flex-start; gap: 0; text-align: left; cursor: pointer;

@@ -126,9 +126,9 @@ export const L02 = {
         <li>読んだ記事や、ここまでのことから、<b>気になったことを「？」で終わる形で</b>書こう</li>
       </ol>
       <div class="field"><span class="hint">書き出しを押すと、空いている欄に入ります</span>${chips(Q_CHIPS, "q1,q2,q3")}</div>
-      ${field("q1", "気になったこと ①", { type: "text", qmark: true })}
-      ${field("q2", "気になったこと ②", { type: "text", qmark: true })}
-      ${field("q3", "気になったこと ③", { type: "text", qmark: true })}
+      ${field("q1", "気になったこと ①", { type: "line", qmark: true })}
+      ${field("q2", "気になったこと ②", { type: "line", qmark: true })}
+      ${field("q3", "気になったこと ③", { type: "line", qmark: true })}
       <p class="hint">読み終わらなかったら、あとで読んで書き足そう。提出したあとも直せます。</p>`;
     if (i === 3) return `
       <p>${quest(2)}の準備です。この「？」の<b>手がかりになりそうな本か動画</b>を探して、<b>見る動画・読む本を授業のうちに決めよう</b>。</p>

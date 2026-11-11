@@ -35,6 +35,7 @@ const papersOf = c => KEYS.map((k, j) => ({ j, no: NO[j], raw: c.v(k.u), url: sa
 const sigOf = ps => ps.map(p => p.j).join(",");
 let shownSig = ""; // いまタブに出ている論文の組（③を入れたときにタブを足すため）
 let keepFold = false; // 描き直しても「論文を変えたいとき」を開いたままにする
+let tipsOpen = true; // 「読み方のコツ」は最初から開く。閉じたら、描き直しても閉じたまま（11/11 先生）
 const readerConf = ps => ({ papers: ps, fields: j => fieldsOf(ps[j]?.j ?? 0), yomi: j => KEYS[ps[j]?.j ?? 0].y, YOMI });
 // 論文のタブ（2本以上のとき）
 function tabsHtml(c, ps, pick) {
@@ -134,7 +135,7 @@ function readStep(c) {
     <div data-reader-root>
       <p class="lead">いよいよ<b>論文</b>を読みます。研究者が何を調べて、何が分かったのか。読みながら、<b>分かったこと</b>と、<b>読みながら気になったこと</b>（えっ？・なぜ？・足りないと思ったところ）をメモしていこう。</p>
       ${fl && !floating ? FLOAT_HOWTO : ""}
-      <details class="fold tips">
+      <details class="fold tips" ${tipsOpen ? "open" : ""}>
         <summary>読み方のコツ</summary>
         <ul>
           <li>知らない言葉は、すぐ調べなくてOK。印をつけて先へ</li>
@@ -197,9 +198,9 @@ function afterStep(c) {
       <p class="lead">読みながら気になったことの中から、<b>いちばん確かめてみたいもの</b>を1〜3つ選ぼう。第4回で問いを立てるとき、はじめから入っています。</p>
       <div data-fuda-box>${fudaHtml(c)}</div>
       <div class="field"><span class="label">確かめてみたいこと（「？」で終わる形・なくてもOK）</span><span class="hint">札を押すと、空いている欄に入ります。自分で書いても、直してもOK</span>${chips(Q_CHIPS, "q1,q2,q3")}</div>
-      ${field("q1", "①", { type: "text", qmark: true })}
-      ${field("q2", "②", { type: "text", qmark: true })}
-      ${field("q3", "③", { type: "text", qmark: true })}
+      ${field("q1", "①", { type: "line", qmark: true })}
+      ${field("q2", "②", { type: "line", qmark: true })}
+      ${field("q3", "③", { type: "line", qmark: true })}
       <h3>論文も RefNavi に登録して、参考文献リストを新しくしよう</h3>
       <ol class="todo">
         <li>RefNavi の上の種類のボタンで「<b>論文</b>」→「<b>DOI</b>」の欄に、下の<b>DOI の番号</b>を貼って「<b>照合</b>」→ 個人タグ「<b>${REF_TAG}</b>」を選んで登録</li>
@@ -279,6 +280,9 @@ export const R03 = {
   },
 
   onClick(t, c) {
+    // 「読み方のコツ」の開け閉めを覚える（押した時点の open は切りかわる前の値）
+    const ts = t.closest(".fold.tips > summary");
+    if (ts) { tipsOpen = !ts.parentElement.open; return false; }
     if (handleReader(t, c)) return true;
     if (handleSearch(t, c)) return true;
     if (t.closest("[data-refnavi-open]")) {
