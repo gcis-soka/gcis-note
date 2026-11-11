@@ -125,6 +125,9 @@ export function pickFields(c, { done = false } = {}) {
       </div>`).join("");
   return `<div class="findrow">${videos}</div><div class="findrow">${books}</div>`;
 }
+// ISBN は必須（11/9 先生）：題名を書いた本ごとに、数字10桁か13桁（ハイフン・空白は数えない。10桁の最後は X も可）
+export const isbnOk = s => /^(\d{13}|\d{9}[\dX])$/i.test(String(s || "").replace(/[０-９Ｘｘ]/g, ch => String.fromCharCode(ch.charCodeAt(0) - 0xFEE0)).replace(/[-\s‐－ー]/g, "")); // 全角の数字も可
+const isbnMissing = c => PICK_N.some(n => c.v("honTitle" + n) && !isbnOk(c.v("isbn" + n)));
 // Quest 2 を初めて開いたとき、第2回で入れた値（探す言葉・見る動画・読む本）を写す（同じことを2回書かせない）
 export const FROM_L02 = ["findq", "findb", ...PICK_N.map(n => "douga" + n), ...PICK_N.map(n => "honTitle" + n)];
 function copyFromL02(c) {
@@ -182,13 +185,14 @@ export const R02 = {
   },
 
   canNext(i, c) {
-    return !!((listOf(c.d, "douga").length || listOf(c.d, "honTitle").length) && c.v("kokoro"));
+    return !!((listOf(c.d, "douga").length || listOf(c.d, "honTitle").length) && c.v("kokoro")) && !isbnMissing(c);
   },
   // 次へが押せないときに出す名前（「〜が書けたら、次へ進もう」）
   need(i, c) {
     const m = [];
     if (!(listOf(c.d, "douga").length || listOf(c.d, "honTitle").length)) m.push("「見た動画のリンク」か「読んだ本の題名」");
     if (!c.v("kokoro")) m.push("「ひとこと」");
+    if (isbnMissing(c)) m.push("題名を書いた本の「ISBN」（数字13桁）");
     return m;
   },
 

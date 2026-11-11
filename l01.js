@@ -116,7 +116,7 @@ export const L01 = {
     if (i === 0) return step0(c);
     if (i === 1) return `
       ${promptBox(prompt1(c), { first: true })}
-      <p class="hint">画面が重なったら、このページを左に寄せよう（Windows：Windowsキー＋← ／ Chromebook：Alt＋[ ）。Chrome右上の「Geminiに相談」は使いません。</p>
+      <p class="hint">Chrome右上の「Geminiに相談」は使いません。</p>
       <p>出てきた20個を眺めて、<b>直感で気になったもの</b>を3つ書こう。理由はいらない。</p>
       <div class="row3">
         ${field("kw1", "気になった ①", { type: "text" })}

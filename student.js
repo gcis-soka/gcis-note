@@ -1,7 +1,7 @@
 // 生徒画面の枠：ホーム・クラスと番号・保存・画面の切り替え
 // ステージ（前のステージを提出すると次が出る）の中身は l01.js・r01.js・l02.js・r02.js・l03.js・r03.js・l04.js … に書く
 import {
-  escapeHtml, kiOf, classLabel, openGemini, chatUrlOf, chatUrlProblem, snapKeys, quest,
+  escapeHtml, kiOf, classLabel, openGemini, chatUrlOf, chatUrlProblem, snapKeys, snapFirst, quest,
   CLASSES, MAX_NUMBER, TEST_CLASS
 } from "./common.js";
 import { L01 } from "./l01.js";
@@ -11,9 +11,10 @@ import { R02 } from "./r02.js";
 import { L03 } from "./l03.js";
 import { R03 } from "./r03.js";
 import { L04 } from "./l04.js";
+import { R04 } from "./r04.js";
 
 // ステージの順。足すときはここに並べる（teacher.js の VIEWS・firestore.rules の lesson も足す）
-const LESSONS = [L01, R01, L02, R02, L03, R03, L04];
+const LESSONS = [L01, R01, L02, R02, L03, R03, L04, R04];
 const stageLabel = L => L.no ? `第${L.no}回` : L.quest ? quest(L.quest) : "";
 const MAP = ["気になる", "一歩", "文献", "問い", "計画", "着手", "RQ"];
 const SHORT_MSG = "思いついたことを、もう少しだけ足してみよう（いつ？どんなとき？）";
@@ -45,9 +46,11 @@ export function mountStudent({ be, user, app, asTeacher }) {
       submitted: n.submitted,
       prev: id => notes[id]?.data || {},
       set: (k, val) => { n.data[k] = val; scheduleSave(); },
-      rerender: () => renderStep(n.step),
+      // 描き直しても、いまの位置にとどまる（11/10 先生：ボタンを押すたびに先頭へ飛ぶと体験が途切れる）
+      rerender: () => { const y = window.scrollY; renderStep(n.step); window.scrollTo(0, y); },
       field, promptBox, chips, esc: escapeHtml, app,
       ki: profile?.ki ?? "", cls: profile?.class ?? "", // 期・クラス（RefNavi のグループコードを出すため：11/7）
+      asTeacher, // 先生が生徒画面を見ているとき（RefNavi のコードを全クラス分見せる：11/9）
       // 問いの数の順位（第4回）。学年＝期ごと。期なしは "x"、先生のテストは "t" で別に数える
       scoreRank: n => be.scoreRank({ ki: asTeacher ? "t" : (profile?.ki || "x"), lesson: cur.id, uid: user.uid, n })
     };
@@ -131,6 +134,7 @@ export function mountStudent({ be, user, app, asTeacher }) {
       <div class="prompt ${link ? "has-link" : ""}">
         <div class="prompt-head">AIに送る文（自動でできています）</div>
         <pre class="prompt-text">${escapeHtml(text)}</pre>
+        ${first ? `<div class="if-nolink">${snapFirst("Gemini")}</div>` : ""}
         <div class="prompt-actions">
           <button class="btn" data-copy>コピーする</button>
           <button class="btn ghost" data-gemini><span class="if-link">このチャットに戻る ↗</span><span class="if-nolink">${first ? "Geminiを右半分に開く ↗" : "Geminiの窓に戻る ↗"}</span></button>
@@ -412,6 +416,7 @@ export function mountStudent({ be, user, app, asTeacher }) {
     const el = e.target.closest("[data-key]");
     if (!el || !cur) return;
     note().data[el.dataset.key] = el.value;
+    cur.onInput?.(el, ctx()); // 画面ごとの直し（第3回・Quest 3：DOI を番号だけに。11/8）
     if (el.dataset.key === "chatUrl") refreshChatUrl(); // 次へ の可否は下の refreshNext で
     scheduleSave(); refreshNext(); updateHints();
   }, { signal: ac.signal });

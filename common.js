@@ -20,8 +20,25 @@ export const JKS_URL = "https://school.japanknowledge.com/"; // ジャパンナ�
 export const LIBRARY_URL = "https://lib-finder.net/tokyo_soka_lib/"; // 学校図書館の蔵書検索（11/4）。検索語をURLに載せられないので、言葉はコピーして貼ってもらう
 // RefNavi のグループコード（第3回で生徒に見せる）。期ごとに { all: "コード" }（学年で1つ）か { 1: "…", 2: "…" }（クラスごと）。
 // 空なら「先生が伝えるグループコード」と出す。学校コードは書かない（生徒に教えないもの）
-export const REFNAVI_GROUPS = { "59": {} };
+export const REFNAVI_GROUPS = {
+  "59": { 1: "9da62", 2: "99ada", 3: "776a4", 4: "90102", 5: "cb119", 6: "6aa3b", 7: "fabb3", 8: "1b818" }, // 1-1H59〜1-8H59（11/9）
+};
 export const refnaviGroupOf = (ki, cls) => { const g = REFNAVI_GROUPS[ki] || {}; return String(g[cls] ?? g.all ?? "").trim(); };
+// DOI の番号だけを取り出す（「https://doi.org/10.…」「DOI: 10.…」などから「10.…」に。見つからなければ空）（11/8）
+export function doiOf(s) {
+  let t = String(s || "").trim();
+  try { t = decodeURIComponent(t); } catch (e) { /* そのまま */ }
+  const m = /10\.\d{4,9}\/[^\s"'<>]+/.exec(t);
+  if (!m) return "";
+  const d = m[0].replace(/[。．.、,，\]」]+$/u, "");
+  return d.includes("(") ? d : d.replace(/[)）]+$/u, ""); // 「(」がなければ、閉じかっこは文の一部
+}
+// Quest 3 のメモ（論文ごと：wakatta・wakatta2 など。11/9）を第4回・教員画面で使う：2本分をまとめた文（1本だけならそのまま。2本なら「論文①：…」「論文②：…」）
+export function memoText(d, base, sep = "\n") {
+  const xs = [[1, d?.[base]], [2, d?.[base + "2"]], [3, d?.[base + "3"]]].map(([n, t]) => [n, String(t || "").trim()]).filter(([, t]) => t);
+  if (xs.length < 2) return xs[0]?.[1] || "";
+  return xs.map(([n, t]) => `論文${"①②③"[n - 1]}：${t}`).join(sep);
+}
 export const YOUTUBE_SEARCH = q => `https://www.youtube.com/results?search_query=${encodeURIComponent(q)}`;
 // 授業の外でやってくること（L01で決めた一歩）の呼び名。Quest 1, Quest 2 …（quest・question・inquiry は同じ語源）
 export const quest = n => `Quest ${n}`;
@@ -126,6 +143,14 @@ export function snapKeys() {
   if (/Windows/.test(ua)) return "Windowsキー ＋ ←";
   if (/Macintosh/.test(ua)) return "fn ＋ control ＋ ←";
   return "";
+}
+
+// 右半分に別の窓を開く前に、アプリの窓を左半分に寄せる案内（11/9 先生：開く前に必ず。Windows・Chromebook どちらも出す。使っている端末の方を先に）
+export function snapFirst(what = "Gemini") {
+  const ua = navigator.userAgent || "";
+  const win = `<span><kbd>Windowsキー ＋ ←</kbd>（Windows）</span>`, cros = `<span><kbd>Alt ＋ [</kbd>（Chromebook）</span>`;
+  const keys = /CrOS/.test(ua) ? [cros, win] : [win, cros];
+  return `<p class="snap snapfirst">🪟 <b>${what}を開く前に</b>、まずこのアプリの窓を<b>左半分</b>に寄せよう：${keys.join("　／　")}</p>`;
 }
 
 export function lsGet(k) { try { return localStorage.getItem(k); } catch { return null; } }

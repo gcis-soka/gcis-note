@@ -97,6 +97,8 @@ details.help { margin-top: 8px; font-size: 15px; } details.help summary { cursor
 .warn-text { color: var(--warn); }
 .link.small { font-size: 13px; margin-left: 6px; }
 .snap { margin: 8px 0 0; background: #fff; border-radius: 10px; padding: 6px 10px; }
+.snapfirst { background: #eef5ff; border: 1px solid #c9dcf5; margin: 8px 0; line-height: 1.9; }
+.snapfirst span { white-space: nowrap; }
 .snap kbd { font-family: inherit; font-weight: 700; border: 1px solid var(--line); border-bottom-width: 3px; border-radius: 6px; padding: 0 6px; background: var(--bg); }
 
 .rules { background: var(--warn-soft); border-radius: 12px; padding: 10px 14px; font-size: 15px; margin-top: 12px; }
@@ -115,6 +117,24 @@ details.help { margin-top: 8px; font-size: 15px; } details.help summary { cursor
 .share p { margin: 4px 0 0; font-size: 15px; }
 .share ul { margin: 4px 0 8px; padding-left: 1.4em; font-size: 15px; }
 .share ul:last-child { margin-bottom: 0; }
+.why { margin-top: 12px; padding: 12px 16px; border-radius: 12px; background: #eaf6ee; border-left: 5px solid #3d7a4f; }
+.why ul { margin: 4px 0 0; padding-left: 1.4em; font-size: 15px; }
+.why li { margin: 3px 0; }
+.regcard { margin: 12px 0; padding: 10px 14px 12px; border: 2px solid var(--line); border-radius: 12px; background: #fff; }
+.regcard.done { border-color: #3d7a4f; background: #f3faf5; }
+.regcard-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-bottom: 4px; }
+.regkind { font-weight: 700; font-size: 17px; color: #fff; background: #3d7a4f; border-radius: 999px; padding: 2px 14px; }
+.regsteps { display: flex; flex-wrap: wrap; gap: 6px; font-size: 14px; }
+.regsteps > span { background: #eef5ff; border: 1px solid #c9dcf5; border-radius: 8px; padding: 1px 8px; }
+.regcard .reflist { margin: 6px 0; }
+.regcard .choice-btn { margin-top: 4px; }
+.camsteps { margin: 6px 0; padding-left: 1.5em; font-size: 15px; }
+.isbnfall { flex-basis: 100%; font-size: 14px; padding: 0 0 2px 12px; }
+.regsetup h3 { margin-top: 14px; }
+.reftable { width: 100%; max-width: 640px; margin: 4px 0 10px; border-collapse: collapse; font-size: 14px; }
+.reftable th, .reftable td { border: 1px solid #d6dae2; padding: 5px 8px; text-align: left; vertical-align: top; }
+.reftable th { background: #f1f3f6; font-weight: 700; }
+.reftable td:nth-child(2) { font-weight: 700; color: #2f6b43; white-space: nowrap; }
 
 /* 教員画面 */
 .t-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
@@ -271,6 +291,15 @@ select.ki { width: auto; padding: 3px 10px; border-radius: 999px; font-size: 15p
 .qpick { display: block; width: 100%; text-align: left; font: inherit; padding: 8px 12px; margin: 4px 0; border-radius: 10px; border: 2px solid var(--line); background: #fff; cursor: pointer; }
 .qpick:hover { border-color: var(--kc, var(--accent)); }
 .qpick.on { border-color: var(--kc, var(--accent)); background: color-mix(in srgb, var(--kc, var(--accent)) 10%, #fff); font-weight: 700; }
+/* Quest 3 画面2：読みながら気になったことの札（11/10） */
+.fuda-list { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 14px; }
+.fuda { display: inline-flex; align-items: baseline; gap: 6px; max-width: 100%; text-align: left; font: inherit; padding: 8px 12px; border-radius: 10px; border: 2px solid var(--line); background: #fffdf8; cursor: pointer; box-shadow: 0 1px 0 var(--line); }
+.fuda em { font-style: normal; font-size: 12px; color: var(--sub); flex: 0 0 auto; }
+.fuda i { font-style: normal; color: var(--accent); font-weight: 700; }
+.fuda:hover:not(:disabled) { border-color: var(--accent); }
+.fuda.on { border-color: var(--accent); background: var(--accent-soft); font-weight: 700; }
+.fuda:disabled { opacity: .45; cursor: default; }
+.tagq3 { font-style: normal; font-size: 12px; color: var(--accent); border: 1px solid var(--accent); border-radius: 6px; padding: 0 5px; }
 
 /* ホームのカード：done＝提出済み（背景を少し暗く・緑に✓）／now＝いま（緑の枠・緑の輪）／todo＝まだ（点線） */
 .lesson h3 { margin: 0; }
@@ -293,8 +322,8 @@ select.ki { width: auto; padding: 3px 10px; border-radius: 999px; font-size: 15p
 /* 1つの画面の中の区切り（例：第2回 画面3の①読む／②気になったこと） */
 hr.divider { border: none; border-top: 2px solid var(--line); margin: 24px 0 18px; }
 /* チャットのURLをどこからコピーするかの図 */
-.urlhowto { margin: 10px 0 4px; }
-.urlhowto svg { display: block; width: 100%; max-width: 520px; height: auto; font-family: var(--font); }
+.urlhowto { margin: 12px auto 6px; max-width: 560px; } /* 図は中央に（11/10 先生）。説明文は図と同じ幅で左ぞろえ */
+.urlhowto svg { display: block; width: 100%; max-width: 560px; height: auto; margin: 0 auto; font-family: var(--font); }
 .urlhowto figcaption { font-size: 14px; margin-top: 6px; }
 /* 本か動画を探す：動画の組と本の組 */
 .findrow { border-left: 4px solid var(--line); padding: 2px 0 2px 12px; margin: 10px 0 14px; }
@@ -311,18 +340,56 @@ hr.divider { border: none; border-top: 2px solid var(--line); margin: 24px 0 18p
 /* 次へが押せないときの一言（何が書けたら進めるか） */
 .need-msg { text-align: right; font-size: 14px; color: var(--accent); font-weight: 700; margin: 6px 2px 0; }
 
-/* 論文を読みながらメモ（reader.js・11/7 試作）。カードより広く使う */
-main:has(.reader) { max-width: 1240px; }
-.reader { margin: 12px 0; }
-.reader-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 4px; }
-.reader-bar .btn { margin-left: auto; }
-.reader-tabs { display: inline-flex; gap: 6px; }
-.reader-tabs .choice-btn { flex: none; min-width: 0; padding: 6px 14px; font-size: 14px; border-radius: 10px; }
-.reader-grid { display: grid; grid-template-columns: minmax(0, 3fr) minmax(280px, 2fr); gap: 14px; align-items: start; }
-.reader-frame { width: 100%; height: 78vh; border: 2px solid var(--line); border-radius: 12px; background: #fff; }
-.reader-memo { position: sticky; top: 12px; }
-.reader-memo .field { margin-top: 0; }
-@media (max-width: 900px) { .reader-grid { grid-template-columns: 1fr; } .reader-frame { height: 65vh; } .reader-memo { position: static; } }
+/* 論文を読む（Quest 3 画面1・reader.js。11/9 作り直し：論文はアプリの中に出さない） */
+.fold.tips { margin: 8px 0 14px; }
+.fold.tips ul { margin: 4px 0 8px; }
+.ptabs { display: flex; gap: 6px; margin-top: 8px; }
+.ptab { font: inherit; flex: 1; display: flex; flex-direction: column; align-items: flex-start; gap: 0; text-align: left; cursor: pointer;
+  padding: 8px 16px 10px; border: 2px solid var(--line); border-bottom: none; border-radius: 14px 14px 0 0; background: var(--bg); color: var(--sub); }
+.ptab b { font-size: 16px; }
+.ptab span { font-size: 13px; }
+.ptab.on { background: var(--card); color: var(--ink); border-color: var(--accent); position: relative; z-index: 1; margin-bottom: -2px; padding-bottom: 12px; }
+.ptab.on span { color: var(--accent); font-weight: 700; }
+.pcard { border: 2px solid var(--line); border-radius: 14px; padding: 12px 16px 6px; background: var(--card); }
+.pcard.tabbed { border-color: var(--accent); border-top-left-radius: 0; }
+.pcard-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.pcard-head .btn { margin-left: auto; }
+.pfloat { display: flex; width: 100%; justify-content: center; margin: 10px 0 2px; }
+.memo2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; }
+.memo2 .field { margin: 8px 0; }
+@media (max-width: 640px) { .memo2 { grid-template-columns: 1fr; } }
+.memo-fold { margin: 10px 0 4px; }
+.memo-fold > summary .hint { font-weight: 400; margin-left: 4px; }
+.floathowto svg { max-width: 540px; }
+.pfloat-on { margin: 10px 0 4px; padding: 10px 14px; border-radius: 12px; background: var(--accent-soft); color: var(--accent); font-weight: 700; }
+/* メモの小さな窓（Document Picture-in-Picture・11/8 → 11/9 論文ごと） */
+body.pip { margin: 0; font-size: 15px; background: var(--card); }
+.pip-wrap { padding: 10px 14px 14px; }
+.pip-head { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+.pip-head .pip-close { margin-left: auto; }
+.pip-start { text-align: center; padding: 34px 0 20px; }
+.pip-start .btn { font-size: 20px; padding: 16px 44px; }
+.pip-start .hint { margin: 12px 0 6px; }
+.linkish { font: inherit; font-size: 13px; background: none; border: none; color: var(--sub); text-decoration: underline; cursor: pointer; }
+.pip-tabs { display: inline-flex; gap: 4px; background: var(--bg); padding: 3px; border-radius: 12px; }
+.pip-tab { font: inherit; font-weight: 700; font-size: 14px; border: none; background: none; color: var(--sub); padding: 5px 14px; border-radius: 9px; cursor: pointer; }
+.pip-tab.on { background: var(--card); color: var(--accent); box-shadow: 0 1px 3px rgba(0,0,0,.12); }
+.pip-x { font: inherit; font-size: 13px; border: 1px solid var(--line); background: var(--card); color: var(--sub); border-radius: 999px; padding: 3px 12px; cursor: pointer; }
+.pip-open { padding: 6px 22px; font-size: 15px; }
+.pip-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0 14px; }
+@media (max-width: 600px) { .pip-cols { grid-template-columns: 1fr; } .pip-head { flex-wrap: wrap; } }
+.pip-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
+.pip-foot .label { font-size: 14px; margin: 0; }
+.pip-foot .choice.small { margin: 0; flex-wrap: nowrap; }
+.pip-foot .choice-btn { min-width: 0; flex: none; white-space: nowrap; padding: 3px 12px; font-size: 13px; }
+.pip-foot .hint { margin: 0 0 0 auto; font-size: 12px; }
+.pip-field { margin: 4px 0 8px; }
+.pip-field .label { font-size: 14px; margin-bottom: 2px; }
+.pip-field .chips { margin: 2px 0 4px; }
+.pip-field .chip { font-size: 12px; padding: 2px 10px; }
+.pip-field textarea { font-size: 15px; }
+.pip-field textarea:disabled, .pip-field button:disabled { opacity: .5; }
+.pip-off { background: var(--warn-soft); color: var(--warn); padding: 6px 10px; border-radius: 10px; }
 /* RefNavi に登録するもの（第3回） */
 .reflist { list-style: none; padding: 0; margin: 6px 0 12px; }
 .refrow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--line); }
