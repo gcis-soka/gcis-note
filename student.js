@@ -458,7 +458,7 @@ export function mountStudent({ be, user, app, asTeacher }) {
     if (t.closest("[data-gemini-force]")) { gemini(t.closest(".prompt").querySelector("[data-gemini]"), true); return; }
     if (t.closest("[data-gemini]")) { gemini(t.closest("[data-gemini]")); return; }
     if (t.closest("[data-insert]")) { insertChip(t.closest("[data-insert]")); return; }
-    if (cur.onClick?.(t, ctx())) return;
+    if (cur.onClick?.(t, ctx())) { refreshNext(); return; } // 押したもので「次へ」の可否が変わることがある（Quest 3 の札・登録できた：11/11）
     if (t.closest("[data-home]")) { await saveNow(); renderHome(); return; }
     const go = t.closest("[data-go]");
     if (!go) return;

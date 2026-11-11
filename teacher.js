@@ -231,12 +231,12 @@ const VIEWS = {
         <div class="recap">${ps.map(p => `<div class="tc-row"><span>論文${p.no}（${esc(p.yomi || "—")}）</span><b>${paperCell(p)}</b></div>`).join("") || `<div class="tc-row"><span>論文</span><b>—</b></div>`}</div>
         ${memoItem(d, "wakatta", "分かったこと")}${memoItem(d, "mada", "読みながら気になったこと")}
         <div class="tc-row"><span>確かめてみたいこと</span><b>${qs.length ? `<ul class="qs">${qs.map(q => `<li>${esc(q)}</li>`).join("")}</ul>` : "—"}</b></div>
-        <div class="tc-row"><span>参考文献リスト</span><b>${esc(d.sanko || r.l03?.data?.sanko || "—").replace(/\n/g, "<br>")}</b></div>`;
+        <div class="tc-row"><span>RefNavi に論文</span><b>${d.refRonbun ? "登録できた" : "—"}</b></div>`;
     },
-    csvHead: ["論文1のURL", "論文1を読んだか", "論文2のURL", "論文2を読んだか", "論文1：分かったこと", "論文1：読みながら気になったこと", "論文2：分かったこと", "論文2：読みながら気になったこと", "論文3のURL", "論文3を読んだか", "論文3：分かったこと", "論文3：読みながら気になったこと", "確かめてみたいこと1", "確かめてみたいこと2", "確かめてみたいこと3", "参考文献リスト"],
+    csvHead: ["論文1のURL", "論文1を読んだか", "論文2のURL", "論文2を読んだか", "論文1：分かったこと", "論文1：読みながら気になったこと", "論文2：分かったこと", "論文2：読みながら気になったこと", "論文3のURL", "論文3を読んだか", "論文3：分かったこと", "論文3：読みながら気になったこと", "確かめてみたいこと1", "確かめてみたいこと2", "確かめてみたいこと3", "RefNaviに論文を登録"],
     csvRow: r => {
       const d = r.note?.data || {}, l = d.fromL03 ? d : r.l03?.data || {}; // 論文は Quest 3 で変えられる（11/7）
-      return [l.p1Url, d.yomi1, l.p2Url, d.yomi2, d.wakatta, d.mada, d.wakatta2, d.mada2, d.p3Url, d.yomi3, d.wakatta3, d.mada3, d.q1, d.q2, d.q3, d.sanko || r.l03?.data?.sanko];
+      return [l.p1Url, d.yomi1, l.p2Url, d.yomi2, d.wakatta, d.mada, d.wakatta2, d.mada2, d.p3Url, d.yomi3, d.wakatta3, d.mada3, d.q1, d.q2, d.q3, d.refRonbun ? "○" : ""];
     }
   },
   L04: {
