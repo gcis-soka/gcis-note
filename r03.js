@@ -4,7 +4,7 @@
 // 11/10 先生：メモの右の欄を「まだ分かっていないこと」→「読みながら気になったこと」（教科書 p.60 d 疑問点・不足事項）。
 //       右の欄の1行＝1枚の札。画面2で札から「確かめてみたい？」を q1〜q3 に選ぶ。欄の名前（mada…）は前のまま
 // data：yomi1〜3（全部読んだ／途中まで／まだ）・wakatta・mada（論文①。mada＝読みながら気になったこと）・wakatta2・mada2（論文②・11/9）・wakatta3・mada3（論文③・11/9）・q1〜q3・
-//       p1Url〜p3Url・p1Doi〜p3Doi（①②は第3回から写し、ここで変えられる。③は Quest 3 だけ）・kensaku・tried・sanko・fromL03
+//       p1Url〜p3Url・p1Doi〜p3Doi（①②は第3回から写し、ここで変えられる。③は Quest 3 だけ）・kensaku・tried・refRonbun（論文を RefNavi に登録できた・11/11）・fromL03（sanko は 11/11 から使わない）
 import { quest, memoText, doiOf } from "./common.js";
 export { memoText };
 import { setupReader, handleReader, canFloat, isFloating, safeUrl, hostOf, paperOpenUrl } from "./reader.js";
@@ -14,7 +14,8 @@ import { copyText } from "./r02.js";
 // 第3回の論文のURL・DOI・検索語を写す（論文を変えるのは Quest 3 の中で：11/7）。
 // 11/9：開くたびに、Quest 3 でまだ一度も触っていない欄（値がない＝undefined）にだけ写す。
 // 先に Quest 3 を開いてから第3回に DOI を入れても写るように。Quest 3 で消した欄（""）は写し直さない
-const FROM_L03 = ["p1Url", "p2Url", "p1Doi", "p2Doi", "kensaku", "tried", "sanko"];
+// 11/11 先生：参考文献リストは Quest 3 では貼らない（まとめるときに出力し直す）。論文の RefNavi 登録だけする
+const FROM_L03 = ["p1Url", "p2Url", "p1Doi", "p2Doi", "kensaku", "tried"];
 function copyFromL03(c) {
   const L3 = c.prev("L03");
   let n = 0;
@@ -35,6 +36,7 @@ const papersOf = c => KEYS.map((k, j) => ({ j, no: NO[j], raw: c.v(k.u), url: sa
 const sigOf = ps => ps.map(p => p.j).join(",");
 let shownSig = ""; // いまタブに出ている論文の組（③を入れたときにタブを足すため）
 let keepFold = false; // 描き直しても「論文を変えたいとき」を開いたままにする
+let tipsOpen = true; // 「読み方のコツ」は最初から開く。閉じたら、描き直しても閉じたまま（11/11 先生）
 const readerConf = ps => ({ papers: ps, fields: j => fieldsOf(ps[j]?.j ?? 0), yomi: j => KEYS[ps[j]?.j ?? 0].y, YOMI });
 // 論文のタブ（2本以上のとき）
 function tabsHtml(c, ps, pick) {
@@ -134,7 +136,7 @@ function readStep(c) {
     <div data-reader-root>
       <p class="lead">いよいよ<b>論文</b>を読みます。研究者が何を調べて、何が分かったのか。読みながら、<b>分かったこと</b>と、<b>読みながら気になったこと</b>（えっ？・なぜ？・足りないと思ったところ）をメモしていこう。</p>
       ${fl && !floating ? FLOAT_HOWTO : ""}
-      <details class="fold tips">
+      <details class="fold tips" ${tipsOpen ? "open" : ""}>
         <summary>読み方のコツ</summary>
         <ul>
           <li>知らない言葉は、すぐ調べなくてOK。印をつけて先へ</li>
@@ -196,20 +198,19 @@ function afterStep(c) {
   return `
       <p class="lead">読みながら気になったことの中から、<b>いちばん確かめてみたいもの</b>を1〜3つ選ぼう。第4回で問いを立てるとき、はじめから入っています。</p>
       <div data-fuda-box>${fudaHtml(c)}</div>
-      <div class="field"><span class="label">確かめてみたいこと（「？」で終わる形・なくてもOK）</span><span class="hint">札を押すと、空いている欄に入ります。自分で書いても、直してもOK</span>${chips(Q_CHIPS, "q1,q2,q3")}</div>
-      ${field("q1", "①", { type: "text", qmark: true })}
-      ${field("q2", "②", { type: "text", qmark: true })}
-      ${field("q3", "③", { type: "text", qmark: true })}
-      <h3>論文も RefNavi に登録して、参考文献リストを新しくしよう</h3>
+      <div class="field"><span class="label">確かめてみたいこと（「？」で終わる形・1つ以上）</span><span class="hint">札を押すと、空いている欄に入ります。自分で書いても、直してもOK</span>${chips(Q_CHIPS, "q1,q2,q3")}</div>
+      ${field("q1", "①", { type: "line", qmark: true })}
+      ${field("q2", "②", { type: "line", qmark: true })}
+      ${field("q3", "③", { type: "line", qmark: true })}
+      <h3>読んだ論文を RefNavi に登録しよう</h3>
       <ol class="todo">
         <li>RefNavi の上の種類のボタンで「<b>論文</b>」→「<b>DOI</b>」の欄に、下の<b>DOI の番号</b>を貼って「<b>照合</b>」→ 個人タグ「<b>${REF_TAG}</b>」を選んで登録</li>
-        <li>「整理する」の「リスト」で全部にチェック →「出力」→ ${REF_FORMAT ? `「${REF_FORMAT}」` : "先生が指定した書式"} → コピー</li>
-        <li>下の欄を消して、貼り直す</li>
       </ol>
       ${REF_PAPER_HOWTO}
       ${doiList(c)}
       <div class="searchbtns"><button type="button" class="btn ghost" data-refnavi-open>RefNavi を右半分に開く ↗</button></div>
-      ${field("sanko", "参考文献リスト（RefNavi から貼る）", { rows: 6, hint: "第3回に貼ったものが入っています。論文を足したら貼り直そう" })}
+      <div class="choice small"><button type="button" class="choice-btn ${c.d.refRonbun ? "on" : ""}" data-ronbun-chk>${c.d.refRonbun ? "✓ " : ""}論文を登録できた</button></div>
+      <p class="hint">参考文献リストは、ここでは貼りません。あとでまとめるときに、RefNavi から出力し直します。</p>
       <p class="hint">がんばって、読めるところまで読んでみよう！ 別の論文にしたくなったら、「もどる」で1つ前の画面の「論文を変えたいとき」から。</p>
       ${c.submitted ? `<p class="okmsg">提出済み ✓　あとから直しても自動で保存されます。</p>` : ""}`;
 }
@@ -271,14 +272,24 @@ export const R03 = {
   // 画面1：どちらかの論文で「分かったこと」と「読みながら気になったこと」が書けたら次へ
   canNext(i, c) {
     if (i === 0) return KEYS.some((k, j) => doneOf(c, j));
-    return true;
+    return QK.some(k => c.v(k)) && !!c.v("refRonbun"); // 11/11 先生：確かめてみたいこと1つ以上＋論文の RefNavi 登録
+
   },
   need(i, c) {
     if (i === 0) return ["どれか1本の論文の「分かったこと」と「読みながら気になったこと」"];
-    return [];
+    return [!QK.some(k => c.v(k)) && "「確かめてみたいこと」を1つ以上", !c.v("refRonbun") && "「論文を登録できた」"].filter(Boolean);
   },
 
   onClick(t, c) {
+    // 「読み方のコツ」の開け閉めを覚える（押した時点の open は切りかわる前の値）
+    const ts = t.closest(".fold.tips > summary");
+    if (ts) { tipsOpen = !ts.parentElement.open; return false; }
+    const rc = t.closest("[data-ronbun-chk]");
+    if (rc) {
+      const on = !c.d.refRonbun; c.set("refRonbun", on ? 1 : "");
+      rc.classList.toggle("on", on); rc.textContent = `${on ? "✓ " : ""}論文を登録できた`;
+      return true;
+    }
     if (handleReader(t, c)) return true;
     if (handleSearch(t, c)) return true;
     if (t.closest("[data-refnavi-open]")) {

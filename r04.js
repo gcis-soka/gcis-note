@@ -56,7 +56,7 @@ export const R04 = {
       ${field("hirogeru", "次は、どう広げたい？（なくてもOK）", { rows: 2, placeholder: "例：自分だけでなく、クラスの友だち10人にもやってもらいたい" })}
       <p class="note">第5回では、班で途中経過を報告して、<b>対象を広げる</b>計画に直します。</p>`;
     if (notYet(c)) body = `
-      ${field("yarunara", "いつ・何からやる？（1行）", { type: "text", placeholder: "例：12/12の放課後に、まず自分で15分ずつ試す" })}
+      ${field("yarunara", "いつ・何からやる？（1行）", { type: "line", placeholder: "例：12/12の放課後に、まず自分で15分ずつ試す" })}
       <p class="note">大丈夫。第5回の班では「計画と、いつ・何からやるか」を話そう。</p>`;
     return `
       ${recapL04(c)}

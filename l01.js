@@ -53,7 +53,7 @@ function step0(c) {
       <p><b>テーマの例</b>：少しでも気になるものを1つクリックしよう。あとで変えてもOK。</p>
       <div class="themes">${THEMES.map((t, i) =>
         `<button type="button" class="theme ${t === sel ? "on" : ""}" data-theme="${i}">${esc(t)}</button>`).join("")}</div>
-      ${sel ? field("themeWhere", "どこが少し気になった？（なくてもOK）", { type: "text", placeholder: "例：「食」のところ。給食の残りが多いのが気になってた" }) : ""}
+      ${sel ? field("themeWhere", "どこが少し気になった？（なくてもOK）", { type: "line", placeholder: "例：「食」のところ。給食の残りが多いのが気になってた" }) : ""}
       <p class="switch"><button type="button" class="link" data-route="A">← 3つの質問にもどる</button></p>`;
   }
   return `
@@ -119,9 +119,9 @@ export const L01 = {
       <p class="hint">Chrome右上の「Geminiに相談」は使いません。</p>
       <p>出てきた20個を眺めて、<b>直感で気になったもの</b>を3つ書こう。理由はいらない。</p>
       <div class="row3">
-        ${field("kw1", "気になった ①", { type: "text" })}
-        ${field("kw2", "気になった ②", { type: "text" })}
-        ${field("kw3", "気になった ③", { type: "text" })}
+        ${field("kw1", "気になった ①", { type: "line" })}
+        ${field("kw2", "気になった ②", { type: "line" })}
+        ${field("kw3", "気になった ③", { type: "line" })}
       </div>
       <p class="hint">読み切れなかったら、各列から1つずつ選んでもOK。</p>`;
     if (i === 2 && route(c) === "C") return step2C(c);

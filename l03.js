@@ -402,7 +402,7 @@ function refOutStep(c) {
       <ul class="todo">
         <li>一覧の下の「<b>10</b>」は、1ページに出す数。登録が10件より多い人は、数を大きくしてから「表示中を全て選択」</li>
       </ul>
-      ${c.field("sanko", "参考文献リスト（RefNavi から貼る）", { rows: 6, hint: `RefNavi で出力して、そのまま貼ろう。${quest(3)}で論文を足したら貼り直します。RQ をまとめるときに、ここから自動で使います` })}`;
+      ${c.field("sanko", "参考文献リスト（RefNavi から貼る）", { rows: 6, hint: `RefNavi で出力して、そのまま貼ろう。RQ をまとめるときに、ここから自動で使います` })}`;
 }
 function refStep(c) {
   const { d } = c;

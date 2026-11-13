@@ -96,6 +96,8 @@ export function mountStudent({ be, user, app, asTeacher }) {
     const val = escapeHtml(note().data[key] || "");
     const input = type === "textarea"
       ? `<textarea data-key="${key}" rows="${rows}" placeholder="${escapeHtml(placeholder)}">${val}</textarea>`
+      : type === "line" // 1行の答え。長いと折り返して見せる（改行は入れない：11/11）
+      ? `<textarea class="line" data-key="${key}" rows="1" placeholder="${escapeHtml(placeholder)}">${val}</textarea>`
       : `<input data-key="${key}" type="${type}" value="${val}" placeholder="${escapeHtml(placeholder)}">`;
     return `<div class="field"><label><span class="label">${label}</span>${hint ? `<span class="hint">${hint}</span>` : ""}${cs ? chips(cs, key) : ""}${input}</label>` +
       (short ? `<p class="hint short" data-short="${key}" hidden>${SHORT_MSG}</p>` : "") +
@@ -333,9 +335,19 @@ export function mountStudent({ be, user, app, asTeacher }) {
       const len = v(p.dataset.short).length;
       p.hidden = !(len > 0 && len < 10);
     });
+    fitLines();
     app.querySelectorAll("[data-qmark]").forEach(p => {
       const x = v(p.dataset.qmark);
       p.hidden = !x || /[？?]$/.test(x);
+    });
+  }
+  // 1行の欄の高さを中身に合わせる（field-sizing が使えないブラウザだけ）
+  const FIT_CSS = typeof CSS !== "undefined" && CSS.supports?.("field-sizing", "content");
+  function fitLines() {
+    if (FIT_CSS) return;
+    app.querySelectorAll("textarea.line").forEach(t => {
+      t.style.height = "auto";
+      t.style.height = `${t.scrollHeight + t.offsetHeight - t.clientHeight}px`;
     });
   }
   function refreshNext() {
@@ -415,12 +427,19 @@ export function mountStudent({ be, user, app, asTeacher }) {
   app.addEventListener("input", e => {
     const el = e.target.closest("[data-key]");
     if (!el || !cur) return;
+    if (el.matches("textarea.line") && /[\r\n]/.test(el.value)) { // 貼りつけた改行は空白に
+      const at = el.selectionStart; el.value = el.value.replace(/\r?\n/g, " "); el.setSelectionRange(at, at);
+    }
     note().data[el.dataset.key] = el.value;
     cur.onInput?.(el, ctx()); // 画面ごとの直し（第3回・Quest 3：DOI を番号だけに。11/8）
     if (el.dataset.key === "chatUrl") refreshChatUrl(); // 次へ の可否は下の refreshNext で
     scheduleSave(); refreshNext(); updateHints();
   }, { signal: ac.signal });
 
+  // 1行の欄では Enter で改行しない（変換の確定は除く）
+  app.addEventListener("keydown", e => {
+    if (e.key === "Enter" && !e.isComposing && e.keyCode !== 229 && e.target.matches?.("textarea.line")) e.preventDefault();
+  }, { signal: ac.signal });
   app.addEventListener("focusin", e => { const el = e.target.closest("[data-key]"); if (el) lastFocus = el.dataset.key; }, { signal: ac.signal });
   app.addEventListener("focusout", e => { if (e.target.closest("[data-key]")) saveIfDirty(); }, { signal: ac.signal });
   document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") saveIfDirty(); }, { signal: ac.signal });
@@ -439,7 +458,7 @@ export function mountStudent({ be, user, app, asTeacher }) {
     if (t.closest("[data-gemini-force]")) { gemini(t.closest(".prompt").querySelector("[data-gemini]"), true); return; }
     if (t.closest("[data-gemini]")) { gemini(t.closest("[data-gemini]")); return; }
     if (t.closest("[data-insert]")) { insertChip(t.closest("[data-insert]")); return; }
-    if (cur.onClick?.(t, ctx())) return;
+    if (cur.onClick?.(t, ctx())) { refreshNext(); return; } // 押したもので「次へ」の可否が変わることがある（Quest 3 の札・登録できた：11/11）
     if (t.closest("[data-home]")) { await saveNow(); renderHome(); return; }
     const go = t.closest("[data-go]");
     if (!go) return;

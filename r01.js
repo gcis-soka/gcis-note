@@ -42,10 +42,10 @@ export const R01 = {
       ${field("mita", "見たこと・数字（なくてもOK）", { rows: 2, placeholder: "例：無音は12問、雑音ありは15問。雑音ありの方が時計を見る回数が少なかった" })}
       ${field("kanji", "感じたこと（予想と違った・意外だった）", { rows: 2, placeholder: "例：予想どおりだったけど、歌詞のある曲だと逆に気が散った" })}
       ${field("iikire", "これだけでは言い切れないこと（1行）", {
-        type: "text", placeholder: "例：1回だけなので、毎日そうなるかは分からない",
+        type: "line", placeholder: "例：1回だけなので、毎日そうなるかは分からない",
         hint: "書き出しを押すと入ります", chips: IIKIRE_CHIPS })}`;
     if (notYet(c)) body = `
-      ${field("yarunara", "やるとしたら、何をする？（1行）", { type: "text", placeholder: "例：週末に、無音と雑音で15分ずつ問題を解いて比べる" })}
+      ${field("yarunara", "やるとしたら、何をする？（1行）", { type: "line", placeholder: "例：週末に、無音と雑音で15分ずつ問題を解いて比べる" })}
       <p class="note">大丈夫。授業の班では「説・予想・やるとしたら」を話そう。</p>`;
     return `
       ${recapL01(c)}

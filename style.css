@@ -78,6 +78,8 @@ h2 { font-size: 21px; margin: 0; } h3 { margin: 0; font-size: 19px; }
 .label { display: block; font-weight: 700; margin-bottom: 4px; }
 textarea, input, select { width: 100%; font: inherit; padding: 10px 12px; border: 2px solid var(--line); border-radius: 12px; background: #fffdf8; color: var(--ink); }
 textarea { resize: vertical; }
+/* 1行の欄（type "line"）：長くなったら折り返して全部見せる。改行は入れない（11/11 先生） */
+textarea.line { resize: none; overflow: hidden; field-sizing: content; min-height: calc(1.7em + 24px); }
 .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .row3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
 @media (max-width: 560px) { .row3 { grid-template-columns: 1fr; } .row3 .field { margin: 6px 0; } }
@@ -246,6 +248,20 @@ select.ki { width: auto; padding: 3px 10px; border-radius: 999px; font-size: 15p
 .qcount { display: flex; align-items: baseline; gap: 4px; }
 .qcount b { font-size: 44px; line-height: 1; }
 .qadd { display: flex; gap: 8px; margin: 10px 0; }
+/* タイムアタック中（11/11）：時間・入力・個数の帯を上にとめる。説と論文は高さを決めた箱でスクロール */
+.qft-bar { position: sticky; top: var(--top-h, 52px); z-index: 4; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 14px;
+  background: var(--card); padding: 8px 0 10px; margin: -4px 0 12px; border-bottom: 2px solid var(--line); }
+.qft-bar .timer, .qft-bar .qcount b { font-size: 34px; line-height: 1; }
+.qft-bar .qadd { margin: 0; }
+.qft-cols { display: grid; gap: 4px 16px; }
+@media (min-width: 700px) { .qft-cols { grid-template-columns: 1fr 1fr; } }
+.qft-cap { margin: 4px 0; font-size: 13px; font-weight: 700; color: var(--sub); }
+.recap.compact { max-height: 42vh; overflow-y: auto; font-size: 15px; line-height: 1.6; padding: 2px 12px; }
+.recap.compact .tc-row { padding: 6px 0; }
+.recap.compact .tc-row.big b { font-size: 15px; }
+.qft-run .qlist li { font-size: 15px; }
+.qft-run .qlist { padding-left: 0; margin-top: 0; max-height: 42vh; overflow-y: auto; }
+@media (max-width: 560px) { .qft-bar { grid-template-columns: auto auto; justify-content: space-between; } .qft-bar .qadd { grid-column: 1 / -1; grid-row: 2; } .qft-bar .qcount { justify-self: end; } }
 .qadd input { flex: 1; font: inherit; font-size: 17px; padding: 12px 14px; border-radius: 12px; border: 2px solid var(--accent); background: #fffdf8; }
 .qlist { margin: 8px 0; padding-left: 1.8em; }
 .qlist li { padding: 4px 0; border-bottom: 1px dashed var(--line); display: flex; align-items: center; gap: 8px; }
@@ -341,7 +357,8 @@ hr.divider { border: none; border-top: 2px solid var(--line); margin: 24px 0 18p
 .need-msg { text-align: right; font-size: 14px; color: var(--accent); font-weight: 700; margin: 6px 2px 0; }
 
 /* 論文を読む（Quest 3 画面1・reader.js。11/9 作り直し：論文はアプリの中に出さない） */
-.fold.tips { margin: 8px 0 14px; }
+.fold.tips { margin: 8px 0 14px; background: #fdf6e3; border-color: #f0dca8; } /* 全員が読む：うすい黄色（AIの文＝緑・注意＝橙と分ける。11/11） */
+.fold.tips[open] > summary { border-bottom-color: #f0dca8; }
 .fold.tips ul { margin: 4px 0 8px; }
 .ptabs { display: flex; gap: 6px; margin-top: 8px; }
 .ptab { font: inherit; flex: 1; display: flex; flex-direction: column; align-items: flex-start; gap: 0; text-align: left; cursor: pointer;
