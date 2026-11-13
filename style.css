@@ -443,3 +443,15 @@ body.pip { margin: 0; font-size: 15px; background: var(--card); }
 .odai-cap { margin: 4px 0; padding: 6px 12px; border-radius: 10px 10px 0 0; background: var(--accent-soft); font-size: 15px; font-weight: 700; color: var(--accent); }
 .odai-run .recap.compact { margin-top: 0; border-radius: 0 0 10px 10px; }
 .odai-run .recap.compact { max-height: 34vh; }
+/* 本番のお題を選ぶ（11/13）：説と論文のメモの札 → 1文のお題 */
+.odai-pick { margin: 10px 0 4px; }
+.ocards { display: flex; flex-direction: column; gap: 6px; margin: 8px 0; max-height: 40vh; overflow-y: auto; }
+.ocard { text-align: left; font: inherit; font-size: 15px; padding: 8px 12px; border-radius: 10px; border: 1px solid var(--line); background: #fff; cursor: pointer; }
+.ocard small { display: block; font-size: 12px; color: var(--sub); }
+.ocard:hover { border-color: var(--accent); }
+.ocard.on { border: 2px solid var(--accent); background: var(--accent-soft); }
+.odai-edit { align-items: center; }
+.odai-edit textarea { flex: 1; min-width: 12em; font: inherit; font-size: 20px; font-weight: 700; border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; background: #fff; resize: none; }
+.step-lead { margin: 18px 0 0; }
+.memo-fold { margin-top: 14px; font-size: 14px; }
+.memo-fold summary { cursor: pointer; color: var(--sub); }

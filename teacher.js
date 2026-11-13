@@ -265,6 +265,7 @@ const VIEWS = {
       const d = r.note?.data || {}, q = r.r03?.data || {}, qs = qsList(d);
       return `
         <div class="recap">${memoItem(q, "wakatta", `${quest(3)}：分かったこと`)}${memoItem(q, "mada", "読みながら気になったこと")}</div>
+        ${item(d, "odai", "タイムアタックのお題")}
         <div class="tc-row"><span>出した問い（${qs.length}個・チャレンジ${esc(d.rounds || 0)}回）</span><b>${qs.length ? `<ul class="qs">${qs.map(x => `<li>${esc(x.t)}${x.k ? ` <span class="mchip">${esc(x.k)}</span>` : ""}${x.a ? ` <span class="hint">AI</span>` : ""}${x.s ? ` <span class="hint">${quest(3)}</span>` : ""}</li>`).join("")}</ul>` : "—"}</b></div>
         ${item(d, "toi", "選んだ問い")}${item(d, "toiWhy", "選んだわけ")}
         ${item(d, "yosou", "予想")}
@@ -273,10 +274,10 @@ const VIEWS = {
         ${item(d, "hitsuyou", "必要なもの・人")}${item(d, "kuraberu", "比べるもの")}${item(d, "anzen", "気をつけること（安全・倫理）")}
         <div class="tc-row"><span>Geminiのチャット</span><b>${linkCell(d.geminiLink)}</b></div>`;
     },
-    csvHead: ["出した問い（種類）", "問いの数", "うちAI", "チャレンジ回数", "選んだ問い", "選んだわけ", "予想", "もう調べられていそう", "確かめたい", "相手", "調べ方", "あわせて使う調べ方", "確かめること", "序の口（12/14まで）", "冬休み", "必要なもの・人", "比べるもの", "気をつけること", "班で出たこと", "Geminiのリンク"],
+    csvHead: ["タイムアタックのお題", "出した問い（種類）", "問いの数", "うちAI", "チャレンジ回数", "選んだ問い", "選んだわけ", "予想", "もう調べられていそう", "確かめたい", "相手", "調べ方", "あわせて使う調べ方", "確かめること", "序の口（12/14まで）", "冬休み", "必要なもの・人", "比べるもの", "気をつけること", "班で出たこと", "Geminiのリンク"],
     csvRow: r => {
       const d = r.note?.data || {}, qs = qsList(d);
-      return [qs.map(x => `${x.t}（${x.k || "未分類"}${x.a ? "・AI" : ""}）`).join(" / "), qs.length, qs.filter(x => x.a).length, d.rounds || 0,
+      return [d.odai, qs.map(x => `${x.t}（${x.k || "未分類"}${x.a ? "・AI" : ""}）`).join(" / "), qs.length, qs.filter(x => x.a).length, d.rounds || 0,
         d.toi, d.toiWhy, d.yosou, d.sudeni, d.kakame, d.aite, d.houhou, d.houhou2, d.nani, d.yotei, d.yotei2, d.hitsuyou, d.kuraberu, d.anzen, d.hanMemo, d.geminiLink];
     }
   },

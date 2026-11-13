@@ -7,7 +7,7 @@
 // data：qs（[{t:問い, k:種類, a:1＝AIで足した}]）・qftPhase（""/run/done）・qftEnd・rounds・rank・rankTotal・rankN
 //       ・toi・toiWhy・yosou（予想）・sudeni・kakame・aite（問いへの3つの答え）・houhou・houhou2（あわせて使う）
 //       ・nani・yotei（序の口：12/14まで）・yotei2（冬休み）・hitsuyou・kuraberu・anzen・geminiLink・hanMemo（班で出たこと）・seeded（Quest 3 の「確かめてみたいこと」を入れたか）
-//       ・tutQs（練習の問い [{t}]）・tutPhase（""/run/done）・tutEnd（11/13）
+//       ・tutQs（練習の問い [{t}]）・tutPhase（""/run/done）・tutEnd・odai（本番のお題：説と論文のメモから1つ選んで短く。11/13）
 // 11/10 先生：焦点は「説＋論文で分かったこと」。Quest 3 で選んだ「確かめてみたいこと」（q1〜q3）は、はじめから問いのリストに入れる（s:1。順位の数には入れない）
 import { quest, memoText } from "./common.js"; // memoText：Quest 3 のメモは論文ごと（11/9）
 
@@ -353,7 +353,7 @@ function startTut(c) {
   setTimeout(() => c.app.querySelector("[data-qadd-input]")?.focus(), 50);
 }
 // 先生のテスト用：練習とタイムアタックをはじめからやり直す（生徒には出ない：11/13 先生。一度やると、生徒が見る最初の画面を確かめられないため）
-const TEST_RESET_KEYS = ["tutQs", "tutPhase", "tutEnd", "qftPhase", "qftEnd", "rounds", "rank", "rankTotal", "rankN", "seeded"];
+const TEST_RESET_KEYS = ["odai", "tutQs", "tutPhase", "tutEnd", "qftPhase", "qftEnd", "rounds", "rank", "rankTotal", "rankN", "seeded"];
 const testReset = c => c.asTeacher
   ? `<p class="test-reset"><button type="button" class="link small" data-test-reset>先生用：練習とタイムアタックを、はじめからやり直す</button>（生徒には出ません）</p>` : "";
 function doTestReset(c) {
@@ -395,8 +395,7 @@ function tutStep(c) {
     <div data-tut>
       <div class="share honban">
         <b>このあと本番：問いのタイムアタック（${QFT_MIN}分）</b>
-        <p>あなたの<b>説</b>と<b>論文で分かったこと</b>を見ながら、${QFT_MIN}分間で<b>問いをできるだけたくさん</b>出します。学年で何位か出ます。</p>
-        ${focusBox(c, true)}
+        <p>あなたの<b>説</b>や<b>論文で分かったこと</b>から<b>お題を1つ</b>選んで、${QFT_MIN}分間で<b>問いをできるだけたくさん</b>出します。学年で何位か出ます。</p>
       </div>
       <p class="tut-lead">その前に、<b>練習</b>。<b>${TUT_SEC}秒</b>で、このお題について問いを出してみよう。<b>1つでもOK</b>。</p>
       ${odai}
@@ -416,7 +415,7 @@ function tutExamples(c) {
     </div>
     <p>短くても、ふざけているように見えても、答えが分かりそうでも、<b>問いは問い</b>。</p>
     <p class="qft-cap">もちろん、こんな問いもOK</p><ul class="qlist ex cols2">${TUT_EX2.map(t => `<li><span>${esc(t)}</span></li>`).join("")}</ul>
-    <div class="share honban"><b>次は本番（${QFT_MIN}分）</b><p>お題が、あなたの<b>説</b>と<b>論文で分かったこと</b>に変わります。この調子で、どんどん出そう。</p></div>`;
+    <div class="share honban"><b>次は本番（${QFT_MIN}分）</b><p>次は、あなたの<b>説</b>や<b>論文で分かったこと</b>から、<b>お題を1つ</b>選びます。この調子で、どんどん出そう。</p></div>`;
 }
 
 // Enter で追加（日本語の変換中の Enter は無視）
@@ -436,6 +435,41 @@ function focusBox(c, compact = false) {
       <div class="tc-row"><span>説（第1回）</span><b>${esc(L1.setsu || "—")}</b></div>
       <div class="tc-row big"><span>論文で分かったこと</span><b>${esc(memoText(R3, "wakatta") || "—").replace(/\n/g, "<br>")}</b></div>
     </div>`;
+}
+
+// ---------- 本番のお題（11/13 先生）：説と論文のメモは長いので、そこから1つ選んで短い1文にする ----------
+const ODAI_MAX = 40; // 目安の字数
+// 札：説（第1回）と、Quest 3 の「分かったこと」の各行（論文ごと）
+function odaiCards(c) {
+  const L1 = c.prev("L01"), R3 = c.prev("R03"), out = [];
+  const setsu = String(L1.setsu || "").trim();
+  if (setsu) out.push({ from: "説（第1回）", t: setsu });
+  const ps = [["wakatta", "①"], ["wakatta2", "②"], ["wakatta3", "③"]].filter(([k]) => String(R3[k] || "").trim());
+  ps.forEach(([k, no]) => String(R3[k]).split(/\n+/).map(x => x.trim()).filter(Boolean)
+    .forEach(t => out.push({ from: ps.length > 1 ? `論文${no}で分かったこと` : "論文で分かったこと", t })));
+  return out;
+}
+function odaiPick(c) {
+  const esc = c.esc, cards = odaiCards(c), cur = String(c.d.odai || "").trim();
+  return `
+    <div class="odai-pick">
+      <p><b>① お題を1つ選ぼう</b>　あなたの説と、論文で分かったことから。押すと下に入ります。</p>
+      <div class="ocards">${cards.length ? cards.map((x, j) =>
+        `<button type="button" class="ocard ${cur && cur === x.t ? "on" : ""}" data-ocard="${j}"><small>${esc(x.from)}</small><span>${esc(x.t)}</span></button>`).join("")
+        : `<p class="hint">説やメモが見つかりません。下に、問いを出したいことを1文で書こう。</p>`}</div>
+      <div class="odai odai-edit"><span>お題</span>
+        <textarea class="line" data-key="odai" rows="1" placeholder="例：カレーは2日目のほうがおいしい">${esc(c.d.odai || "")}</textarea></div>
+      <p class="hint" data-odai-len>練習の「カレーは2日目のほうがおいしい」のように、<b>短い1文</b>がおすすめ。長いときは${ODAI_MAX}字くらいまでに短く直そう。</p>
+    </div>`;
+}
+// お題の字数と、スタートを押せるか
+function refreshOdai(c) {
+  const v = String(c.d.odai || "").trim(), n = [...v].length;
+  const st = c.app.querySelector("[data-qft-start]"); if (st) st.disabled = !v;
+  const msg = c.app.querySelector("[data-odai-need]"); if (msg) msg.hidden = !!v;
+  const len = c.app.querySelector("[data-odai-len]");
+  if (len) len.classList.toggle("warn-text", n > ODAI_MAX);
+  c.app.querySelectorAll("[data-ocard]").forEach(b => b.classList.toggle("on", b.querySelector("span").textContent === v));
 }
 
 // 画面0：班で論文を紹介（Quest 3 の共有。11/10 先生）
@@ -494,8 +528,20 @@ export const L04 = {
   onClick(t, c) {
     if (t.closest("[data-tut-start]")) { startTut(c); return true; }
     if (t.closest("[data-test-reset]")) { doTestReset(c); return true; }
+    const oc = t.closest("[data-ocard]");
+    if (oc) {
+      const x = odaiCards(c)[Number(oc.dataset.ocard)];
+      if (x) {
+        c.set("odai", x.t);
+        const ta = c.app.querySelector('[data-key="odai"]');
+        if (ta) { ta.value = x.t; ta.dispatchEvent(new Event("input", { bubbles: true })); ta.focus(); }
+      }
+      refreshOdai(c);
+      return true;
+    }
     return onClickMain(t, c);
-  }
+  },
+  onInput(el, c) { if (el.dataset.key === "odai") refreshOdai(c); }
 };
 
 // 第4回の本体（画面4〜10。番号は班の紹介・練習を足す前のまま 0〜6）
@@ -524,11 +570,10 @@ const L04Main = {
         setTimeout(fitTopH, 0);
         return `
           <div class="qft-run">
-            ${runSticky(c, { tut: false, n: ownN(qs), ph: "お題（説と論文で分かったこと）について、思いついた問いを入れて Enter" })}
-            <div class="qft-cols">
-              <div class="odai-run"><p class="odai-cap">お題：あなたの説と、論文で分かったこと</p>${focusBox(c, true)}</div>
-              <div><p class="qft-cap">出した問い（新しい順）</p><div data-qlist>${listHtml(qs, esc, { rev: true })}</div></div>
-            </div>
+            ${runSticky(c, { tut: false, n: ownN(qs), ph: "お題について、思いついた問いを入れて Enter" })}
+            <div class="odai"><span>お題</span><b>${esc(d.odai || "—")}</b></div>
+            <p class="qft-cap">出した問い（新しい順）</p><div data-qlist>${listHtml(qs, esc, { rev: true })}</div>
+            <details class="memo-fold"><summary>説と、論文のメモを見る</summary>${focusBox(c, true)}</details>
           </div>`;
       }
       if (phase === "done") {
@@ -549,11 +594,13 @@ const L04Main = {
       return `
         ${testReset(c)}
         <p class="okay-big">いよいよ本番</p>
-        <p>お題は、あなたの<b>説</b>と<b>論文で分かったこと</b>。練習と同じように、<b>${QFT_MIN}分間で問いをできるだけたくさん</b>出そう。学年で何位か出ます。</p>
-        ${qs.some(q => q.s) ? `<p class="hint">${quest(3)}で選んだ「確かめてみたいこと」は、はじめから下に入っています（<em class="tagq3">${quest(3)}</em>。数には入りません）。</p>` : ""}
-        ${focusBox(c)}
+        <p>練習と同じように、<b>${QFT_MIN}分間で問いをできるだけたくさん</b>出そう。学年で何位か出ます。</p>
+        ${odaiPick(c)}
+        <p class="step-lead"><b>② ルールを確かめて、スタート</b></p>
         ${rules}
-        <div class="qstart"><button type="button" class="btn primary big" data-qft-start>スタート（${QFT_MIN}分）</button></div>
+        ${qs.some(q => q.s) ? `<p class="hint">${quest(3)}で選んだ「確かめてみたいこと」は、はじめから下に入っています（<em class="tagq3">${quest(3)}</em>。数には入りません）。</p>` : ""}
+        <div class="qstart"><button type="button" class="btn primary big" data-qft-start ${String(d.odai || "").trim() ? "" : "disabled"}>スタート（${QFT_MIN}分）</button>
+          <p class="hint" data-odai-need ${String(d.odai || "").trim() ? "hidden" : ""}>お題を選ぶと、スタートできます。</p></div>
         ${qs.length ? `<div data-qlist>${listHtml(qs, esc)}</div>` : ""}`;
     }
 
