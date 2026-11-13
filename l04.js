@@ -7,12 +7,22 @@
 // data：qs（[{t:問い, k:種類, a:1＝AIで足した}]）・qftPhase（""/run/done）・qftEnd・rounds・rank・rankTotal・rankN
 //       ・toi・toiWhy・yosou（予想）・sudeni・kakame・aite（問いへの3つの答え）・houhou・houhou2（あわせて使う）
 //       ・nani・yotei（序の口：12/14まで）・yotei2（冬休み）・hitsuyou・kuraberu・anzen・geminiLink・hanMemo（班で出たこと）・seeded（Quest 3 の「確かめてみたいこと」を入れたか）
+//       ・tutQs（練習の問い [{t}]）・tutPhase（""/run/done）・tutEnd（11/13）
 // 11/10 先生：焦点は「説＋論文で分かったこと」。Quest 3 で選んだ「確かめてみたいこと」（q1〜q3）は、はじめから問いのリストに入れる（s:1。順位の数には入れない）
 import { quest, memoText } from "./common.js"; // memoText：Quest 3 のメモは論文ごと（11/9）
 
 const QFT_MIN = 3;   // 1回のチャレンジの時間（分）。1人なので班の5分より短く。もう一度チャレンジで足せる
 const TOP = 20;      // 学年で何位までは順位を見せるか
 const MIN_Q = 3;     // 次へ進むのに要る問いの数
+// 練習（11/13 先生）：本番の前に、お題について20秒で問いを出す → 「こんな問いでも全然いい」を見せる。
+// 練習の問いは tutQs に入れ、本番のリスト・順位には入れない。20秒たつと自動で次の画面へ
+const TUT_SEC = 20;
+const TUT_ODAI = "カレーは2日目のほうがおいしい";
+const TUT_EX = ["カレーって何？", "1日目に全部食べたらどうなる？", "3日目は？", "みんなは何日目派？", "カレーパンも一緒？", "冷凍したらどうなる？"];
+// 結果のことば（学年20位まで・上から4割まで以外は、個数で決める：11/13 先生）
+const GOOD_N = 8, OK_N = 5;
+// QFTの4つのルールを1行で（本番中・練習中も上の帯に出す：11/13 先生）
+const RULES_LINE = `<div class="qft-rules">ルール：① たくさん　② 評価・答えはしない　③ 思いついたまま　④「？」で終わる</div>`;
 const tail = s => String(s || "").trim().replace(/[。．.、,，！!\s　]+$/u, "");
 
 // 問いの7種類（課題研究メソッド p.44・1学期 第1回のスライド）
@@ -68,14 +78,13 @@ const ANZEN_CHIPS = [
   { label: "家の人・先生に相談してから", text: "家の人・先生に相談してから始める。" }
 ];
 
-// 結果のことば：学年20位まで→順位、それ以外は上から何割か
-function verdict(rank, total) {
-  if (!rank || !total) return { big: "おつかれさま！", sub: "" };
-  if (rank <= TOP) return { big: `学年 ${rank}位！`, sub: "すごい。問いを出す力がある" };
-  const p = rank / total;
-  if (p <= 0.4) return { big: "たくさん出せたね！", sub: "" };
-  if (p <= 0.7) return { big: "けっこう出せたね！", sub: "" };
-  if (p <= 0.9) return { big: "まぁまぁ出せたね", sub: "" };
+// 結果のことば：学年20位まで→順位、上から4割まで→「たくさん」、それ以外は個数で（絶対評価：11/13 先生）
+// 順位が出せないとき（通信）も個数で決める
+function verdict(rank, total, n) {
+  if (rank > 0 && rank <= TOP) return { big: `学年 ${rank}位！`, sub: "すごい。問いを出す力がある" };
+  if (rank > 0 && total && rank / total <= 0.4) return { big: "たくさん出せたね！", sub: "" };
+  if (n >= GOOD_N) return { big: "けっこう出せたね！", sub: "" };
+  if (n >= OK_N) return { big: "頑張って出せたね！", sub: "" };
   return { big: "もう少し出せるはず！", sub: "もう一度チャレンジしてみよう" };
 }
 
@@ -150,10 +159,12 @@ const addBox = (label = "追加") => `
 // 画面の一部だけ書き換える（全体を描き直すと入力欄のカーソルとスクロールが戻るため）
 function refreshList(c) {
   const box = c.app.querySelector("[data-qlist]");
-  if (box) box.innerHTML = listHtml(qsOf(c), c.esc, { rev: !!box.closest(".qft-run") });
+  const tut = !!box?.closest("[data-tut]"), list = tut ? tutOf(c) : qsOf(c);
+  if (box) box.innerHTML = listHtml(list, c.esc, { rev: !!box.closest(".qft-run"), del: !tut });
   const n = c.app.querySelector("[data-qcount]");
-  if (n) n.textContent = String(ownN(qsOf(c)));
+  if (n) n.textContent = String(tut ? list.length : ownN(list));
 }
+const tutOf = c => Array.isArray(c.d.tutQs) ? c.d.tutQs : [];
 function refreshNav(c, ok) {
   const b = c.app.querySelector(".nav .primary");
   if (b) b.disabled = !ok;
@@ -249,8 +260,12 @@ function addQuestion(c, input, ai = false) {
   let t = String(input.value || "").trim();
   if (!t) return;
   if (!/[？?]$/.test(t)) t += "？"; // ルール4：「？」で終わる形に
-  const qs = [...qsOf(c), ai ? { t, k: "", a: 1 } : { t, k: "" }];
-  c.set("qs", qs);
+  if (input.closest("[data-tut]")) { // 練習の問い（本番のリスト・順位には入れない）
+    if (c.d.tutPhase !== "run") return;
+    c.set("tutQs", [...tutOf(c), { t }]);
+  } else {
+    c.set("qs", [...qsOf(c), ai ? { t, k: "", a: 1 } : { t, k: "" }]);
+  }
   input.value = ""; input.focus();
   refreshList(c);
 }
@@ -288,18 +303,78 @@ function fitTopH() {
   if (h) document.documentElement.style.setProperty("--top-h", `${h}px`);
 }
 
-// タイマー：画面に [data-timer] があるあいだ動く
+// タイマー：画面に [data-timer] があるあいだ動く（data-timer="tut" は練習、"qft" は本番）
 function ensureTick() {
   if (tickId) return;
   tickId = setInterval(() => {
     const el = document.querySelector("[data-timer]");
     if (!el || !ctxRef) { clearInterval(tickId); tickId = null; return; }
-    const left = Math.max(0, Number(ctxRef.d.qftEnd || 0) - Date.now());
+    const tut = el.dataset.timer === "tut";
+    const left = Math.max(0, Number(ctxRef.d[tut ? "tutEnd" : "qftEnd"] || 0) - Date.now());
     const s = Math.ceil(left / 1000);
     el.textContent = `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
-    el.classList.toggle("hurry", s <= 30);
-    if (left <= 0) { clearInterval(tickId); tickId = null; finishRound(ctxRef); }
+    el.classList.toggle("hurry", s <= (tut ? 5 : 30));
+    if (left <= 0) { clearInterval(tickId); tickId = null; tut ? finishTut(ctxRef) : finishRound(ctxRef); }
   }, 250);
+}
+
+// ---------- 練習（20秒）→ こんな問いでも全然いい（11/13 先生） ----------
+function startTut(c) {
+  c.set("tutPhase", "run");
+  c.set("tutEnd", Date.now() + TUT_SEC * 1000);
+  c.rerender();
+  setTimeout(() => c.app.querySelector("[data-qadd-input]")?.focus(), 50);
+}
+// 20秒たったら、本番と同じく自動で次の画面（こんな問いでも全然いい）へ
+function finishTut(c) {
+  if (c.d.tutPhase === "done") return;
+  c.set("tutPhase", "done");
+  c.go(2);
+}
+function tutStep(c) {
+  const esc = c.esc, phase = c.d.tutPhase || "", qs = tutOf(c);
+  const odai = `<div class="odai"><span>お題</span><b>${esc(TUT_ODAI)}</b></div>`;
+  if (phase === "run") {
+    if (Date.now() >= Number(c.d.tutEnd || 0)) { setTimeout(() => finishTut(c), 0); } // 途中で閉じた
+    else ensureTick();
+    setTimeout(fitTopH, 0);
+    return `
+      <div class="qft-run" data-tut>
+        <div class="qft-bar">
+          <div class="timer" data-timer="tut">0:${String(TUT_SEC).padStart(2, "0")}</div>
+          ${addBox()}
+          <div class="qcount"><b data-qcount>${qs.length}</b><span>個</span></div>
+          ${RULES_LINE}
+        </div>
+        ${odai}
+        <p class="qft-cap">出した問い（新しい順）</p><div data-qlist>${listHtml(qs, esc, { rev: true, del: false })}</div>
+      </div>`;
+  }
+  if (phase === "done") return `
+    <div data-tut>
+      <p>練習はおわりました。次へ進もう。</p>
+      ${odai}
+      <p class="qft-cap">練習で出した問い</p><div data-qlist>${listHtml(qs, esc, { del: false })}</div>
+    </div>`;
+  return `
+    <div data-tut>
+      <p>本番の前に、まずは<b>練習</b>。<b>${TUT_SEC}秒</b>で、このお題について問いを出してみよう。<b>1つでもOK</b>。</p>
+      ${odai}
+      ${RULES_LINE}
+      <p class="hint">練習の問いは、本番の数や順位には入りません。${TUT_SEC}秒たつと、自動で次の画面に進みます。</p>
+      <div class="qstart"><button type="button" class="btn primary big" data-tut-start>練習スタート（${TUT_SEC}秒）</button></div>
+    </div>`;
+}
+function tutExamples(c) {
+  const esc = c.esc, mine = tutOf(c);
+  return `
+    <p class="okay-big">こんな問いでも、全然いい。</p>
+    <div class="odai"><span>お題</span><b>${esc(TUT_ODAI)}</b></div>
+    <div class="qft-cols">
+      <div><p class="qft-cap">たとえば</p><ul class="qlist ex">${TUT_EX.map(t => `<li><span>${esc(t)}</span></li>`).join("")}</ul></div>
+      <div class="tut-mine"><p class="qft-cap">あなたが練習で出した問い</p>${mine.length ? listHtml(mine, esc, { del: false }) : `<p class="hint">出せなくてもだいじょうぶ。本番は${QFT_MIN}分あります。</p>`}</div>
+    </div>
+    <p>短くても、ふざけているように見えても、答えが分かりそうでも、<b>問いは問い</b>。本番もこの調子で、どんどん出そう。</p>`;
 }
 
 // Enter で追加（日本語の変換中の Enter は無視）
@@ -355,6 +430,8 @@ export const L04 = {
   uses: ["L01", "L03", "R03"],
   steps: [
     { title: "班で論文を紹介", mins: 6 },
+    { title: "練習：20秒で問いを出す", mins: 1 },
+    { title: "こんな問いでも、全然いい", mins: 1 },
     { title: "問いを出す（タイムアタック）", mins: 10 },
     { title: "AIで広げる（なくてもOK）", mins: 3 },
     { title: "問いを7種類に分ける", mins: 8 },
@@ -368,13 +445,17 @@ export const L04 = {
   render(i, c) {
     ctxRef = c;
     seedFromR03(c);
-    return i === 0 ? shareStep(c) : renderMain(i - 1, c);
+    return i === 0 ? shareStep(c) : i === 1 ? tutStep(c) : i === 2 ? tutExamples(c) : renderMain(i - 3, c);
   },
-  canNext(i, c) { return i === 0 ? true : canNextMain(i - 1, c); },
-  onClick(t, c) { return onClickMain(t, c); }
+  // 練習は20秒たつと自動で進む。本番を先に始めていた人（開発版のテストなど）は練習なしでも進める
+  canNext(i, c) { return i === 0 || i === 2 ? true : i === 1 ? (c.d.tutPhase === "done" || !!c.d.qftPhase) : canNextMain(i - 3, c); },
+  onClick(t, c) {
+    if (t.closest("[data-tut-start]")) { startTut(c); return true; }
+    return onClickMain(t, c);
+  }
 };
 
-// 第4回の本体（画面1〜7。番号は班の紹介を足す前のまま 0〜6）
+// 第4回の本体（画面4〜10。番号は班の紹介・練習を足す前のまま 0〜6）
 const L04Main = {
   render(i, c) {
     const { field, promptBox, chips, esc, d } = c;
@@ -401,9 +482,10 @@ const L04Main = {
         return `
           <div class="qft-run">
             <div class="qft-bar">
-              <div class="timer" data-timer>${QFT_MIN}:00</div>
+              <div class="timer" data-timer="qft">${QFT_MIN}:00</div>
               ${addBox()}
               <div class="qcount"><b data-qcount>${ownN(qs)}</b><span>個</span></div>
+              ${RULES_LINE}
             </div>
             <div class="qft-cols">
               <div><p class="qft-cap">説と、論文で分かったこと</p>${focusBox(c, true)}</div>
@@ -412,13 +494,13 @@ const L04Main = {
           </div>`;
       }
       if (phase === "done") {
-        const r = Number(d.rank) || 0, v = verdict(r > 0 ? r : 0, Number(d.rankTotal) || 0);
+        const r = Number(d.rank) || 0, n = Number(d.rankN) || ownN(qs), v = verdict(r, Number(d.rankTotal) || 0, n);
         return `
           <div class="qresult" data-qresult>
             <p class="eyebrow">${d.rounds > 1 ? `${d.rounds}回目の` : ""}結果</p>
-            <div class="qr-n"><b>${Number(d.rankN) || ownN(qs)}</b>個</div>
-            <div class="qr-big">${r === 0 ? "集計中…" : r < 0 ? "おつかれさま！" : v.big}</div>
-            ${r > 0 && v.sub ? `<p>${v.sub}</p>` : ""}
+            <div class="qr-n"><b>${n}</b>個</div>
+            <div class="qr-big">${r === 0 ? "集計中…" : v.big}</div>
+            ${r !== 0 && v.sub ? `<p>${v.sub}</p>` : ""}
             ${r < 0 ? `<p class="hint">順位を出せませんでした（通信）。問いはちゃんと残っています。</p>` : ""}
             <button type="button" class="btn" data-qft-retry>もう一度チャレンジ（${QFT_MIN}分）</button>
             <p class="hint">もう一度チャレンジすると、今の問いに足していきます。</p>

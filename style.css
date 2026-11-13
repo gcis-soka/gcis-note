@@ -272,6 +272,14 @@ select.ki { width: auto; padding: 3px 10px; border-radius: 999px; font-size: 15p
 .qresult { text-align: center; padding: 18px; border-radius: var(--radius); background: var(--accent-soft); margin-bottom: 14px; }
 .qr-n b { font-size: 56px; line-height: 1.1; }
 .qr-big { font-size: 28px; font-weight: 700; color: var(--accent); margin: 4px 0 8px; }
+/* QFTのルールを1行で（帯の中では3列をまたぐ）・練習のお題・「こんな問いでも全然いい」（11/13） */
+.qft-rules { font-size: 13px; color: var(--sub); margin: 6px 0; }
+.qft-bar .qft-rules { grid-column: 1 / -1; margin: 0; }
+.odai { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; padding: 12px 16px; margin: 10px 0; border-radius: var(--radius); background: var(--accent-soft); }
+.odai span { font-size: 13px; font-weight: 700; color: var(--sub); }
+.odai b { font-size: 22px; }
+.okay-big { font-size: 24px; font-weight: 700; color: var(--accent); text-align: center; margin: 6px 0 4px; }
+.qlist.ex, .tut-mine .qlist { list-style: none; padding-left: 0; }
 /* 7種類に分ける（まん中のカードを8つの箱へ送る） */
 .sort-pos { display: flex; justify-content: space-between; font-size: 13px; color: var(--sub); margin-top: 6px; }
 .compass { display: grid; grid-template-columns: 1fr 1.5fr 1fr; gap: 8px; margin: 6px 0; user-select: none; -webkit-user-select: none; }

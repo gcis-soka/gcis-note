@@ -48,6 +48,8 @@ export function mountStudent({ be, user, app, asTeacher }) {
       set: (k, val) => { n.data[k] = val; scheduleSave(); },
       // 描き直しても、いまの位置にとどまる（11/10 先生：ボタンを押すたびに先頭へ飛ぶと体験が途切れる）
       rerender: () => { const y = window.scrollY; renderStep(n.step); window.scrollTo(0, y); },
+      // 画面を自動で進める（第4回の練習：20秒たったら次の画面へ。11/13）
+      go: to => { if (note() === n) { renderStep(to); saveNow(); } },
       field, promptBox, chips, esc: escapeHtml, app,
       ki: profile?.ki ?? "", cls: profile?.class ?? "", // 期・クラス（RefNavi のグループコードを出すため：11/7）
       asTeacher, // 先生が生徒画面を見ているとき（RefNavi のコードを全クラス分見せる：11/9）
