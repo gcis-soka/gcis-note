@@ -455,3 +455,4 @@ body.pip { margin: 0; font-size: 15px; background: var(--card); }
 .step-lead { margin: 18px 0 0; }
 .memo-fold { margin-top: 14px; font-size: 14px; }
 .memo-fold summary { cursor: pointer; color: var(--sub); }
+.kind-tag { font-style: normal; font-weight: 700; }

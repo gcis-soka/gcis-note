@@ -305,6 +305,7 @@ export function mountStudent({ be, user, app, asTeacher }) {
         <div class="step-head"><h2>${one ? "" : `${n.step + 1}. `}${title}</h2>${s.mins ? `<span class="mins">目安 ${s.mins}分</span>` : ""}</div>
         ${cur.render(n.step, c)}
         ${nav(n.step, canGo(n.step, c), nextLabel)}
+        ${asTeacher ? `<p class="test-reset"><button type="button" class="link small" data-reset-stage>先生用：この回の記録を消して、はじめからやり直す</button>（生徒には出ません）</p>` : ""}
       </section>`;
     window.scrollTo(0, 0);
     updateHints(); refreshNeed();
@@ -452,6 +453,18 @@ export function mountStudent({ be, user, app, asTeacher }) {
     const op = t.closest("[data-open]");
     if (op) { openLesson(op.dataset.open); return; }
     if (!cur) return;
+    // 先生用：この回の記録を消して最初から（11/14。アプリを直したあと、先生のテスト用の記録が古い形のまま残って、新しい画面が見られないことが多いため）
+    // 2回押して消す（1回目で文言が変わる）。保存は merge なので、項目を空にして上書きする
+    const rs = t.closest("[data-reset-stage]");
+    if (rs && asTeacher) {
+      if (!rs.dataset.armed) { rs.dataset.armed = "1"; rs.textContent = "本当に消す？ もう一度押すと消えます"; return; }
+      const n = note();
+      Object.keys(n.data || {}).forEach(k => { n.data[k] = ""; });
+      n.step = 0; n.submitted = false;
+      cur.onReset?.();
+      await saveNow();
+      renderStep(0); return;
+    }
     if (t.closest("[data-copy]")) { copyPrompt(t.closest("[data-copy]")); return; }
     if (t.closest("[data-gemini-new]")) { // やり直す：覚えたURLを消して、新しいチャットを開く
       note().data.chatUrl = ""; app.querySelectorAll('[data-key="chatUrl"]').forEach(i => { i.value = ""; }); scheduleSave(); refreshChatUrl();
