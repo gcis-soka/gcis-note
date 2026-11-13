@@ -18,11 +18,14 @@ const MIN_Q = 3;     // 次へ進むのに要る問いの数
 // 練習の問いは tutQs に入れ、本番のリスト・順位には入れない。20秒たつと自動で次の画面へ
 const TUT_SEC = 20;
 const TUT_ODAI = "カレーは2日目のほうがおいしい";
+// まじめな問いの例（種類の名前は出さない：11/13 先生）
+const TUT_EX2 = ["「おいしい」ってどういうこと？", "なぜ2日目のほうがおいしいの？", "本当に2日目のほうがおいしい？", "シチューでも同じ？", "これを調べた人はいる？", "一晩置くと何が起こる？", "温度と味は関係ある？"];
 const TUT_EX = ["カレーって何？", "1日目に全部食べたらどうなる？", "3日目は？", "みんなは何日目派？", "カレーパンも一緒？", "冷凍したらどうなる？"];
 // 結果のことば（学年20位まで・上から4割まで以外は、個数で決める：11/13 先生）
 const GOOD_N = 8, OK_N = 5;
-// QFTの4つのルールを1行で（本番中・練習中も上の帯に出す：11/13 先生）
-const RULES_LINE = `<div class="qft-rules">ルール：① たくさん　② 評価・答えはしない　③ 思いついたまま　④「？」で終わる</div>`;
+// QFTの4つのルール（スタート前と同じ文言）。本番中・練習中も、入力欄の上に目立つように出し、時間・入力欄と一緒に上にとめる（11/13 先生：1行の略した形では約束が伝わらない）
+const RULES = ["できるだけたくさんの問いをつくる（量が大事。質はあとから）", "問いを評価したり、答えたりしない", "思いついたとおりに書く", "意見や主張は「？」で終わる形に直す（「？」がないと自動でつきます）"];
+const RULES_BOX = `<div class="qft-rules"><b>QFTの4つのルール</b><ol>${RULES.map(r => `<li>${r}</li>`).join("")}</ol></div>`;
 const tail = s => String(s || "").trim().replace(/[。．.、,，！!\s　]+$/u, "");
 
 // 問いの7種類（課題研究メソッド p.44・1学期 第1回のスライド）
@@ -81,8 +84,9 @@ const ANZEN_CHIPS = [
 // 結果のことば：学年20位まで→順位、上から4割まで→「たくさん」、それ以外は個数で（絶対評価：11/13 先生）
 // 順位が出せないとき（通信）も個数で決める
 function verdict(rank, total, n) {
-  if (rank > 0 && rank <= TOP) return { big: `学年 ${rank}位！`, sub: "すごい。問いを出す力がある" };
-  if (rank > 0 && total && rank / total <= 0.4) return { big: "たくさん出せたね！", sub: "" };
+  const ranked = rank > 0 && n >= MIN_Q;
+  if (ranked && rank <= TOP) return { big: `学年 ${rank}位！`, sub: "すごい。問いを出す力がある" };
+  if (ranked && total && rank / total <= 0.4) return { big: "たくさん出せたね！", sub: "" };
   if (n >= GOOD_N) return { big: "けっこう出せたね！", sub: "" };
   if (n >= OK_N) return { big: "頑張って出せたね！", sub: "" };
   return { big: "もう少し出せるはず！", sub: "もう一度チャレンジしてみよう" };
@@ -155,6 +159,29 @@ function listHtml(qs, esc, { del = true, rev = false } = {}) {
 }
 const addBox = (label = "追加") => `
   <div class="qadd"><input type="text" data-qadd-input placeholder="思いついた問いを入れて Enter" autocomplete="off"><button type="button" class="btn primary" data-qadd>${label}</button></div>`;
+
+// タイムアタック中の上の帯：ルール → 残り時間 → 入力欄・個数（11/13 先生）。追加ボタンはなく Enter で入れる
+// form にして、スマホのキーボードの「完了」でも入るようにする（変換中の Enter では送られない）
+function runSticky(c, { tut, n, ph }) {
+  const sec = tut ? TUT_SEC : QFT_MIN * 60;
+  return `
+    <div class="qft-sticky">
+      ${RULES_BOX}
+      <div class="qft-time"><span>残り時間</span><b class="timer" data-timer="${tut ? "tut" : "qft"}">${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, "0")}</b></div>
+      <div class="qft-bar">
+        <form class="qadd" data-qadd-form><input type="text" data-qadd-input placeholder="${ph}" autocomplete="off" enterkeyhint="done"></form>
+        <div class="qcount"><b data-qcount>${n}</b><span>個</span></div>
+      </div>
+    </div>`;
+}
+if (typeof document !== "undefined") {
+  document.addEventListener("submit", e => {
+    if (!e.target.matches?.("[data-qadd-form]")) return;
+    e.preventDefault();
+    const input = e.target.querySelector("[data-qadd-input]");
+    if (input && ctxRef) addQuestion(ctxRef, input);
+  });
+}
 
 // 画面の一部だけ書き換える（全体を描き直すと入力欄のカーソルとスクロールが戻るため）
 function refreshList(c) {
@@ -273,7 +300,7 @@ function addQuestion(c, input, ai = false) {
 function startRound(c) {
   c.set("qftPhase", "run");
   c.set("qftEnd", Date.now() + QFT_MIN * 60 * 1000);
-  c.rerender();
+  c.rerender(); window.scrollTo(0, 0); // スタートのボタンの位置のままだと、お題が上に隠れる
   setTimeout(() => c.app.querySelector("[data-qadd-input]")?.focus(), 50);
 }
 
@@ -322,8 +349,19 @@ function ensureTick() {
 function startTut(c) {
   c.set("tutPhase", "run");
   c.set("tutEnd", Date.now() + TUT_SEC * 1000);
-  c.rerender();
+  c.rerender(); window.scrollTo(0, 0); // スタートのボタンの位置のままだと、お題が上に隠れる
   setTimeout(() => c.app.querySelector("[data-qadd-input]")?.focus(), 50);
+}
+// 先生のテスト用：練習とタイムアタックをはじめからやり直す（生徒には出ない：11/13 先生。一度やると、生徒が見る最初の画面を確かめられないため）
+const TEST_RESET_KEYS = ["tutQs", "tutPhase", "tutEnd", "qftPhase", "qftEnd", "rounds", "rank", "rankTotal", "rankN", "seeded"];
+const testReset = c => c.asTeacher
+  ? `<p class="test-reset"><button type="button" class="link small" data-test-reset>先生用：練習とタイムアタックを、はじめからやり直す</button>（生徒には出ません）</p>` : "";
+function doTestReset(c) {
+  TEST_RESET_KEYS.forEach(k => c.set(k, ""));
+  c.set("qs", qsOf(c).filter(q => q.a)); // 自分で出した問い・Quest 3 から入れた問いを消す（Quest 3 の分は開き直すと入る）
+  sortAt = -1;
+  seedFromR03(c);
+  c.go(1);
 }
 // 20秒たったら、本番と同じく自動で次の画面（こんな問いでも全然いい）へ
 function finishTut(c) {
@@ -340,12 +378,7 @@ function tutStep(c) {
     setTimeout(fitTopH, 0);
     return `
       <div class="qft-run" data-tut>
-        <div class="qft-bar">
-          <div class="timer" data-timer="tut">0:${String(TUT_SEC).padStart(2, "0")}</div>
-          ${addBox()}
-          <div class="qcount"><b data-qcount>${qs.length}</b><span>個</span></div>
-          ${RULES_LINE}
-        </div>
+        ${runSticky(c, { tut: true, n: qs.length, ph: "お題について、思いついた問いを入れて Enter" })}
         ${odai}
         <p class="qft-cap">出した問い（新しい順）</p><div data-qlist>${listHtml(qs, esc, { rev: true, del: false })}</div>
       </div>`;
@@ -358,6 +391,7 @@ function tutStep(c) {
     </div>`;
   // 11/13 先生：いきなり練習だと何のためか分からない → 先に「このあとの本番」を見せる
   return `
+    ${testReset(c)}
     <div data-tut>
       <div class="share honban">
         <b>このあと本番：問いのタイムアタック（${QFT_MIN}分）</b>
@@ -366,7 +400,7 @@ function tutStep(c) {
       </div>
       <p class="tut-lead">その前に、<b>練習</b>。<b>${TUT_SEC}秒</b>で、このお題について問いを出してみよう。<b>1つでもOK</b>。</p>
       ${odai}
-      ${RULES_LINE}
+      ${RULES_BOX}
       <p class="hint">練習の問いは、本番の数や順位には入りません。${TUT_SEC}秒たつと、自動で次の画面に進みます。</p>
       <div class="qstart"><button type="button" class="btn primary big" data-tut-start>練習スタート（${TUT_SEC}秒）</button></div>
     </div>`;
@@ -381,6 +415,7 @@ function tutExamples(c) {
       <div class="tut-mine"><p class="qft-cap">あなたが練習で出した問い</p>${mine.length ? listHtml(mine, esc, { del: false }) : `<p class="hint">出せなくてもだいじょうぶ。本番は${QFT_MIN}分あります。</p>`}</div>
     </div>
     <p>短くても、ふざけているように見えても、答えが分かりそうでも、<b>問いは問い</b>。</p>
+    <p class="qft-cap">もちろん、こんな問いもOK</p><ul class="qlist ex cols2">${TUT_EX2.map(t => `<li><span>${esc(t)}</span></li>`).join("")}</ul>
     <div class="share honban"><b>次は本番（${QFT_MIN}分）</b><p>お題が、あなたの<b>説</b>と<b>論文で分かったこと</b>に変わります。この調子で、どんどん出そう。</p></div>`;
 }
 
@@ -454,10 +489,11 @@ export const L04 = {
     seedFromR03(c);
     return i === 0 ? shareStep(c) : i === 1 ? tutStep(c) : i === 2 ? tutExamples(c) : renderMain(i - 3, c);
   },
-  // 練習は20秒たつと自動で進む。本番を先に始めていた人（開発版のテストなど）は練習なしでも進める
-  canNext(i, c) { return i === 0 || i === 2 ? true : i === 1 ? (c.d.tutPhase === "done" || !!c.d.qftPhase) : canNextMain(i - 3, c); },
+  // 練習は20秒たつと自動で進む
+  canNext(i, c) { return i === 0 || i === 2 ? true : i === 1 ? c.d.tutPhase === "done" : canNextMain(i - 3, c); },
   onClick(t, c) {
     if (t.closest("[data-tut-start]")) { startTut(c); return true; }
+    if (t.closest("[data-test-reset]")) { doTestReset(c); return true; }
     return onClickMain(t, c);
   }
 };
@@ -488,14 +524,9 @@ const L04Main = {
         setTimeout(fitTopH, 0);
         return `
           <div class="qft-run">
-            <div class="qft-bar">
-              <div class="timer" data-timer="qft">${QFT_MIN}:00</div>
-              ${addBox()}
-              <div class="qcount"><b data-qcount>${ownN(qs)}</b><span>個</span></div>
-              ${RULES_LINE}
-            </div>
+            ${runSticky(c, { tut: false, n: ownN(qs), ph: "お題（説と論文で分かったこと）について、思いついた問いを入れて Enter" })}
             <div class="qft-cols">
-              <div><p class="qft-cap">説と、論文で分かったこと</p>${focusBox(c, true)}</div>
+              <div class="odai-run"><p class="odai-cap">お題：あなたの説と、論文で分かったこと</p>${focusBox(c, true)}</div>
               <div><p class="qft-cap">出した問い（新しい順）</p><div data-qlist>${listHtml(qs, esc, { rev: true })}</div></div>
             </div>
           </div>`;
@@ -503,6 +534,7 @@ const L04Main = {
       if (phase === "done") {
         const r = Number(d.rank) || 0, n = Number(d.rankN) || ownN(qs), v = verdict(r, Number(d.rankTotal) || 0, n);
         return `
+          ${testReset(c)}
           <div class="qresult" data-qresult>
             <p class="eyebrow">${d.rounds > 1 ? `${d.rounds}回目の` : ""}結果</p>
             <div class="qr-n"><b>${n}</b>個</div>
@@ -515,7 +547,9 @@ const L04Main = {
           <div data-qlist>${listHtml(qs, esc)}</div>`;
       }
       return `
-        <p>説と、論文で分かったことを見ながら、<b>${QFT_MIN}分間で問いをできるだけたくさん</b>出そう。学年で何位か出ます。</p>
+        ${testReset(c)}
+        <p class="okay-big">いよいよ本番</p>
+        <p>お題は、あなたの<b>説</b>と<b>論文で分かったこと</b>。練習と同じように、<b>${QFT_MIN}分間で問いをできるだけたくさん</b>出そう。学年で何位か出ます。</p>
         ${qs.some(q => q.s) ? `<p class="hint">${quest(3)}で選んだ「確かめてみたいこと」は、はじめから下に入っています（<em class="tagq3">${quest(3)}</em>。数には入りません）。</p>` : ""}
         ${focusBox(c)}
         ${rules}
