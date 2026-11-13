@@ -356,9 +356,15 @@ function tutStep(c) {
       ${odai}
       <p class="qft-cap">練習で出した問い</p><div data-qlist>${listHtml(qs, esc, { del: false })}</div>
     </div>`;
+  // 11/13 先生：いきなり練習だと何のためか分からない → 先に「このあとの本番」を見せる
   return `
     <div data-tut>
-      <p>本番の前に、まずは<b>練習</b>。<b>${TUT_SEC}秒</b>で、このお題について問いを出してみよう。<b>1つでもOK</b>。</p>
+      <div class="share honban">
+        <b>このあと本番：問いのタイムアタック（${QFT_MIN}分）</b>
+        <p>あなたの<b>説</b>と<b>論文で分かったこと</b>を見ながら、${QFT_MIN}分間で<b>問いをできるだけたくさん</b>出します。学年で何位か出ます。</p>
+        ${focusBox(c, true)}
+      </div>
+      <p class="tut-lead">その前に、<b>練習</b>。<b>${TUT_SEC}秒</b>で、このお題について問いを出してみよう。<b>1つでもOK</b>。</p>
       ${odai}
       ${RULES_LINE}
       <p class="hint">練習の問いは、本番の数や順位には入りません。${TUT_SEC}秒たつと、自動で次の画面に進みます。</p>
@@ -374,7 +380,8 @@ function tutExamples(c) {
       <div><p class="qft-cap">たとえば</p><ul class="qlist ex">${TUT_EX.map(t => `<li><span>${esc(t)}</span></li>`).join("")}</ul></div>
       <div class="tut-mine"><p class="qft-cap">あなたが練習で出した問い</p>${mine.length ? listHtml(mine, esc, { del: false }) : `<p class="hint">出せなくてもだいじょうぶ。本番は${QFT_MIN}分あります。</p>`}</div>
     </div>
-    <p>短くても、ふざけているように見えても、答えが分かりそうでも、<b>問いは問い</b>。本番もこの調子で、どんどん出そう。</p>`;
+    <p>短くても、ふざけているように見えても、答えが分かりそうでも、<b>問いは問い</b>。</p>
+    <div class="share honban"><b>次は本番（${QFT_MIN}分）</b><p>お題が、あなたの<b>説</b>と<b>論文で分かったこと</b>に変わります。この調子で、どんどん出そう。</p></div>`;
 }
 
 // Enter で追加（日本語の変換中の Enter は無視）
@@ -430,7 +437,7 @@ export const L04 = {
   uses: ["L01", "L03", "R03"],
   steps: [
     { title: "班で論文を紹介", mins: 6 },
-    { title: "練習：20秒で問いを出す", mins: 1 },
+    { title: "本番の前に、20秒で練習", mins: 1 },
     { title: "こんな問いでも、全然いい", mins: 1 },
     { title: "問いを出す（タイムアタック）", mins: 10 },
     { title: "AIで広げる（なくてもOK）", mins: 3 },

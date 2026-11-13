@@ -422,3 +422,6 @@ body.pip { margin: 0; font-size: 15px; background: var(--card); }
 .refrow .openurl { margin: 0; }
 .paperbox { border-left: 4px solid var(--line); padding: 0 0 0 12px; margin: 8px 0 14px; }
 .paperbox .field { margin: 8px 0; }
+/* 練習の画面：このあとの本番を先に見せる（11/13） */
+.share.honban .recap { margin: 8px 0 0; }
+.tut-lead { margin-top: 18px; }
