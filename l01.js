@@ -156,7 +156,6 @@ export const L01 = {
         <div class="tc-row big"><span>来週までにやる一歩${m && m !== "不明" && m !== "その他" ? ` <i class="mt">${m}</i>` : ""}</span><b>${esc(d.ippo || "—")}</b><em>${esc(d.ippoDate || "")}</em></div>
         <div class="tc-row"><span>予想</span><b>${esc(d.yosou || "—")}</b></div>
       </div>
-      ${field("geminiLink", "Geminiのチャットのリンク（なくてもOK）", { type: "url", placeholder: "https://…", hint: "Geminiの「共有」→「リンクをコピー」で取れます。共有できないときは空欄でOK" })}
       <div class="share">
         <b>班で共有（1人1分）</b>
         <p>この画面を見せながら「本当？と思った説・来週やること・予想」を話そう。聞く人は質問を1つ。</p>
