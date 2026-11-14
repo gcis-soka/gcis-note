@@ -402,7 +402,7 @@ function tutExamples(c) {
       <div class="tut-mine"><p class="qft-cap">あなたが練習で出した問い</p>${mine.length ? listHtml(mine, esc, { del: false }) : `<p class="hint">出せなくてもだいじょうぶ。本番は${QFT_MIN}分あります。</p>`}</div>
     </div>
     <p>短くても、ふざけているように見えても、答えが分かりそうでも、<b>問いは問い</b>。</p>
-    <p class="qft-cap">もちろん、こんな問いもOK（問いには種類があります）</p><ul class="qlist ex">${TUT_EX2.map(([k, t]) => `<li><span><em class="kind-tag" style="color:${QTYPES.find(x => x.k === k)?.c || "inherit"}">${esc(k)}：</em>${esc(t)}</span></li>`).join("")}</ul>
+    <p class="qft-cap">もちろん、こんな問いもOK（問いには種類があります）</p><ul class="qlist ex kinds">${TUT_EX2.map(([k, t]) => `<li><em class="ktag" style="${kc(k)}">${esc(k)}</em><span>${esc(t)}</span></li>`).join("")}</ul>
     <div class="share honban"><b>次は本番（${QFT_MIN}分）</b><p>次は、あなたの<b>説</b>や<b>論文で分かったこと</b>から、<b>お題を1つ</b>選びます。この調子で、どんどん出そう。</p></div>`;
 }
 
@@ -494,7 +494,7 @@ export const L04 = {
   uses: ["L01", "L03", "R03"],
   steps: [
     { title: "班で論文を紹介", mins: 6 },
-    { title: "本番の前に、20秒で練習", mins: 1 },
+    { title: "問いをたくさん出してみよう", mins: 1 },
     { title: "こんな問いでも、全然いい", mins: 1 },
     { title: "問いを出す（タイムアタック）", mins: 10 },
     { title: "AIで広げる（なくてもOK）", mins: 3 },

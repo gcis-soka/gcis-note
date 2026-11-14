@@ -455,4 +455,7 @@ body.pip { margin: 0; font-size: 15px; background: var(--card); }
 .step-lead { margin: 18px 0 0; }
 .memo-fold { margin-top: 14px; font-size: 14px; }
 .memo-fold summary { cursor: pointer; color: var(--sub); }
-.kind-tag { font-style: normal; font-weight: 700; }
+/* 例の問いと種類（11/14）：種類は7種類の画面と同じ色の札。札の幅をそろえて問いの頭をそろえる */
+.qlist.kinds li { display: grid; grid-template-columns: 7.5em 1fr; align-items: center; gap: 14px; padding: 8px 0; }
+.qlist.kinds .ktag { min-width: 0; width: 100%; box-sizing: border-box; font-size: 13px; padding: 3px 0; }
+.qlist.kinds span { font-size: 16px; }
