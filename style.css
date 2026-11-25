@@ -459,3 +459,24 @@ body.pip { margin: 0; font-size: 15px; background: var(--card); }
 .qlist.kinds li { display: grid; grid-template-columns: 7.5em 1fr; align-items: center; gap: 14px; padding: 8px 0; }
 .qlist.kinds .ktag { min-width: 0; width: 100%; box-sizing: border-box; font-size: 13px; padding: 3px 0; }
 .qlist.kinds span { font-size: 16px; }
+/* お題を書く（11/14）：思い出す → 見つける → 書く → 確かめる → 決める */
+.odai-write .sub-step { margin: 16px 0 6px; font-weight: 700; color: var(--accent); }
+.odai-memo { display: flex; flex-direction: column; gap: 10px; padding: 12px 16px; border-radius: 12px; background: #f6f3ec; }
+.odai-memo small { font-size: 12px; font-weight: 700; color: var(--sub); }
+.odai-memo p { margin: 2px 0 0; line-height: 1.7; }
+.odai-model { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 12px; padding: 8px 14px; border-radius: 10px; border: 1px dashed var(--accent); }
+.odai-model span, .odai-ex span { font-size: 12px; font-weight: 700; color: var(--sub); }
+.odai-model b { font-size: 17px; }
+.odai-model em { font-style: normal; font-size: 13px; color: var(--accent); }
+.odai-ex { font-size: 14px; margin: 4px 0 8px; }
+.odai-ex span { margin-right: 8px; }
+.odai-ex s { color: var(--sub); }
+.odai-check { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 4px; }
+.odai-check li { display: flex; align-items: baseline; gap: 8px; color: var(--sub); }
+.odai-check li i { font-style: normal; width: 1.2em; text-align: center; font-weight: 700; }
+.odai-check li span { font-size: 13px; margin-left: 6px; }
+.odai-check li.ok { color: var(--accent); font-weight: 700; }
+.odai-good { margin: 8px 0 0; font-weight: 700; color: var(--accent); font-size: 18px; }
+.big-odai b { font-size: 22px; }
+.odai.small { padding: 8px 14px; margin: 0 0 10px; }
+.odai.small b { font-size: 17px; }

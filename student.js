@@ -410,7 +410,7 @@ export function mountStudent({ be, user, app, asTeacher }) {
     if (!el || el.value.trim()) el = els.find(e => !e.value.trim()) || el || els[0];
     const t = btn.dataset.insert;
     if (t.includes("＿＿")) { // 型（例：たぶん＿＿だと思う。）：空なら入れて、最初の＿＿を選ぶ（打てば置きかわる）
-      if (!el.value.trim()) el.value = t;
+      if (!el.value.trim() || el.value.includes("＿＿")) el.value = t; // 型のまま（＿＿が残っている）なら入れかえる
       el.focus();
       const at = el.value.indexOf("＿＿");
       if (at >= 0) el.setSelectionRange(at, at + 2);
@@ -444,7 +444,9 @@ export function mountStudent({ be, user, app, asTeacher }) {
     if (e.key === "Enter" && !e.isComposing && e.keyCode !== 229 && e.target.matches?.("textarea.line")) e.preventDefault();
   }, { signal: ac.signal });
   app.addEventListener("focusin", e => { const el = e.target.closest("[data-key]"); if (el) lastFocus = el.dataset.key; }, { signal: ac.signal });
-  app.addEventListener("focusout", e => { if (e.target.closest("[data-key]")) saveIfDirty(); }, { signal: ac.signal });
+  // 欄を離れたら保存。一瞬遅らせる（11/25：離れる途中に「保存中…」の表示を変えると、Chrome がまだ入力中の欄へ画面を戻し、
+  // 欄から下へスクロールして押したボタン（第4回のスタートなど）が押せないことがあった）
+  app.addEventListener("focusout", e => { if (e.target.closest("[data-key]")) setTimeout(saveIfDirty, 0); }, { signal: ac.signal });
   document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") saveIfDirty(); }, { signal: ac.signal });
   window.addEventListener("pagehide", saveIfDirty, { signal: ac.signal });
 
@@ -496,6 +498,7 @@ export function mountStudent({ be, user, app, asTeacher }) {
       LESSONS.forEach((L, i) => {
         const s = saved[i];
         if (s) notes[L.id] = { step: s.step || 0, submitted: !!s.submitted, data: s.data || {}, saved: true };
+        if (s) L.migrate?.(notes[L.id]); // 画面の数を変えた回の、古い記録を合わせる（第4回：11/25）
       });
       const ki = kiOf(user.email);
       if (asTeacher) { // 教員は番号の入力なしで「テスト」として保存

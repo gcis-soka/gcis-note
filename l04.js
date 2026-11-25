@@ -95,7 +95,13 @@ function verdict(rank, total, n) {
 // ---------- プロンプト（試作・未試行） ----------
 const listText = qs => qs.map(q => `・${q.t}`).join("\n") || "・（まだありません）";
 function promptAdd(c) {
-  const L1 = c.prev("L01"), R3 = c.prev("R03");
+  const L1 = c.prev("L01"), R3 = c.prev("R03"), odai = tail(c.d.odai);
+  // お題があるとき（11/14 先生）：お題について広げてもらう。説と分かったことは背景として短く
+  if (odai) return `私は高校1年生です。「${odai}」というお題について、問いを出しました。\n` +
+    `（背景：「${tail(L1.setsu) || "（説）"}」という説から探究を始め、論文を読みました。分かったこと：${tail(memoText(R3, "wakatta", "／")).slice(0, 200) || "（なし）"}）\n` +
+    `私の問い：\n${listText(qsOf(c))}\n` +
+    "このお題について、私の問いとは違う角度から、問いを10個出してください。私の問いの言い換えは入れないでください。答えやヒントは書かないでください。" +
+    "「問い｜どんな角度か（10文字以内）」の表にしてください。表のあとには何も書かないでください。";
   return `私は高校1年生です。「${tail(L1.setsu) || "（説）"}」という説から探究を始め、論文を読みました。` +
     `分かったこと：${tail(memoText(R3, "wakatta", "／")) || "（なし）"}。読みながら気になったこと：${tail(memoText(R3, "mada", "／")) || "（なし）"}。\n` +
     `私は次の問いを出しました。\n${listText(qsOf(c))}\n` +
@@ -383,7 +389,7 @@ function tutStep(c) {
     <div data-tut>
       <div class="share honban">
         <b>このあと本番：問いのタイムアタック（${QFT_MIN}分）</b>
-        <p>あなたの<b>説</b>や<b>論文で分かったこと</b>から<b>お題を1つ</b>選んで、${QFT_MIN}分間で<b>問いをできるだけたくさん</b>出します。学年で何位か出ます。</p>
+        <p>あなたの<b>説</b>や<b>論文で分かったこと</b>から<b>お題を1文</b>で書いて、${QFT_MIN}分間で<b>問いをできるだけたくさん</b>出します。学年で何位か出ます。</p>
       </div>
       <p class="tut-lead">その前に、<b>練習</b>。<b>${TUT_SEC}秒</b>で、このお題について問いを出してみよう。<b>1つでもOK</b>。</p>
       ${odai}
@@ -403,7 +409,7 @@ function tutExamples(c) {
     </div>
     <p>短くても、ふざけているように見えても、答えが分かりそうでも、<b>問いは問い</b>。</p>
     <p class="qft-cap">もちろん、こんな問いもOK（問いには種類があります）</p><ul class="qlist ex kinds">${TUT_EX2.map(([k, t]) => `<li><em class="ktag" style="${kc(k)}">${esc(k)}</em><span>${esc(t)}</span></li>`).join("")}</ul>
-    <div class="share honban"><b>次は本番（${QFT_MIN}分）</b><p>次は、あなたの<b>説</b>や<b>論文で分かったこと</b>から、<b>お題を1つ</b>選びます。この調子で、どんどん出そう。</p></div>`;
+    <div class="share honban"><b>次は本番（${QFT_MIN}分）</b><p>次は、あなたの<b>説</b>や<b>論文で分かったこと</b>から、<b>お題を1文</b>で書きます。この調子で、どんどん出そう。</p></div>`;
 }
 
 // Enter で追加（日本語の変換中の Enter は無視）
@@ -425,39 +431,66 @@ function focusBox(c, compact = false) {
     </div>`;
 }
 
-// ---------- 本番のお題（11/13 先生）：説と論文のメモは長いので、そこから1つ選んで短い1文にする ----------
+// ---------- 本番のお題（11/14 先生）：説と論文で分かったことを見て、「えっ」を1文の言い切りで書く ----------
+// よいお題（QFT）：短い・1つにしぼる・問いの形にしない・「えっ」がある。機械で見るのは「短い」「言い切り」の2つだけ
 const ODAI_MAX = 40; // 目安の字数
-// 札：説（第1回）と、Quest 3 の「分かったこと」の各行（論文ごと）
-function odaiCards(c) {
-  const L1 = c.prev("L01"), R3 = c.prev("R03"), out = [];
-  const setsu = String(L1.setsu || "").trim();
-  if (setsu) out.push({ from: "説（第1回）", t: setsu });
-  const ps = [["wakatta", "①"], ["wakatta2", "②"], ["wakatta3", "③"]].filter(([k]) => String(R3[k] || "").trim());
-  ps.forEach(([k, no]) => String(R3[k]).split(/\n+/).map(x => x.trim()).filter(Boolean)
-    .forEach(t => out.push({ from: ps.length > 1 ? `論文${no}で分かったこと` : "論文で分かったこと", t })));
-  return out;
+const ODAI_KATA = ["＿＿は、実は＿＿", "＿＿すると、＿＿になる", "＿＿な人ほど、＿＿", "＿＿より＿＿のほうが＿＿"].map(t => ({ label: `型：${t}`, text: t }));
+const isQform = v => /[？?]$/.test(v) || /(のか|だろうか|でしょうか)$/.test(v);
+function odaiChecks(v) {
+  v = String(v || "").trim();
+  const n = [...v].length;
+  return { v, n, short: !!v && n <= ODAI_MAX, flat: !!v && !isQform(v) && !v.includes("＿＿") };
 }
-function odaiPick(c) {
-  const esc = c.esc, cards = odaiCards(c), cur = String(c.d.odai || "").trim();
+// 説と論文で分かったことを、札に割らずに文章のまま（見出しは1回ずつ）
+function odaiMemo(c) {
+  const esc = c.esc, L1 = c.prev("L01"), R3 = c.prev("R03");
+  const parts = [];
+  if (String(L1.setsu || "").trim()) parts.push(["説（第1回）", L1.setsu]);
+  const ps = [["wakatta", "①"], ["wakatta2", "②"], ["wakatta3", "③"]].filter(([k]) => String(R3[k] || "").trim());
+  ps.forEach(([k, no]) => parts.push([ps.length > 1 ? `論文${no}で分かったこと` : "論文で分かったこと", R3[k]]));
+  return parts.length
+    ? `<div class="odai-memo">${parts.map(([h, t]) => `<div><small>${h}</small><p>${esc(String(t).trim()).replace(/\n+/g, "<br>")}</p></div>`).join("")}</div>`
+    : `<p class="hint">説やメモが見つかりません。いちばん気になっていることを1文で書こう。</p>`;
+}
+const tick = (ok, label) => `<li class="${ok ? "ok" : ""}"><i>${ok ? "✓" : "・"}</i>${label}</li>`;
+function odaiCheckHtml(c) {
+  const k = odaiChecks(c.d.odai);
+  const good = k.short && k.flat;
   return `
-    <div class="odai-pick">
-      <p><b>① お題を1つ選ぼう</b>　あなたの説と、論文で分かったことから。押すと下に入ります。</p>
-      <div class="ocards">${cards.length ? cards.map((x, j) =>
-        `<button type="button" class="ocard ${cur && cur === x.t ? "on" : ""}" data-ocard="${j}"><small>${esc(x.from)}</small><span>${esc(x.t)}</span></button>`).join("")
-        : `<p class="hint">説やメモが見つかりません。下に、問いを出したいことを1文で書こう。</p>`}</div>
-      <div class="odai odai-edit"><span>お題</span>
-        <textarea class="line" data-key="odai" rows="1" placeholder="例：カレーは2日目のほうがおいしい">${esc(c.d.odai || "")}</textarea></div>
-      <p class="hint" data-odai-len>練習の「カレーは2日目のほうがおいしい」のように、<b>短い1文</b>がおすすめ。長いときは${ODAI_MAX}字くらいまでに短く直そう。</p>
+    <ul class="odai-check">
+      ${tick(k.short, `短い（${ODAI_MAX}字くらいまで）${k.v ? `<span>いま${k.n}字</span>` : ""}`)}
+      ${tick(k.flat, "言い切り（「？」で終わらない）")}
+      <li class="memo"><i>・</i>1つのことにしぼる　・「えっ」と思ったこと</li>
+    </ul>
+    ${k.v && !k.flat && isQform(k.v) ? `<p class="hint warn-text">問いの形になっています。「〜のか？」をとって、言い切りにしよう。</p>` : ""}
+    ${good ? `<p class="odai-good">いいお題！</p>` : ""}`;
+}
+function odaiWrite(c) {
+  const k = odaiChecks(c.d.odai);
+  return `
+    <div class="odai-write">
+      <p class="step-lead"><b>① お題を1文で書こう</b></p>
+      <p class="sub-step">1. 思い出す：説と、論文で分かったこと</p>
+      ${odaiMemo(c)}
+      <p class="sub-step">2. 見つける：いちばん<b>「えっ」</b>と思ったことは？</p>
+      <div class="odai-model"><span>練習のお題</span><b>${c.esc(TUT_ODAI)}</b><em>短い・1つ・言い切り・「えっ」</em></div>
+      <p class="sub-step">3. 書く：言い切りの1文で（型を押すと入ります）</p>
+      <div class="odai-ex"><span>例</span><s>睡眠時間と成績は関係あるのか？</s> → <b>よく寝る人ほど、テストの点が高い</b></div>
+      ${c.field("odai", "お題", { type: "line", chips: ODAI_KATA, placeholder: "例：カレーは2日目のほうがおいしい" })}
+      <p class="sub-step">4. 確かめる</p>
+      <div data-odai-check>${odaiCheckHtml(c)}</div>
+      <p class="sub-step">5. 決める</p>
+      <div class="odai big-odai"><span>このお題で、問いを出す</span><b data-odai-preview>${c.esc(k.v || "（まだ書いていません）")}</b></div>
     </div>`;
 }
-// お題の字数と、スタートを押せるか
+const odaiReady = c => { const k = odaiChecks(c.d.odai); return !!k.v && k.flat; };
+// お題の確かめと、スタートを押せるか（打つたびに）
 function refreshOdai(c) {
-  const v = String(c.d.odai || "").trim(), n = [...v].length;
-  const st = c.app.querySelector("[data-qft-start]"); if (st) st.disabled = !v;
-  const msg = c.app.querySelector("[data-odai-need]"); if (msg) msg.hidden = !!v;
-  const len = c.app.querySelector("[data-odai-len]");
-  if (len) len.classList.toggle("warn-text", n > ODAI_MAX);
-  c.app.querySelectorAll("[data-ocard]").forEach(b => b.classList.toggle("on", b.querySelector("span").textContent === v));
+  const k = odaiChecks(c.d.odai), ok = odaiReady(c);
+  const st = c.app.querySelector("[data-qft-start]"); if (st) st.disabled = !ok;
+  const msg = c.app.querySelector("[data-odai-need]"); if (msg) msg.hidden = ok;
+  const box = c.app.querySelector("[data-odai-check]"); if (box) box.innerHTML = odaiCheckHtml(c);
+  const pv = c.app.querySelector("[data-odai-preview]"); if (pv) pv.textContent = k.v || "（まだ書いていません）";
 }
 
 // 画面0：班で論文を紹介（Quest 3 の共有。11/10 先生）
@@ -515,21 +548,16 @@ export const L04 = {
   canNext(i, c) { return i === 0 || i === 2 ? true : i === 1 ? c.d.tutPhase === "done" : canNextMain(i - 3, c); },
   onClick(t, c) {
     if (t.closest("[data-tut-start]")) { startTut(c); return true; }
-    const oc = t.closest("[data-ocard]");
-    if (oc) {
-      const x = odaiCards(c)[Number(oc.dataset.ocard)];
-      if (x) {
-        c.set("odai", x.t);
-        const ta = c.app.querySelector('[data-key="odai"]');
-        if (ta) { ta.value = x.t; ta.dispatchEvent(new Event("input", { bubbles: true })); ta.focus(); }
-      }
-      refreshOdai(c);
-      return true;
-    }
     return onClickMain(t, c);
   },
   onInput(el, c) { if (el.dataset.key === "odai") refreshOdai(c); },
-  onReset() { sortAt = -1; } // 先生用のやり直し（student.js）
+  onReset() { sortAt = -1; }, // 先生用のやり直し（student.js）
+  // 8画面のころの記録（練習の2画面を足す前）：画面2以降にいたら2つ後ろへ。練習は済んだことにする
+  // 練習の前にいる人・新しい記録は tutPhase があるか画面0〜1なので動かない
+  migrate(n) {
+    if (!n || n.data?.tutPhase) return;
+    if ((n.step || 0) >= 2 || (n.step === 1 && n.data?.qftPhase)) { n.step = (n.step || 0) + 2; n.data.tutPhase = "done"; }
+  }
 };
 
 // 第4回の本体（画面4〜10。番号は班の紹介・練習を足す前のまま 0〜6）
@@ -581,16 +609,17 @@ const L04Main = {
       return `
             <p class="okay-big">いよいよ本番</p>
         <p>練習と同じように、<b>${QFT_MIN}分間で問いをできるだけたくさん</b>出そう。学年で何位か出ます。</p>
-        ${odaiPick(c)}
+        ${odaiWrite(c)}
         <p class="step-lead"><b>② ルールを確かめて、スタート</b></p>
         ${rules}
         ${qs.some(q => q.s) ? `<p class="hint">${quest(3)}で選んだ「確かめてみたいこと」は、はじめから下に入っています（<em class="tagq3">${quest(3)}</em>。数には入りません）。</p>` : ""}
-        <div class="qstart"><button type="button" class="btn primary big" data-qft-start ${String(d.odai || "").trim() ? "" : "disabled"}>スタート（${QFT_MIN}分）</button>
-          <p class="hint" data-odai-need ${String(d.odai || "").trim() ? "hidden" : ""}>お題を選ぶと、スタートできます。</p></div>
+        <div class="qstart"><button type="button" class="btn primary big" data-qft-start ${odaiReady(c) ? "" : "disabled"}>スタート（${QFT_MIN}分）</button>
+          <p class="hint" data-odai-need ${odaiReady(c) ? "hidden" : ""}>お題を言い切りの1文で書くと、スタートできます。</p></div>
         ${qs.length ? `<div data-qlist>${listHtml(qs, esc)}</div>` : ""}`;
     }
 
     if (i === 1) return `
+      ${d.odai ? `<div class="odai small"><span>お題</span><b>${esc(d.odai)}</b></div>` : ""}
       <p>自分の問いを出したら、<b>AIに別の角度の問いを足してもらおう</b>。足さなくてもOK。</p>
       ${promptBox(promptAdd(c), { first: true })}
       <p>気に入った問いがあったら、<b>自分の言葉に直して</b>足そう（順位には入りません）。</p>
@@ -607,6 +636,7 @@ const L04Main = {
     if (i === 3) {
       const groups = TYPE_ORDER.map(k => ({ k, items: qs.map((q, idx) => ({ ...q, idx })).filter(q => (q.k || UNKNOWN) === k) })).filter(g => g.items.length);
       return `
+        ${d.odai ? `<div class="odai small"><span>お題</span><b>${esc(d.odai)}</b></div>` : ""}
         <p>種類ごとに並べ直しました。<b>いちばん確かめてみたい問いを1つ</b>選ぼう（押すと下に入ります）。</p>
         <div class="qgroups">${groups.map(g => {
           const t = QTYPES.find(x => x.k === g.k);
